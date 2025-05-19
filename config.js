@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 module.exports = {
     prefix: '!',
     owners: ['254742063632'],
