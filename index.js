@@ -18,6 +18,7 @@ const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const { prefix } = require('./config');
 const fs = require('fs');
+const moment = require('moment-timezone');
 
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -29,6 +30,8 @@ allCommands.forEach(cmd => {
         cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
     }
 });
+
+const messageStore = new Map();
 
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
@@ -46,11 +49,72 @@ async function startBot() {
         version
     });
 
-    logger.info('🚀 Flash-MD-V2 has started...');
-
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || !msg.message) return;
+
+        const messageId = msg.key.id;
+        messageStore.set(messageId, msg);
+
+        if (msg.message?.protocolMessage?.type === 0) {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedMsg = messageStore.get(deletedMsgKey);
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            let senderName = msg.pushName || senderNumber;
+            let chatName = '';
+            let chatType = 'Private Chat';
+            const timezone = 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us')) {
+                try {
+                    const metadata = await sock.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    chatName = metadata.subject;
+                    chatType = 'Group Chat';
+                } catch {
+                    chatName = 'Unknown Group';
+                }
+            } else if (fromJid === 'status@broadcast') {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = 'System';
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Newsletter';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== sock.user.id) {
+                await sock.sendMessage(sock.user.id, {
+                    text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await sock.sendMessage(sock.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
 
         const allowedNumbers = ['254742063632', '254757835036'];
 
@@ -91,8 +155,6 @@ async function startBot() {
         const readableType = typeMap[messageType] || messageType;
 
         const jid = msg.key.remoteJid;
-      //  const senderJid = msg.key.participant || msg.key.remoteJid;
-      //  const senderNumber = Jid.split('@')[0];
 
         let chatType = 'Private Chat';
         let groupName = null;
