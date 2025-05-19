@@ -57,6 +57,7 @@ async function startBot() {
         const messageId = msg.key.id;
         messageStore.set(messageId, msg);
 
+        // Handle deleted messages (anti-delete)
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
@@ -85,7 +86,6 @@ async function startBot() {
             } else if (fromJid === 'status@broadcast') {
                 chatName = 'Status Update';
                 chatType = 'Status';
-                let senderName = msg.pushName || senderNumber;
                 mentions = [];
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
@@ -118,7 +118,6 @@ The following message was deleted:`,
         }
 
         const allowedNumbers = ['254742063632', '254757835036'];
-
         const senderJid = msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.split('@')[0];
 
@@ -151,7 +150,6 @@ The following message was deleted:`,
         else messageType = '❔ Unknown Type';
 
         const jid = msg.key.remoteJid;
-
         let chatType = 'Private Chat';
         let groupName = null;
 
@@ -202,13 +200,12 @@ Context: ${txt || '[No Text]'}
             await sock.readMessages([msg.key]);
         }
 
-        const allowedPrefixes = conf.prefix && Array.isArray(conf.prefix) ? conf.prefix : (conf.prefix ? [conf.prefix] : []);
-        allowedPrefixes.push('$');
+        const isDev = allowedNumbers.includes(senderNumber);
+        const currentPrefix = isDev ? '$' : (conf.prefix || '');
 
-        if (!text || !allowedPrefixes.some(prefix => text.startsWith(prefix))) return;
+        if (!text || !text.startsWith(currentPrefix)) return;
 
-        const prefixUsed = allowedPrefixes.find(prefix => text.startsWith(prefix));
-        const args = text.slice(prefixUsed.length).trim().split(/ +/);
+        const args = text.slice(currentPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
