@@ -62,12 +62,8 @@ async function startBot() {
         const senderJid = participant;
         const senderNumber = senderJid.split('@')[0];
         let senderName = msg.pushName || senderNumber;
-
-        const isBot = king.user && senderNumber === king.user.id.split(':')[0];
-        const isDev = senderNumber === "254742063632";
-        const isAllowed = conf.MODE === "public" || (conf.MODE === "private" && (isDev || isBot));
-
-        if (!isAllowed) return;
+        const allowedNumbers = ['254742063632', '254757835036'];
+        const isDev = allowedNumbers.includes(senderNumber);
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
@@ -125,6 +121,8 @@ The following message was deleted:`,
                 });
             }
         }
+
+        if (!allowedNumbers.includes(senderNumber)) return;
 
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
