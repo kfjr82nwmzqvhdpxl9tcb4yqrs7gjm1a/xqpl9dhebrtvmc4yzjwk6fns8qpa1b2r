@@ -120,7 +120,7 @@ The following message was deleted:`,
 
         const senderJid = msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.split('@')[0];
-        const jid = msg.key.remoteJid;
+     //   const jid = msg.key.remoteJid;
 
         if (!allowedNumbers.includes(senderNumber)) return;
 
