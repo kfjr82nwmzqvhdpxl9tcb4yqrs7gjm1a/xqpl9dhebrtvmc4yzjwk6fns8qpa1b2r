@@ -186,25 +186,29 @@ Channel: ${channelInfo}
 Context: ${txt || '[No Text]'}
 `;
 
-if (chatType === 'Group Chat') {
-    console.log(`\n===== GROUP MESSAGE =====${logBase}\n`);
-} else if (chatType === 'Private Chat') {
-    console.log(`\n===== PRIVATE MESSAGE =====${logBase}\n`);
-} else if (chatType === 'Status') {
-    console.log(`\n===== STATUS MESSAGE =====${logBase}\n`);
-} else if (chatType === 'Newsletter') {
-    console.log(`\n===== CHANNEL MESSAGE =====${logBase}\n`);
-} else {
-    console.log(`\n===== OTHER MESSAGE =====${logBase}\n`);
-}
+        if (chatType === 'Group Chat') {
+            console.log(`\n===== GROUP MESSAGE =====${logBase}\n`);
+        } else if (chatType === 'Private Chat') {
+            console.log(`\n===== PRIVATE MESSAGE =====${logBase}\n`);
+        } else if (chatType === 'Status') {
+            console.log(`\n===== STATUS MESSAGE =====${logBase}\n`);
+        } else if (chatType === 'Newsletter') {
+            console.log(`\n===== CHANNEL MESSAGE =====${logBase}\n`);
+        } else {
+            console.log(`\n===== OTHER MESSAGE =====${logBase}\n`);
+        }
+
         if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
             await sock.readMessages([msg.key]);
         }
 
-const isDev = allowedNumbers.includes(senderNumber);
-const currentPrefix = isDev ? '$' : prefix;
-if (!text || !text.startsWith(currentPrefix)) return;
- const args = text.slice(currentPrefix.length).trim().split(/ +/); 
+        const allowedPrefixes = conf.prefix && Array.isArray(conf.prefix) ? conf.prefix : (conf.prefix ? [conf.prefix] : []);
+        allowedPrefixes.push('$');
+
+        if (!text || !allowedPrefixes.some(prefix => text.startsWith(prefix))) return;
+
+        const prefixUsed = allowedPrefixes.find(prefix => text.startsWith(prefix));
+        const args = text.slice(prefixUsed.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
