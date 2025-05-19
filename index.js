@@ -19,7 +19,7 @@ const allCommands = require('./commands');
 const { prefix } = require('./config');
 const fs = require('fs');
 
-const logger = pino({ level: 'info' });
+const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 
@@ -37,7 +37,7 @@ async function startBot() {
     const sock = makeWASocket({
         auth: {
             creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'info' }))
+            keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
         },
         markOnlineOnConnect: true,
         printQRInTerminal: true,
@@ -91,6 +91,8 @@ async function startBot() {
         const readableType = typeMap[messageType] || messageType;
 
         const jid = msg.key.remoteJid;
+      //  const senderJid = msg.key.participant || msg.key.remoteJid;
+      //  const senderNumber = Jid.split('@')[0];
 
         let chatType = 'Private Chat';
         let groupName = null;
@@ -100,9 +102,7 @@ async function startBot() {
             try {
                 const metadata = await sock.groupMetadata(jid);
                 groupName = metadata.subject;
-            } catch (err) {
-                console.error(`Failed to fetch group metadata for ${jid}:`, err);
-            }
+            } catch {}
         } else if (jid === 'status@broadcast') {
             chatType = 'Status';
         } else if (jid.endsWith('@newsletter')) {
@@ -119,14 +119,13 @@ async function startBot() {
         const text = msg.message.conversation ||
                      msg.message?.extendedTextMessage?.text ||
                      msg.message?.imageMessage?.caption ||
-                     msg.message?.videoMessage?.caption ||
-                     '[Unhandled message type]';
+                     msg.message?.videoMessage?.caption;
 
         console.log(`\n===== MESSAGE RECEIVED =====
 Type: ${readableType}
 From: ${senderName} (${senderNumber})
 Channel: ${channelInfo}
-Text: ${text}
+Text: ${text || '[No Text]'}
 ==============================\n`);
 
         if (!text || !text.startsWith(prefix)) return;
@@ -159,4 +158,3 @@ Text: ${text}
 }
 
 startBot();
-
