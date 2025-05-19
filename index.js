@@ -8,14 +8,18 @@ app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 const {
     default: makeWASocket,
     DisconnectReason,
-    fetchLatestBaileysVersion
+    fetchLatestBaileysVersion,
+    makeCacheableSignalKeyStore,
+    Browsers
 } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
-const { loadSessionFromBase64, getEncodedSession } = require('./auth');
+const pino = require('pino');
+const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const { prefix } = require('./config');
 const fs = require('fs');
 
+const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 
@@ -31,11 +35,18 @@ async function startBot() {
     const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
-        version,
-        auth: state,
-        printQRInTerminal: false,
-        browser: ['Ubuntu', 'Chrome', '20.0']
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
+        },
+        markOnlineOnConnect: true,
+        printQRInTerminal: true,
+        logger: logger.child({ level: 'fatal' }),
+        browser: Browsers.macOS('Safari'),
+        version
     });
+
+    logger.info('🚀 Flash-MD-V2 has started...');
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
@@ -64,8 +75,6 @@ async function startBot() {
 
     sock.ev.on('creds.update', () => {
         saveState();
-        const base64 = getEncodedSession();
-        console.log('Updated session (Base64):\n', base64);
     });
 
     sock.ev.on('connection.update', (update) => {
