@@ -179,10 +179,10 @@ else messageType = '❔ Unknown Type';
                      msg.message?.videoMessage?.caption;
 
         console.log(`\n===== MESSAGE RECEIVED =====
-Type: ${readableType}
+Type: ${messageType}
 From: ${senderName} (${senderNumber})
 Channel: ${channelInfo}
-Text: ${text || '[No Text]'}
+Context: ${txt || '[No Text]'}
 ==============================\n`);
         if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
             await sock.readMessages([msg.key]);
