@@ -16,6 +16,7 @@ const { Boom } = require('@hapi/boom');
 const pino = require('pino');
 const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
+const { prefix } = require('./config');
 const conf = require('./config');
 const fs = require('fs');
 const moment = require('moment-timezone');
@@ -117,8 +118,11 @@ The following message was deleted:`,
         }
 
         const allowedNumbers = ['254742063632', '254757835036'];
+
         const senderJid = msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.split('@')[0];
+
+        if (!allowedNumbers.includes(senderNumber)) return;
 
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
@@ -147,6 +151,7 @@ The following message was deleted:`,
         else messageType = '❔ Unknown Type';
 
         const jid = msg.key.remoteJid;
+
         let chatType = 'Private Chat';
         let groupName = null;
 
@@ -198,14 +203,12 @@ Context: ${txt || '[No Text]'}
         }
 
         const isDev = allowedNumbers.includes(senderNumber);
-        const devPrefix = '$';
-        const userPrefixes = Array.isArray(conf.prefix) ? conf.prefix : [conf.prefix || ''];
-        const allPrefixes = isDev ? [devPrefix, ...userPrefixes] : userPrefixes;
-        let usedPrefix = allPrefixes.find(p => text?.startsWith(p));
-        if (!text || !usedPrefix) return;
-
-        const args = text.slice(usedPrefix.length).trim().split(/ +/);
+        const currentPrefix = isDev ? '$' : prefix;
+        if (!text || !text.startsWith(currentPrefix)) return;
+        
+        const args = text.slice(currentPrefix.length).trim().split(/ +/); 
         const cmdName = args.shift().toLowerCase();
+
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
@@ -230,7 +233,7 @@ Context: ${txt || '[No Text]'}
 
         if (connection === 'open') {
             const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-            const prefixInfo = Array.isArray(conf.prefix) ? `Prefixes: ${conf.prefix.map(p => `"${p}"`).join(', ')}` : `Prefix: "${conf.prefix}"`;
+            const prefixInfo = conf.prefix ? `Prefix: "${conf.prefix}"` : 'Prefix: [No Prefix]';
             const totalCmds = commands.size;
 
             const connInfo = `*🤖 FLASH-MD-V2*
