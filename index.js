@@ -21,9 +21,6 @@ const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 
-// Your own user ID (owner's JID, so we exclude this later)
-const OWNER_JID = '254742063632@s.whatsapp.net'; // Your WhatsApp user ID in JID format
-
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases && Array.isArray(cmd.aliases)) {
@@ -49,14 +46,17 @@ async function startFlashV2() {
 
     logger.info('🚀 Flash-MD-V2 has started...');
 
-    // Send a starting message to all users in the session except the OWNER_JID
-    const users = Object.keys(state.creds.contacts);
-    for (let userId of users) {
-        if (userId !== OWNER_JID) {
-            await king.sendMessage(userId, {
-                text: `FLASH-MD V2 is connected\nPrefix: ${prefix}\nLoaded commands: ${allCommands.length}`
-            });
+    if (state.creds && state.creds.contacts) {
+        const users = Object.keys(state.creds.contacts);
+        for (let userId of users) {
+            if (userId !== OWNER_JID) {
+                await king.sendMessage(userId, {
+                    text: `FLASH-MD V2 is connected\nPrefix: ${prefix}\nLoaded commands: ${allCommands.length}`
+                });
+            }
         }
+    } else {
+        console.log("No contacts found in the session.");
     }
 
     king.ev.on('messages.upsert', async ({ messages }) => {
