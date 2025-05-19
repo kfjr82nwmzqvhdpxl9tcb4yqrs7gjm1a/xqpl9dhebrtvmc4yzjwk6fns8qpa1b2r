@@ -1,3 +1,10 @@
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
+app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
+
 const {
     default: makeWASocket,
     DisconnectReason,
@@ -5,7 +12,7 @@ const {
 } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const { loadSessionFromBase64, getEncodedSession } = require('./auth');
-const allCommands = require('./commands');
+const allCommands = require('./commands/commands');
 const { prefix } = require('./config');
 const fs = require('fs');
 
