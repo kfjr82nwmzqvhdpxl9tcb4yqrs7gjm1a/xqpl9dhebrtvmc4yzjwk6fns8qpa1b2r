@@ -1,6 +1,6 @@
 require('dotenv').config();
 const fs = require('fs');
-const { useSingleFileAuthState } = require('@whiskeysockets/baileys');
+const baileys = require('@whiskeysockets/baileys');
 const { sessionBase64 } = require('./config');
 
 const SESSION_FILE = './session.json';
@@ -15,7 +15,7 @@ function loadSessionFromBase64() {
             console.error('Invalid Base64 session:', err);
         }
     }
-    return useSingleFileAuthState(SESSION_FILE);
+    return baileys.useSingleFileAuthState(SESSION_FILE);
 }
 
 function getEncodedSession() {
