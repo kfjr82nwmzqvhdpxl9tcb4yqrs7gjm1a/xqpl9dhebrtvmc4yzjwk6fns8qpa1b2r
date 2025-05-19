@@ -12,7 +12,7 @@ const {
 } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const { loadSessionFromBase64, getEncodedSession } = require('./auth');
-const allCommands = require('./commands/commands');
+const allCommands = require('./commands');
 const { prefix } = require('./config');
 const fs = require('fs');
 
