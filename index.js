@@ -46,6 +46,19 @@ async function startFlashV2() {
 
     logger.info('🚀 Flash-MD-V2 has started...');
 
+    if (state.creds && state.creds.contacts) {
+        const users = Object.keys(state.creds.contacts);
+        for (let userId of users) {
+            if (userId !== OWNER_JID) {
+                await king.sendMessage(userId, {
+                    text: `FLASH-MD V2 is connected\nPrefix: ${prefix}\nLoaded commands: ${allCommands.length}`
+                });
+            }
+        }
+    } else {
+        console.log("No contacts found in the session.");
+    }
+
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || msg.key.fromMe || !msg.message) return;
@@ -116,10 +129,6 @@ async function startFlashV2() {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) startFlashV2();
         }
-    });
-
-    await king.sendMessage(msg.key.remoteJid, {
-        text: `FLASH-MD V2 is connected\nPrefix: ${prefix}\nLoaded commands: ${allCommands.length}`
     });
 }
 
