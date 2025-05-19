@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => res.send('Start Flash-MD-V2'));
+app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
 app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
 const {
@@ -12,10 +12,12 @@ const {
     makeCacheableSignalKeyStore,
     Browsers
 } = require('@whiskeysockets/baileys');
+const { Boom } = require('@hapi/boom');
 const pino = require('pino');
 const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const { prefix } = require('./config');
+const fs = require('fs');
 
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -28,11 +30,11 @@ allCommands.forEach(cmd => {
     }
 });
 
-async function startFlashV2() {
+async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
 
-    const king = makeWASocket({
+    const sock = makeWASocket({
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
@@ -46,81 +48,98 @@ async function startFlashV2() {
 
     logger.info('🚀 Flash-MD-V2 has started...');
 
-    king.ev.on('messages.upsert', async ({ messages }) => {
+    sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || msg.key.fromMe || !msg.message) return;
 
         const messageType = Object.keys(msg.message)[0];
-        let content = '';
+        const typeMap = {
+            conversation: 'Text',
+            extendedTextMessage: 'Extended Text',
+            imageMessage: 'Image',
+            videoMessage: 'Video',
+            audioMessage: 'Audio',
+            documentMessage: 'Document',
+            stickerMessage: 'Sticker',
+            contactMessage: 'Contact',
+            contactsArrayMessage: 'Contacts Array',
+            locationMessage: 'Location',
+            liveLocationMessage: 'Live Location',
+            buttonsMessage: 'Buttons',
+            templateMessage: 'Template',
+            listMessage: 'List',
+            orderMessage: 'Order',
+            productMessage: 'Product',
+            ephemeralMessage: 'Ephemeral',
+            viewOnceMessage: 'View Once',
+            reactionMessage: 'Reaction',
+            protocolMessage: 'Protocol',
+            groupInviteMessage: 'Group Invite',
+            callLogMessage: 'Call Log',
+            pollCreationMessage: 'Poll Creation',
+            pollUpdateMessage: 'Poll Update',
+            senderKeyDistributionMessage: 'Sender Key Distribution',
+            statusV3Message: 'Status/Story'
+        };
+        const readableType = typeMap[messageType] || messageType;
 
-        switch (messageType) {
-            case 'conversation':
-                content = msg.message.conversation;
-                break;
-            case 'extendedTextMessage':
-                content = msg.message.extendedTextMessage.text;
-                break;
-            case 'imageMessage':
-                content = msg.message.imageMessage.caption || '[Image]';
-                break;
-            case 'videoMessage':
-                content = msg.message.videoMessage.caption || '[Video]';
-                break;
-            case 'audioMessage':
-                content = '[Audio]';
-                break;
-            case 'documentMessage':
-                content = msg.message.documentMessage.caption || '[Document]';
-                break;
-            case 'buttonsMessage':
-                content = msg.message.buttonsMessage.contentText || '[Buttons Message]';
-                break;
-            case 'templateMessage':
-                content = '[Template Message]';
-                break;
-            default:
-                content = `[${messageType}]`;
+        const jid = msg.key.remoteJid;
+        const senderJid = msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.split('@')[0];
+
+        let chatType = 'Private Chat';
+        let groupName = null;
+
+        if (jid.endsWith('@g.us')) {
+            chatType = 'Group Chat';
+            try {
+                const metadata = await sock.groupMetadata(jid);
+                groupName = metadata.subject;
+            } catch {}
+        } else if (jid === 'status@broadcast') {
+            chatType = 'Status';
         }
 
-        const sender = msg.pushName || 'Unknown';
-        const fromGroup = msg.key.remoteJid.endsWith('@g.us');
-        const chatInfo = fromGroup ? `Group: ${msg.key.remoteJid}` : `User: ${sender} (${msg.key.remoteJid})`;
+        let senderName = msg.pushName || 'Unknown';
+        let channelInfo = `${chatType}`;
+        if (chatType === 'Group Chat') channelInfo += ` | Group: ${groupName}`;
+        if (chatType === 'Status') channelInfo += ` | From: ${senderName} (${senderNumber})`;
+        if (chatType === 'Private Chat') channelInfo += ` | From: ${senderName} (${senderNumber})`;
 
-        console.log(`Message Type: ${messageType}`);
-        console.log(`Sender: ${chatInfo}`);
-        console.log(`Message Content: ${content}`);
+        console.log(`\n===== MESSAGE RECEIVED =====
+Type: ${readableType}
+From: ${senderName} (${senderNumber})
+Channel: ${channelInfo}
+==============================\n`);
 
-        if (!content || !content.startsWith(prefix)) return;
+        const text = msg.message.conversation || msg.message?.extendedTextMessage?.text;
+        if (!text || !text.startsWith(prefix)) return;
 
-        const args = content.slice(prefix.length).trim().split(/ +/);
+        const args = text.slice(prefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
         try {
-            await command.execute(king, msg, args, allCommands);
+            await command.execute(sock, msg, args, allCommands);
         } catch (err) {
             console.error('Command failed:', err);
-            await king.sendMessage(msg.key.remoteJid, { text: 'Something went wrong.' });
+            await sock.sendMessage(jid, { text: 'Something went wrong.' });
         }
     });
 
-    king.ev.on('creds.update', () => {
+    sock.ev.on('creds.update', () => {
         saveState();
     });
 
-    king.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) startFlashV2();
+            if (shouldReconnect) startBot();
         }
-    });
-
-    await king.sendMessage(msg.key.remoteJid, {
-        text: `FLASH-MD V2 is connected\nPrefix: ${prefix}\nLoaded commands: ${allCommands.length}`
     });
 }
 
-startFlashV2();
+startBot();
