@@ -13,6 +13,7 @@
     "express": "^4.19.2",
     "moment-timezone": "^0.5.43",
     "performance-now": "^2.1.0",
-    "pino": "^8.15.1"
+    "pino": "^8.15.1",
+    "axios": "^1.4.0"
   }
 }
