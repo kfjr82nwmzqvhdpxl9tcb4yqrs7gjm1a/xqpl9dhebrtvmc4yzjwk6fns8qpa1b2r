@@ -38,7 +38,7 @@ async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
 
-    const sock = makeWASocket({
+    const king = makeWASocket({
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
@@ -50,21 +50,26 @@ async function startBot() {
         version
     });
 
-    sock.ev.on('messages.upsert', async ({ messages }) => {
+    king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
         const messageId = msg.key.id;
         messageStore.set(messageId, msg);
 
+        const fromJid = msg.key.remoteJid;
+        const participant = msg.key?.participant || fromJid;
+        const senderJid = participant;
+        const senderNumber = senderJid.split('@')[0];
+        let senderName = msg.pushName || senderNumber;
+        const allowedNumbers = ['254742063632', '254757835036'];
+        const isDev = allowedNumbers.includes(senderNumber);
+
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
-            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
-            const fromJid = msg.key.remoteJid;
-
-            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
-            let senderName = msg.pushName || senderNumber;
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || fromJid;
+            senderName = msg.pushName || deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
             let chatName = '';
             let chatType = 'Private Chat';
             const timezone = 'Africa/Nairobi';
@@ -74,18 +79,18 @@ async function startBot() {
 
             if (fromJid.endsWith('@g.us')) {
                 try {
-                    const metadata = await sock.groupMetadata(fromJid);
+                    const metadata = await king.groupMetadata(fromJid);
                     const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderName;
                     chatName = metadata.subject;
                     chatType = 'Group Chat';
-                } catch {
+                } catch (err) {
                     chatName = 'Unknown Group';
                 }
             } else if (fromJid === 'status@broadcast') {
                 chatName = 'Status Update';
                 chatType = 'Status';
-                let senderName = msg.pushName || senderNumber;
+                senderName = msg.pushName || senderName;
                 mentions = [];
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
@@ -96,8 +101,8 @@ async function startBot() {
                 chatName = senderName;
             }
 
-            if (deletedMsg && deletedSenderJid !== sock.user.id) {
-                await sock.sendMessage(sock.user.id, {
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
                     text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
 
 *Chat:* ${chatName}
@@ -111,23 +116,22 @@ The following message was deleted:`,
                     mentions
                 });
 
-                await sock.sendMessage(sock.user.id, {
+                await king.sendMessage(king.user.id, {
                     forward: deletedMsg
                 });
             }
         }
 
-        const allowedNumbers = ['254742063632', '254757835036'];
-
-        const senderJid = msg.key.participant || msg.key.remoteJid;
-        const senderNumber = senderJid.split('@')[0];
-const participant = msg.key?.participant || msg.key.remoteJid;
         if (!allowedNumbers.includes(senderNumber)) return;
 
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
+        const text = txt ||
+                     m?.imageMessage?.caption ||
+                     m?.videoMessage?.caption ||
+                     '';
 
-        let messageType;
+        let messageType = '❔ Unknown Type';
         if (txt) messageType = `💬 Text: "${txt}"`;
         else if (m?.imageMessage) messageType = '🖼️ Image';
         else if (m?.videoMessage) messageType = '🎥 Video';
@@ -148,36 +152,27 @@ const participant = msg.key?.participant || msg.key.remoteJid;
         else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
         else if (m?.reactionMessage) messageType = '❤️ Reaction';
         else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
-        else messageType = '❔ Unknown Type';
-
-        const jid = msg.key.remoteJid;
 
         let chatType = 'Private Chat';
         let groupName = null;
 
-        if (jid.endsWith('@g.us')) {
+        if (fromJid.endsWith('@g.us')) {
             chatType = 'Group Chat';
             try {
-                const metadata = await sock.groupMetadata(jid);
+                const metadata = await king.groupMetadata(fromJid);
                 groupName = metadata.subject;
             } catch {}
-        } else if (jid === 'status@broadcast') {
+        } else if (fromJid === 'status@broadcast') {
             chatType = 'Status';
-        } else if (jid.endsWith('@newsletter')) {
+        } else if (fromJid.endsWith('@newsletter')) {
             chatType = 'Newsletter';
         }
 
-        let senderName = msg.pushName || 'Unknown';
         let channelInfo = `${chatType}`;
         if (chatType === 'Group Chat') channelInfo += ` | Group: ${groupName}`;
         if (chatType === 'Status' || chatType === 'Newsletter' || chatType === 'Private Chat') {
             channelInfo += ` | From: ${senderName} (${senderNumber})`;
         }
-
-        const text = msg.message.conversation ||
-                     msg.message?.extendedTextMessage?.text ||
-                     msg.message?.imageMessage?.caption ||
-                     msg.message?.videoMessage?.caption;
 
         const logBase = `
 Type: ${messageType}
@@ -186,55 +181,49 @@ Channel: ${channelInfo}
 Context: ${txt || '[No Text]'}
 `;
 
-if (chatType === 'Group Chat') {
-    console.log(`\n===== GROUP MESSAGE =====${logBase}\n`);
-} else if (chatType === 'Private Chat') {
-    console.log(`\n===== PRIVATE MESSAGE =====${logBase}\n`);
-} else if (chatType === 'Status') {
-    console.log(`\n===== STATUS MESSAGE =====${logBase}\n`);
-} else if (chatType === 'Newsletter') {
-    console.log(`\n===== CHANNEL MESSAGE =====${logBase}\n`);
-} else {
-    console.log(`\n===== OTHER MESSAGE =====${logBase}\n`);
-}
-        if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
-            await sock.readMessages([msg.key]);
+        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
+
+        if (conf.AUTO_READ_MESSAGES === "on" && fromJid.endsWith('@s.whatsapp.net')) {
+            await king.readMessages([msg.key]);
         }
-if (msg.key.remoteJid === 'status@broadcast') {
+
+        if (fromJid === 'status@broadcast') {
             if (conf.AUTO_VIEW_STATUS === "on") {
-                await sock.readMessages([msg.key]);
+                await king.readMessages([msg.key]);
             }
 
-            const botID = sock?.user?.id;
+            const botID = king?.user?.id;
             if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
-                await sock.sendMessage(jid, {
+                await king.sendMessage(fromJid, {
                     react: { key: msg.key, text: '🤍' }
                 }, {
                     statusJidList: [participant, botID]
                 });
             }
-const isDev = allowedNumbers.includes(senderNumber);
-const currentPrefix = isDev ? '$' : prefix;
-if (!text || !text.startsWith(currentPrefix)) return;
- const args = text.slice(currentPrefix.length).trim().split(/ +/); 
+        }
+
+        const currentPrefix = isDev ? '$' : prefix;
+        if (!text || !text.startsWith(currentPrefix)) return;
+
+        const args = text.slice(currentPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
         try {
-            await command.execute(sock, msg, args, allCommands);
+            await command.execute(king, msg, args, allCommands);
         } catch (err) {
             console.error('Command failed:', err);
-            await sock.sendMessage(jid, { text: 'Something went wrong.' });
+            await king.sendMessage(fromJid, { text: 'Something went wrong.' });
         }
     });
 
-    sock.ev.on('creds.update', () => {
+    king.ev.on('creds.update', () => {
         saveState();
     });
 
-    sock.ev.on('connection.update', async (update) => {
+    king.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -246,15 +235,15 @@ if (!text || !text.startsWith(currentPrefix)) return;
             const prefixInfo = conf.prefix ? `Prefix: "${conf.prefix}"` : 'Prefix: [No Prefix]';
             const totalCmds = commands.size;
 
-            const connInfo = `*🤖 FLASH-MD-V2*
+            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
 
-*✅ Connected Successfully!*
+*✅ Using Version 2.5!*
 
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-            await sock.sendMessage(sock.user.id, {
+            await king.sendMessage(king.user.id, {
                 text: connInfo,
                 contextInfo: {
                     forwardingScore: 1,
