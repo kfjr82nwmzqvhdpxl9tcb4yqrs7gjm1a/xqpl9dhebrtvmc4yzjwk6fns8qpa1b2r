@@ -92,7 +92,7 @@ async function startBot() {
 
         const jid = msg.key.remoteJid;
       //  const senderJid = msg.key.participant || msg.key.remoteJid;
-        const senderNumber = Jid.split('@')[0];
+      //  const senderNumber = Jid.split('@')[0];
 
         let chatType = 'Private Chat';
         let groupName = null;
