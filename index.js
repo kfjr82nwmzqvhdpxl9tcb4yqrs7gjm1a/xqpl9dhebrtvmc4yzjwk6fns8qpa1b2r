@@ -52,9 +52,65 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || msg.key.fromMe || !msg.message) return;
 
-        console.log('Received Message:', msg);
         const messageType = Object.keys(msg.message)[0];
-        console.log('Message Type:', messageType);
+        const typeMap = {
+            conversation: 'Text',
+            extendedTextMessage: 'Extended Text',
+            imageMessage: 'Image',
+            videoMessage: 'Video',
+            audioMessage: 'Audio',
+            documentMessage: 'Document',
+            stickerMessage: 'Sticker',
+            contactMessage: 'Contact',
+            contactsArrayMessage: 'Contacts Array',
+            locationMessage: 'Location',
+            liveLocationMessage: 'Live Location',
+            buttonsMessage: 'Buttons',
+            templateMessage: 'Template',
+            listMessage: 'List',
+            orderMessage: 'Order',
+            productMessage: 'Product',
+            ephemeralMessage: 'Ephemeral',
+            viewOnceMessage: 'View Once',
+            reactionMessage: 'Reaction',
+            protocolMessage: 'Protocol',
+            groupInviteMessage: 'Group Invite',
+            callLogMessage: 'Call Log',
+            pollCreationMessage: 'Poll Creation',
+            pollUpdateMessage: 'Poll Update',
+            senderKeyDistributionMessage: 'Sender Key Distribution',
+            statusV3Message: 'Status/Story'
+        };
+        const readableType = typeMap[messageType] || messageType;
+
+        const jid = msg.key.remoteJid;
+        const senderJid = msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.split('@')[0];
+
+        let chatType = 'Private Chat';
+        let groupName = null;
+
+        if (jid.endsWith('@g.us')) {
+            chatType = 'Group Chat';
+            try {
+                const metadata = await sock.groupMetadata(jid);
+                groupName = metadata.subject;
+            } catch {}
+        } else if (jid === 'status@broadcast') {
+            chatType = 'Status';
+        }
+
+        let senderName = msg.pushName || 'Unknown';
+        let channelInfo = `${chatType}`;
+        if (chatType === 'Group Chat') channelInfo += ` | Group: ${groupName}`;
+        if (chatType === 'Status') channelInfo += ` | From: ${senderName} (${senderNumber})`;
+        if (chatType === 'Private Chat') channelInfo += ` | From: ${senderName} (${senderNumber})`;
+
+        console.log(`\n===== MESSAGE RECEIVED =====
+Type: ${readableType}
+From: ${senderName} (${senderNumber})
+Channel: ${channelInfo}
+==============================\n`);
 
         const text = msg.message.conversation || msg.message?.extendedTextMessage?.text;
         if (!text || !text.startsWith(prefix)) return;
@@ -69,7 +125,7 @@ async function startBot() {
             await command.execute(sock, msg, args, allCommands);
         } catch (err) {
             console.error('Command failed:', err);
-            await sock.sendMessage(msg.key.remoteJid, { text: 'Something went wrong.' });
+            await sock.sendMessage(jid, { text: 'Something went wrong.' });
         }
     });
 
