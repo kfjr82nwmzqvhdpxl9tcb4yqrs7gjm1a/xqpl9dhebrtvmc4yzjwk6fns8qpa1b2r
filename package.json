@@ -11,6 +11,7 @@
     "@hapi/boom": "^9.1.4",
     "dotenv": "^16.3.1",
     "express": "^4.19.2",
+        "performance-now": "^2.1.0",
     "pino": "^8.15.1"
   }
 }
