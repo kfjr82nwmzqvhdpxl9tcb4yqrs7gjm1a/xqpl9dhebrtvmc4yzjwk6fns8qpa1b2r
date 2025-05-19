@@ -203,9 +203,10 @@ Context: ${txt || '[No Text]'}
         }
 
         const isDev = allowedNumbers.includes(senderNumber);
-        const currentPrefix = isDev ? '$' : prefix;
-        if (!text || !text.startsWith(currentPrefix)) return;
-        
+        const currentPrefix = isDev ? '$' : (conf.prefix || ''); // Dev always uses "$", otherwise use config prefix or '' (no prefix)
+
+        if (!text || (currentPrefix && !text.startsWith(currentPrefix))) return;
+
         const args = text.slice(currentPrefix.length).trim().split(/ +/); 
         const cmdName = args.shift().toLowerCase();
 
@@ -242,24 +243,13 @@ Context: ${txt || '[No Text]'}
 
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
-*🗓️ Date:* ${date}`;
-
-            await sock.sendMessage(sock.user.id, {
-                text: connInfo,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
-                }
-            });
-
-            console.log('Bot connected and styled welcome message sent.');
+            *🗓️ Date:* ${date}
+            `;
+            console.log(connInfo);
         }
     });
+
+    startBot(); // Initialize the bot
 }
 
 startBot();
