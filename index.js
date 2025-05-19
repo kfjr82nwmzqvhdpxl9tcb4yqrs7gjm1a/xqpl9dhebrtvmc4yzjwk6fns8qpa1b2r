@@ -83,10 +83,11 @@ async function startBot() {
                     chatName = 'Unknown Group';
                 }
             } else if (fromJid === 'status@broadcast') {
-                chatName = 'Status Update';
-                chatType = 'Status';
-                senderName = 'System';
-                mentions = [];
+    chatName = 'Status Update';
+    chatType = 'Status';
+    senderName = msg.pushName || msg.key.remoteJid;
+    mentions = [deletedSenderJid];
+}
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
                 chatType = 'Newsletter';
