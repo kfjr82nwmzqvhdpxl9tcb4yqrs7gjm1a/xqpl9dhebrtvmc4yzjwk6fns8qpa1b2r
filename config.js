@@ -3,6 +3,7 @@ require('dotenv').config();
 module.exports = {
     prefix: '', // Can be '', or any other single prefix
     owners: ['254742063632'],
+    MODE: 'private', 
     AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS || 'off',
     AUTO_LIKE: process.env.AUTO_LIKE || 'off',
     AUTO_READ_MESSAGES: process.env.AUTO_READ_DM || 'off',
