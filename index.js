@@ -91,8 +91,8 @@ async function startBot() {
         const readableType = typeMap[messageType] || messageType;
 
         const jid = msg.key.remoteJid;
-        const senderJid = msg.key.participant || msg.key.remoteJid;
-        const senderNumber = senderJid.split('@')[0];
+      //  const senderJid = msg.key.participant || msg.key.remoteJid;
+        const senderNumber = Jid.split('@')[0];
 
         let chatType = 'Private Chat';
         let groupName = null;
