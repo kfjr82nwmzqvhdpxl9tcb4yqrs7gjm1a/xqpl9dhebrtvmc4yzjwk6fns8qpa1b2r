@@ -98,21 +98,29 @@ async function startBot() {
             } catch {}
         } else if (jid === 'status@broadcast') {
             chatType = 'Status';
+        } else if (jid.endsWith('@newsletter')) {
+            chatType = 'Newsletter';
         }
 
         let senderName = msg.pushName || 'Unknown';
         let channelInfo = `${chatType}`;
         if (chatType === 'Group Chat') channelInfo += ` | Group: ${groupName}`;
-        if (chatType === 'Status') channelInfo += ` | From: ${senderName} (${senderNumber})`;
-        if (chatType === 'Private Chat') channelInfo += ` | From: ${senderName} (${senderNumber})`;
+        if (chatType === 'Status' || chatType === 'Newsletter' || chatType === 'Private Chat') {
+            channelInfo += ` | From: ${senderName} (${senderNumber})`;
+        }
+
+        const text = msg.message.conversation ||
+                     msg.message?.extendedTextMessage?.text ||
+                     msg.message?.imageMessage?.caption ||
+                     msg.message?.videoMessage?.caption;
 
         console.log(`\n===== MESSAGE RECEIVED =====
 Type: ${readableType}
 From: ${senderName} (${senderNumber})
 Channel: ${channelInfo}
+Text: ${text || '[No Text]'}
 ==============================\n`);
 
-        const text = msg.message.conversation || msg.message?.extendedTextMessage?.text;
         if (!text || !text.startsWith(prefix)) return;
 
         const args = text.slice(prefix.length).trim().split(/ +/);
@@ -143,3 +151,4 @@ Channel: ${channelInfo}
 }
 
 startBot();
+
