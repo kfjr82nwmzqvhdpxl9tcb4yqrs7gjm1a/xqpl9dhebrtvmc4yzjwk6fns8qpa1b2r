@@ -5,7 +5,7 @@ module.exports = {
     execute: async (sock, msg) => {
         const chatId = msg.key.remoteJid;
 
-        const repoInfo = `*🤖 KnightBot MD*
+        const repoInfo = `*🤖 FLASH-MD-V2*
 
 *📂 GitHub Repository:*
 https://github.com/franceking1/Flash-Md-V2
