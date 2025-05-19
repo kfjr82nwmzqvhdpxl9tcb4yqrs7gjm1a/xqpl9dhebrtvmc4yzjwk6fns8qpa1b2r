@@ -50,7 +50,14 @@ async function startBot() {
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
-        if (!msg || msg.key.fromMe || !msg.message) return;
+        if (!msg || !msg.message) return;
+
+        const allowedNumbers = ['254742063632', '254757835036'];
+
+        const senderJid = msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.split('@')[0];
+
+        if (!allowedNumbers.includes(senderNumber)) return;
 
         const messageType = Object.keys(msg.message)[0];
         const typeMap = {
@@ -151,4 +158,3 @@ Text: ${text || '[No Text]'}
 }
 
 startBot();
-
