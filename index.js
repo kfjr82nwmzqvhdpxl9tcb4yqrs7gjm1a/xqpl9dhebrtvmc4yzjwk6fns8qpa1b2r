@@ -17,7 +17,7 @@ const pino = require('pino');
 const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const { prefix } = require('./config');
-const conf = require('./config);
+const {conf} = require('./config);
 const fs = require('fs');
 const moment = require('moment-timezone');
 
