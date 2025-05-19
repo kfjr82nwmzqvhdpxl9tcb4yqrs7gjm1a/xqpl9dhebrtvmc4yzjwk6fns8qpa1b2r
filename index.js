@@ -125,37 +125,29 @@ The following message was deleted:`,
 
         if (!allowedNumbers.includes(senderNumber)) return;
              const m = msg.message;
-        const messageType = m?.conversation || m?.extendedTextMessage?.text || '';
+    const txt = m?.conversation || m?.extendedTextMessage?.text || '';
 
-        const typeMap = {
-            conversation: 'Text',
-            extendedTextMessage: 'Extended Text',
-            imageMessage: 'Image',
-            videoMessage: 'Video',
-            audioMessage: 'Audio',
-            documentMessage: 'Document',
-            stickerMessage: 'Sticker',
-            contactMessage: 'Contact',
-            contactsArrayMessage: 'Contacts Array',
-            locationMessage: 'Location',
-            liveLocationMessage: 'Live Location',
-            buttonsMessage: 'Buttons',
-            templateMessage: 'Template',
-            listMessage: 'List',
-            orderMessage: 'Order',
-            productMessage: 'Product',
-            ephemeralMessage: 'Ephemeral',
-            viewOnceMessage: 'View Once',
-            reactionMessage: 'Reaction',
-            protocolMessage: 'Protocol',
-            groupInviteMessage: 'Group Invite',
-            callLogMessage: 'Call Log',
-            pollCreationMessage: 'Poll Creation',
-            pollUpdateMessage: 'Poll Update',
-            senderKeyDistributionMessage: 'Sender Key Distribution',
-            statusV3Message: 'Status/Story'
-        };
-        const readableType = typeMap[messageType] || messageType;
+  if (txt) messageType = `💬 Text: "${txt}"`;
+else if (m?.imageMessage) messageType = '🖼️ Image';
+else if (m?.videoMessage) messageType = '🎥 Video';
+else if (m?.audioMessage) messageType = '🎧 Audio';
+else if (m?.stickerMessage) messageType = '🔖 Sticker';
+else if (m?.documentMessage) messageType = '📄 Document';
+else if (m?.locationMessage) messageType = '📍 Location';
+else if (m?.liveLocationMessage) messageType = '📡 Live Location';
+else if (m?.contactMessage) messageType = '👤 Contact';
+else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
+else if (m?.buttonsMessage) messageType = '🧩 Buttons';
+else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
+else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
+else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
+else if (m?.templateMessage) messageType = '🧱 Template';
+else if (m?.listMessage) messageType = '📋 List';
+else if (m?.pollCreationMessage) messageType = '📊 Poll';
+else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
+else if (m?.reactionMessage) messageType = '❤️ Reaction';
+else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
+else messageType = '❔ Unknown Type';
 
         const jid = msg.key.remoteJid;
 
