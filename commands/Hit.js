@@ -1,6 +1,6 @@
 module.exports = {
-    name: 'github',
-    aliases: ['repo', 'source'],
+    name: 'repo',
+    aliases: ['sc', 'script'],
     description: 'Sends the GitHub repository link for the bot',
     execute: async (sock, msg) => {
         const chatId = msg.key.remoteJid;
@@ -9,9 +9,6 @@ module.exports = {
 
 *📂 GitHub Repository:*
 https://github.com/franceking1/Flash-Md-V2
-
-*📢 Official Channel:*
-https://youtube.com/@mr_unique_hacker
 
 _Star ⭐ the repository if you like the bot!_`;
 
@@ -23,7 +20,7 @@ _Star ⭐ the repository if you like the bot!_`;
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
                         newsletterJid: '120363400829035253@newsletter',
-                        newsletterName: 'KnightBot MD',
+                        newsletterName: 'FLASH-MD',
                         serverMessageId: -1
                     }
                 }
