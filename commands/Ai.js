@@ -1,6 +1,97 @@
 const axios = require('axios');
 
 module.exports = [
+
+  {
+    name: 'llama',
+    aliases: ['ilama'],
+    description: 'Ask LLaMA AI a question or prompt.',
+    category: 'AI',
+    execute: async (sock, msg, args) => {
+      const chatId = msg.key.remoteJid;
+      if (!args || args.length === 0) {
+        return await sock.sendMessage(chatId, { text: "Please provide a question to ask LLaMA." });
+      }
+
+      const prompt = args.join(' ');
+      const url = `https://api.gurusensei.workers.dev/llama?prompt=${encodeURIComponent(prompt)}`;
+
+      try {
+        const { data } = await axios.get(url);
+        if (!data?.response?.response) {
+          return await sock.sendMessage(chatId, { text: "No response received from LLaMA." });
+        }
+
+        const responseText = data.response.response;
+
+        await sock.sendMessage(chatId, {
+          text: `*LLaMA says:*\n\n${responseText.trim()}`,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        });
+      } catch (error) {
+        console.error('LLaMA API Error:', error);
+        await sock.sendMessage(chatId, { text: "An error occurred while getting a response from LLaMA." });
+      }
+    }
+  },
+
+  {
+    name: 'pair',
+    aliases: ['pairing', 'generatecode'],
+    description: 'Generates a pairing code for a phone number.',
+    category: 'User',
+    execute: async (sock, msg, args) => {
+      const chatId = msg.key.remoteJid;
+      if (!args || args.length === 0) {
+        return await sock.sendMessage(chatId, { text: "Please provide a phone number to generate a pairing code." });
+      }
+
+      const number = args.join(' ').trim();
+      const url = `https://my-sessions.onrender.com/code?number=${encodeURIComponent(number)}`;
+
+      try {
+        await sock.sendMessage(chatId, { text: "*FLASH-MD is generating your pairing code...*" });
+
+        const response = await axios.get(url);
+        const data = response.data;
+
+        if (!data?.code) {
+          return await sock.sendMessage(chatId, { text: "Could not retrieve the pairing code. Please check the number and try again." });
+        }
+
+        await sock.sendMessage(chatId, {
+          text: `*Pairing Code for ${number} is the digits below ⤵️!*\n\n> *Powered by FLASH-MD*`,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        });
+
+        await sock.sendMessage(chatId, {
+          text: `\`\`\`${data.code}\`\`\``
+        });
+
+      } catch (error) {
+        console.error('Pairing Code Error:', error);
+        await sock.sendMessage(chatId, { text: "There was an error processing your request. Please try again later." });
+      }
+    }
+  }, 
+
+  
   {
     name: 'best-wallp',
     aliases: ['bestwal', 'best', 'bw'],
