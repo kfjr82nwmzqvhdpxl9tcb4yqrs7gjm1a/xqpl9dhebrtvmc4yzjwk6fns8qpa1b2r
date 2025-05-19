@@ -186,28 +186,25 @@ Channel: ${channelInfo}
 Context: ${txt || '[No Text]'}
 `;
 
-        if (chatType === 'Group Chat') {
-            console.log(`\n===== GROUP MESSAGE =====${logBase}\n`);
-        } else if (chatType === 'Private Chat') {
-            console.log(`\n===== PRIVATE MESSAGE =====${logBase}\n`);
-        } else if (chatType === 'Status') {
-            console.log(`\n===== STATUS MESSAGE =====${logBase}\n`);
-        } else if (chatType === 'Newsletter') {
-            console.log(`\n===== CHANNEL MESSAGE =====${logBase}\n`);
-        } else {
-            console.log(`\n===== OTHER MESSAGE =====${logBase}\n`);
-        }
-
+if (chatType === 'Group Chat') {
+    console.log(`\n===== GROUP MESSAGE =====${logBase}\n`);
+} else if (chatType === 'Private Chat') {
+    console.log(`\n===== PRIVATE MESSAGE =====${logBase}\n`);
+} else if (chatType === 'Status') {
+    console.log(`\n===== STATUS MESSAGE =====${logBase}\n`);
+} else if (chatType === 'Newsletter') {
+    console.log(`\n===== CHANNEL MESSAGE =====${logBase}\n`);
+} else {
+    console.log(`\n===== OTHER MESSAGE =====${logBase}\n`);
+}
         if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
             await sock.readMessages([msg.key]);
         }
 
-        const isDev = allowedNumbers.includes(senderNumber);
-        const currentPrefix = isDev ? '$' : (conf.prefix || ''); // Dev always uses "$", otherwise use config prefix or '' (no prefix)
-
-        if (!text || (currentPrefix && !text.startsWith(currentPrefix))) return;
-
-        const args = text.slice(currentPrefix.length).trim().split(/ +/); 
+const isDev = allowedNumbers.includes(senderNumber);
+const currentPrefix = isDev ? '$' : prefix;
+if (!text || !text.startsWith(currentPrefix)) return;
+ const args = text.slice(currentPrefix.length).trim().split(/ +/); 
         const cmdName = args.shift().toLowerCase();
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
@@ -243,13 +240,24 @@ Context: ${txt || '[No Text]'}
 
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
-            *🗓️ Date:* ${date}
-            `;
-            console.log(connInfo);
+*🗓️ Date:* ${date}`;
+
+            await sock.sendMessage(sock.user.id, {
+                text: connInfo,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+
+            console.log('Bot connected and styled welcome message sent.');
         }
     });
-
-    startBot(); // Initialize the bot
 }
 
 startBot();
