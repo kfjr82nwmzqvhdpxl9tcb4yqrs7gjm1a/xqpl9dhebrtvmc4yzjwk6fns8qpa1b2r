@@ -121,7 +121,7 @@ The following message was deleted:`,
 
         const senderJid = msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.split('@')[0];
-
+const participant = msg.key?.participant || msg.key.remoteJid;
         if (!allowedNumbers.includes(senderNumber)) return;
 
         const m = msg.message;
@@ -200,7 +200,19 @@ if (chatType === 'Group Chat') {
         if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
             await sock.readMessages([msg.key]);
         }
+if (msg.key.remoteJid === 'status@broadcast') {
+            if (conf.AUTO_VIEW_STATUS === "on") {
+                await sock.readMessages([msg.key]);
+            }
 
+            const botID = sock?.user?.id;
+            if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
+                await sock.sendMessage(jid, {
+                    react: { key: msg.key, text: '🤍' }
+                }, {
+                    statusJidList: [participant, botID]
+                });
+            }
 const isDev = allowedNumbers.includes(senderNumber);
 const currentPrefix = isDev ? '$' : prefix;
 if (!text || !text.startsWith(currentPrefix)) return;
