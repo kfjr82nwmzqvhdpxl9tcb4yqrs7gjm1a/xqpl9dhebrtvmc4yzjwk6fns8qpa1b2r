@@ -124,8 +124,9 @@ The following message was deleted:`,
      //   const jid = msg.key.remoteJid;
 
         if (!allowedNumbers.includes(senderNumber)) return;
+             const m = msg.message;
+        const messageType = m?.conversation || m?.extendedTextMessage?.text || '';
 
-        const messageType = Object.keys(msg.message)[0];
         const typeMap = {
             conversation: 'Text',
             extendedTextMessage: 'Extended Text',
