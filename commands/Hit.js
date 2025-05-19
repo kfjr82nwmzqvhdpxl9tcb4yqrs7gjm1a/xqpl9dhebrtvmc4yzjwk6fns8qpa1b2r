@@ -19,7 +19,7 @@ _Star ⭐ the repository if you like the bot!_`;
                     forwardingScore: 1,
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363400829035253@newsletter',
+                        newsletterJid: '120363238139244263@newsletter',
                         newsletterName: 'FLASH-MD',
                         serverMessageId: -1
                     }
