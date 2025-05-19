@@ -1,5 +1,3 @@
-Sure, here’s the corrected full code file without any comments:
-
 const axios = require('axios');
 
 module.exports = [
