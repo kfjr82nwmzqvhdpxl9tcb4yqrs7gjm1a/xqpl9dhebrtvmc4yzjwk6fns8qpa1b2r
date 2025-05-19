@@ -192,7 +192,7 @@ Channel: ${channelInfo}
 Text: ${text || '[No Text]'}
 ==============================\n`);
         if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
-            await king.readMessages([msg.key]);
+            await sock.readMessages([msg.key]);
         }
 
         if (!text || !text.startsWith(prefix)) return;
