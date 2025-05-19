@@ -179,19 +179,32 @@ The following message was deleted:`,
                      msg.message?.imageMessage?.caption ||
                      msg.message?.videoMessage?.caption;
 
-        console.log(`\n===== MESSAGE RECEIVED =====
+        const logBase = `
 Type: ${messageType}
 From: ${senderName} (${senderNumber})
 Channel: ${channelInfo}
 Context: ${txt || '[No Text]'}
-==============================\n`);
+`;
+
+if (chatType === 'Group Chat') {
+    console.log(`\n===== GROUP MESSAGE =====${logBase}\n`);
+} else if (chatType === 'Private Chat') {
+    console.log(`\n===== PRIVATE MESSAGE =====${logBase}\n`);
+} else if (chatType === 'Status') {
+    console.log(`\n===== STATUS MESSAGE =====${logBase}\n`);
+} else if (chatType === 'Newsletter') {
+    console.log(`\n===== CHANNEL MESSAGE =====${logBase}\n`);
+} else {
+    console.log(`\n===== OTHER MESSAGE =====${logBase}\n`);
+}
         if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
             await sock.readMessages([msg.key]);
         }
 
-        if (!text || !text.startsWith(prefix)) return;
-
-        const args = text.slice(prefix.length).trim().split(/ +/);
+const isDev = allowedNumbers.includes(senderNumber);
+const currentPrefix = isDev ? '$' : prefix;
+if (!text || !text.startsWith(currentPrefix)) return;
+ const args = text.slice(currentPrefix.length).trim().split(/ +/); 
         const cmdName = args.shift().toLowerCase();
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
