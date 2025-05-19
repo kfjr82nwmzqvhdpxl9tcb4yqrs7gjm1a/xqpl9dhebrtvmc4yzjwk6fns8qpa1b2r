@@ -126,7 +126,6 @@ Context: ${txt || '[No Text]'}
 
         if (!text) return;
 
-        // Handle prefix
         let usedPrefix = '';
         let cmdText = text.trim();
         let prefixes = conf.prefix ? [conf.prefix] : [];
@@ -157,8 +156,19 @@ Context: ${txt || '[No Text]'}
 
     sock.ev.on('creds.update', () => saveState());
 
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
+
+        if (connection === 'open') {
+            const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
+            const prefixInfo = conf.prefix ? `Prefix: "${conf.prefix}"` : 'Prefix: [No Prefix]';
+            const totalCmds = commands.size;
+
+            const message = `✅ *Connected to Flash-MD-V2!*\n\n*Commands:* ${totalCmds}\n${prefixInfo}\n*Date:* ${date}`;
+            await sock.sendMessage(sock.user.id, { text: message });
+            console.log('Bot connected and welcome message sent to self.');
+        }
+
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) startBot();
