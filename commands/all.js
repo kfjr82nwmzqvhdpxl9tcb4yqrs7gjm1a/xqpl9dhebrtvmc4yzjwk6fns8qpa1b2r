@@ -2,14 +2,6 @@ const now = require('performance-now');
 
 module.exports = [
     {
-        name: 'hi',
-        aliases: ['hello', 'hey'],
-        description: 'Sends a greeting',
-        execute: async (sock, msg) => {
-            await sock.sendMessage(msg.key.remoteJid, { text: 'Hi! How can I assist you today?' });
-        }
-    },
-    {
         name: 'ping',
         aliases: ['latency', 'speed'],
         description: "Checks the bot's response time",
@@ -53,6 +45,7 @@ module.exports = [
         description: 'Displays the system uptime!',
         execute: async (sock, msg) => {
             if (!global.botStartTime) global.botStartTime = Date.now();
+            
             const currentTime = Date.now();
             const seconds = Math.floor((currentTime - global.botStartTime) / 1000);
             const formatted = formatUptime(seconds);
@@ -77,11 +70,27 @@ module.exports = [
     },
     {
         name: 'help',
-        aliases: ['commands'],
-        description: 'Lists all commands',
+        aliases: ['commands', 'menu'],
+        description: 'Lists all commands and their descriptions',
         execute: async (sock, msg, args, allCommands) => {
-            const list = allCommands.map(cmd => `*${cmd.name}* (${cmd.aliases.join(', ')}) - ${cmd.description}`).join('\n');
-            await sock.sendMessage(msg.key.remoteJid, { text: list });
+            const realCommands = allCommands.filter(cmd => !cmd.aliases || cmd.aliases.length === 0);
+            const aliasCommands = allCommands.filter(cmd => cmd.aliases && cmd.aliases.length > 0);
+            
+            let helpText = "*📜 LIST OF COMMANDS*\n\n";
+
+            helpText += "*🔑 REAL COMMANDS:*\n";
+            realCommands.forEach(cmd => {
+                helpText += `*${cmd.name}* - ${cmd.description}\n`;
+            });
+
+            helpText += "\n*🔄 ALIASES:*\n";
+            aliasCommands.forEach(cmd => {
+                helpText += `*${cmd.name}* (Aliases: ${cmd.aliases.join(', ')}) - ${cmd.description}\n`;
+            });
+
+            helpText += `\nTo use a command, type the prefix followed by the command name. Example: *${global.prefix}ping*`;
+
+            await sock.sendMessage(msg.key.remoteJid, { text: helpText });
         }
     }
 ];
@@ -93,10 +102,11 @@ function formatUptime(seconds) {
     const s = Math.floor(seconds % 60);
 
     const parts = [];
-    if (d > 0) parts.push(`${d}d`);
-    if (h > 0) parts.push(`${h}h`);
-    if (m > 0) parts.push(`${m}m`);
-    if (s > 0) parts.push(`${s}s`);
 
-    return parts.join(', ') || '0s';
+    if (d > 0) parts.push(`${d} day${d > 1 ? 's' : ''}`);
+    if (h > 0) parts.push(`${h} hour${h > 1 ? 's' : ''}`);
+    if (m > 0) parts.push(`${m} minute${m > 1 ? 's' : ''}`);
+    if (s > 0) parts.push(`${s} second${s > 1 ? 's' : ''}`);
+
+    return parts.join(', ') || '0 seconds';
 }
