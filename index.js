@@ -34,7 +34,7 @@ allCommands.forEach(cmd => {
 
 const messageStore = new Map();
 
-async function startBot() {
+async function StartFlashV2() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
 
@@ -85,7 +85,7 @@ async function startBot() {
             } else if (fromJid === 'status@broadcast') {
                 chatName = 'Status Update';
                 chatType = 'Status';
-                let senderName = msg.pushName || senderNumber;
+                senderName = msg.pushName || senderNumber;
                 mentions = [];
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
@@ -179,12 +179,43 @@ The following message was deleted:`,
                      msg.message?.imageMessage?.caption ||
                      msg.message?.videoMessage?.caption;
 
-        console.log(`\n===== MESSAGE RECEIVED =====
+        if (chatType === 'Private Chat') {
+            console.log(`\n===== PERSONAL MESSAGE RECEIVED =====
 Type: ${messageType}
 From: ${senderName} (${senderNumber})
 Channel: ${channelInfo}
-Context: ${txt || '[No Text]'}
+Context: ${text || '[No Text]'}
 ==============================\n`);
+        } else if (chatType === 'Group Chat') {
+            console.log(`\n===== GROUP MESSAGE RECEIVED =====
+Type: ${messageType}
+From: ${senderName} (${senderNumber})
+Channel: ${channelInfo}
+Context: ${text || '[No Text]'}
+==============================\n`);
+        } else if (chatType === 'Status') {
+            console.log(`\n===== STATUS MESSAGE RECEIVED =====
+Type: ${messageType}
+From: ${senderName} (${senderNumber})
+Channel: ${channelInfo}
+Context: ${text || '[No Text]'}
+==============================\n`);
+        } else if (chatType === 'Newsletter') {
+            console.log(`\n===== CHANNEL MESSAGE RECEIVED =====
+Type: ${messageType}
+From: ${senderName} (${senderNumber})
+Channel: ${channelInfo}
+Context: ${text || '[No Text]'}
+==============================\n`);
+        } else {
+            console.log(`\n===== UNKNOWN MESSAGE RECEIVED =====
+Type: ${messageType}
+From: ${senderName} (${senderNumber})
+Channel: ${channelInfo}
+Context: ${text || '[No Text]'}
+==============================\n`);
+        }
+
         if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
             await sock.readMessages([msg.key]);
         }
@@ -213,7 +244,7 @@ Context: ${txt || '[No Text]'}
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) startBot();
+            if (shouldReconnect) StartFlashV2();
         }
 
         if (connection === 'open') {
@@ -247,4 +278,4 @@ Context: ${txt || '[No Text]'}
     });
 }
 
-startBot();
+StartFlashV2();
