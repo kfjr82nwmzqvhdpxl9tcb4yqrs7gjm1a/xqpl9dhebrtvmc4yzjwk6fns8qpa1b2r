@@ -7,11 +7,12 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.5.0",
     "@hapi/boom": "^9.1.4",
+    "@whiskeysockets/baileys": "^6.5.0",
     "dotenv": "^16.3.1",
     "express": "^4.19.2",
-        "performance-now": "^2.1.0",
+    "moment-timezone": "^0.5.43",
+    "performance-now": "^2.1.0",
     "pino": "^8.15.1"
   }
 }
