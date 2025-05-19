@@ -120,6 +120,7 @@ The following message was deleted:`,
 
         const senderJid = msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.split('@')[0];
+        const jid = msg.key.remoteJid;
 
         if (!allowedNumbers.includes(senderNumber)) return;
 
@@ -189,6 +190,9 @@ From: ${senderName} (${senderNumber})
 Channel: ${channelInfo}
 Text: ${text || '[No Text]'}
 ==============================\n`);
+        if (conf.AUTO_READ_MESSAGES === "on" && jid.endsWith('@s.whatsapp.net')) {
+            await king.readMessages([msg.key]);
+        }
 
         if (!text || !text.startsWith(prefix)) return;
 
