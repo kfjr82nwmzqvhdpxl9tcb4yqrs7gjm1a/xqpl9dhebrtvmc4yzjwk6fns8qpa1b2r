@@ -1,3 +1,4 @@
+
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,12 @@ async function startBot() {
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || msg.key.fromMe || !msg.message) return;
+
+        // Log the type of message
+        console.log('Received Message:', msg);
+
+        const messageType = Object.keys(msg.message)[0];  // This will give the type of message (e.g., "conversation", "extendedTextMessage", etc.)
+        console.log('Message Type:', messageType);  // Log the message type
 
         const text = msg.message.conversation || msg.message?.extendedTextMessage?.text;
         if (!text || !text.startsWith(prefix)) return;
