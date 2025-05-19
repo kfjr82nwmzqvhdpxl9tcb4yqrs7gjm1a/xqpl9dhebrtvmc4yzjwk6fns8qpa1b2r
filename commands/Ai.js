@@ -1,3 +1,5 @@
+Sure, here’s the corrected full code file without any comments:
+
 const axios = require('axios');
 
 module.exports = [
@@ -130,6 +132,11 @@ module.exports = [
             }
           }
         });
-      } 
-    } 
-  }:
+      } catch (error) {
+        console.error('Time Command Error:', error);
+        await sock.sendMessage(chatId, { text: "An error occurred while fetching the time information." });
+      }
+    }
+  }
+];
+
