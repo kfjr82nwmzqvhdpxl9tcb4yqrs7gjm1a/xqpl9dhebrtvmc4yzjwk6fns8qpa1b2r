@@ -49,6 +49,20 @@ async function startBot() {
         version
     });
 
+    // Send the activation message when the bot connects
+    const dateStr = moment().tz('Africa/Nairobi').format('dddd, MMMM D, YYYY');
+    const totalCommands = allCommands.length;
+    const mode = 'PRIVATE'; // You can change this to dynamic based on the configuration if needed
+
+    await sock.sendMessage(sock.user.id, {
+        text: `*✅ Flash-MD-V2 Activated!*
+
+📅 Date: *${dateStr}*
+⚙️ Mode: *${mode}*
+🔢 Commands Loaded: *${totalCommands}*
+💬 Prefix: *[ ${prefix} ]*`
+    });
+
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || !msg.message) return;
