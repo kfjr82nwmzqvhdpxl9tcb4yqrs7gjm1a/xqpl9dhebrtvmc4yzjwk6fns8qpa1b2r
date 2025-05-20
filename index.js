@@ -61,7 +61,7 @@ async function startBot() {
         const participant = msg.key?.participant || fromJid;
         const senderJid = participant;
         const senderNumber = senderJid.split('@')[0];
-        let senderName = msg.pushName || msg.key.remoteJid;
+        let senderName = msg.pushName || senderNumber;
         const allowedNumbers = ['254742063632', '254757835036'];
         const isDev = allowedNumbers.includes(senderNumber);
 
@@ -122,7 +122,7 @@ The following message was deleted:`,
             }
         }
 
-        if (!allowedNumbers.includes(senderNumber)) return;
+        //if (!allowedNumbers.includes(senderNumber)) return;
 
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
