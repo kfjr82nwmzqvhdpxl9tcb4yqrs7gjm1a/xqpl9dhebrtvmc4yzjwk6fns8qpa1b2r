@@ -58,8 +58,7 @@ async function startBot() {
         messageStore.set(messageId, msg);
 
         const fromJid = msg.key.remoteJid;
-        const participant = msg.key?.participant || fromJid;
-        const senderJid = participant;
+        const senderJid = msg.key.participant || msg.participant || msg.key.remoteJid;
         const senderNumber = senderJid.split('@')[0];
         let senderName = msg.pushName || senderNumber;
         const allowedNumbers = ['254742063632', '254757835036'];
