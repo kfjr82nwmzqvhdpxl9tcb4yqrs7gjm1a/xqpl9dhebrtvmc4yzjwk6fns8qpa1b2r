@@ -1,196 +1,157 @@
-const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const axios = require('axios');
 const fs = require('fs-extra');
 const ffmpeg = require('fluent-ffmpeg');
-const { Catbox } = require('node-catbox');
 const baileys = require('@whiskeysockets/baileys');
-const { downloadContentFromMessage } = baileys;
+const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const { Catbox } = require('node-catbox');
 
 const catbox = new Catbox();
+const { downloadContentFromMessage } = baileys;
+
+const getBuffer = async (mediaMsg, type) => {
+  const stream = await downloadContentFromMessage(mediaMsg, type);
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
+};
+
+const uploadToCatbox = async (path) => {
+  if (!fs.existsSync(path)) throw new Error("File does not exist");
+  const response = await catbox.uploadFile({ path });
+  if (!response) throw new Error("Failed to upload");
+  return response;
+};
+
+const contextInfo = {
+  forwardingScore: 1,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363238139244263@newsletter',
+    newsletterName: 'FLASH-MD',
+    serverMessageId: -1
+  }
+};
 
 module.exports = [
+
   {
-    name: 'sticker',
-    aliases: ['s'],
-    description: 'Convert image or short video to sticker.',
+    name: 's',
+    aliases: ['sticker'],
+    description: 'Convert image or video to sticker',
     category: 'Converter',
     execute: async (sock, msg, args) => {
       const chatId = msg.key.remoteJid;
       const mtype = Object.keys(msg.message || {})[0];
-      const isQuoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const tagImage = isQuoted?.imageMessage;
-      const tagVideo = isQuoted?.videoMessage;
-      
-      const fileName = `sticker_${Date.now()}`;
-      const webpPath = `${fileName}.webp`;
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const imageMsg = msg.message?.imageMessage || quoted?.imageMessage;
+      const videoMsg = msg.message?.videoMessage || quoted?.videoMessage;
 
       try {
-        if (mtype === 'imageMessage' || tagImage) {
-          const imageMsg = msg.message.imageMessage || tagImage;
+        if (imageMsg) {
           const buffer = await getBuffer(imageMsg, 'image');
-
           const sticker = new Sticker(buffer, {
             pack: 'FLASH-MD',
             author: msg.pushName || 'User',
-            type: args.includes("crop") ? StickerTypes.CROPPED : StickerTypes.FULL,
+            type: args.includes('crop') ? StickerTypes.CROPPED : StickerTypes.FULL,
             quality: 70
           });
-
-          await sock.sendMessage(chatId, { sticker: await sticker.toBuffer() }, { quoted: msg });
-        } else if (mtype === 'videoMessage' || tagVideo) {
-          const videoMsg = msg.message.videoMessage || tagVideo;
+          return await sock.sendMessage(chatId, { sticker: await sticker.toBuffer(), contextInfo }, { quoted: msg });
+        } else if (videoMsg) {
+          const fileName = `video_${Date.now()}.mp4`;
+          const webpPath = `sticker_${Date.now()}.webp`;
           const buffer = await getBuffer(videoMsg, 'video');
-          const mp4Path = `${fileName}.mp4`;
-
-          await fs.writeFile(mp4Path, buffer);
-
-          await new Promise((resolve, reject) => {
-            ffmpeg(mp4Path)
+          await fs.writeFile(fileName, buffer);
+          await new Promise((res, rej) => {
+            ffmpeg(fileName)
               .outputOptions([
                 "-vcodec", "libwebp",
                 "-vf", "fps=15,scale=512:512:force_original_aspect_ratio=decrease",
-                "-loop", "0",
-                "-preset", "default",
-                "-an",
-                "-vsync", "0",
-                "-s", "512:512"
+                "-loop", "0", "-preset", "default", "-an", "-vsync", "0", "-s", "512:512"
               ])
               .save(webpPath)
-              .on('end', resolve)
-              .on('error', reject);
+              .on('end', res).on('error', rej);
           });
-
           const sticker = new Sticker(await fs.readFile(webpPath), {
             pack: 'FLASH-MD',
             author: msg.pushName || 'User',
-            type: args.includes("crop") ? StickerTypes.CROPPED : StickerTypes.FULL,
+            type: StickerTypes.FULL,
             quality: 70
           });
-
-          await sock.sendMessage(chatId, { sticker: await sticker.toBuffer() }, { quoted: msg });
-
-          await fs.unlink(mp4Path);
+          await sock.sendMessage(chatId, { sticker: await sticker.toBuffer(), contextInfo }, { quoted: msg });
+          await fs.unlink(fileName);
           await fs.unlink(webpPath);
         } else {
-          return await sock.sendMessage(chatId, { text: 'Reply to an image or video to convert it into a sticker.' }, { quoted: msg });
+          return await sock.sendMessage(chatId, { text: 'Reply to an image or video to make a sticker.', contextInfo }, { quoted: msg });
         }
       } catch (err) {
-        await sock.sendMessage(chatId, { text: `Error while creating sticker: ${err.message}` }, { quoted: msg });
+        return await sock.sendMessage(chatId, { text: `Error while creating sticker: ${err.message}`, contextInfo }, { quoted: msg });
       }
     }
   },
-  {
-    name: 'url',
-    description: 'Get a URL of replied image or video.',
-    category: 'Converter',
-    execute: async (sock, msg, args) => {
-      const chatId = msg.key.remoteJid;
-      const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const mediaMsg = quotedMsg?.imageMessage || quotedMsg?.videoMessage;
 
-      if (!mediaMsg) {
-        return await sock.sendMessage(chatId, { text: 'Reply to an image or video to upload it.' }, { quoted: msg });
-      }
-
-      try {
-        const type = quotedMsg?.imageMessage ? 'image' : 'video';
-        const stream = await downloadContentFromMessage(mediaMsg, type);
-        const chunks = [];
-
-        for await (const chunk of stream) {
-          chunks.push(chunk);
-        }
-
-        const buffer = Buffer.concat(chunks);
-        const ext = type === 'image' ? 'jpg' : 'mp4';
-        const filePath = `./media_${Date.now()}.${ext}`;
-
-        await fs.writeFile(filePath, buffer);
-
-        const url = await uploadToCatbox(filePath);
-        await sock.sendMessage(chatId, { text: `Below is your Url:\n${url}` }, { quoted: msg });
-
-        await fs.unlink(filePath);
-      } catch (err) {
-        await sock.sendMessage(chatId, { text: `Upload failed: ${err.message}` }, { quoted: msg });
-      }
-    }
-  },
   {
     name: 'tomp3',
     aliases: ['toaudio', 'audio'],
-    description: 'Convert video to MP3 format.',
+    description: 'Convert video to audio (mp3)',
     category: 'Converter',
     execute: async (sock, msg, args) => {
       const chatId = msg.key.remoteJid;
-      const mtype = Object.keys(msg.message || {})[0];
-      const isQuoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const tagVideo = isQuoted?.videoMessage;
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const videoMsg = msg.message?.videoMessage || quoted?.videoMessage;
 
-      if (mtype !== 'videoMessage' && !tagVideo) {
-        return await sock.sendMessage(chatId, { text: 'Reply to a video message to convert to MP3.' }, { quoted: msg });
+      if (!videoMsg) {
+        return await sock.sendMessage(chatId, { text: 'Reply to a video message to convert to MP3.', contextInfo }, { quoted: msg });
       }
 
-      const videoMsg = msg.message.videoMessage || tagVideo;
+      const fileName = `audio_${Date.now()}.mp4`;
+      const mp3Path = `${fileName}.mp3`;
 
       try {
         const buffer = await getBuffer(videoMsg, 'video');
-        const fileName = `audio_${Date.now()}.mp4`;
-        const mp3Path = `${fileName}.mp3`;
-
         await fs.writeFile(fileName, buffer);
 
-        const convertVideoToAudio = () => {
-          return new Promise((resolve, reject) => {
-            ffmpeg(fileName)
-              .output(mp3Path)
-              .on('end', resolve)
-              .on('error', reject)
-              .run();
-          });
-        };
+        await new Promise((res, rej) => {
+          ffmpeg(fileName)
+            .output(mp3Path)
+            .on('end', res)
+            .on('error', rej)
+            .run();
+        });
 
-        await convertVideoToAudio();
+        const audio = await fs.readFile(mp3Path);
+        await sock.sendMessage(chatId, { audio, mimetype: 'audio/mp4', contextInfo }, { quoted: msg });
 
-        if (fs.existsSync(mp3Path)) {
-          const mp3Buffer = await fs.readFile(mp3Path);
-
-          await sock.sendMessage(chatId, { audio: mp3Buffer, mimetype: 'audio/mp3', ptt: false }, { quoted: msg });
-
-          await fs.unlink(fileName);
-          await fs.unlink(mp3Path);
-        } else {
-          await sock.sendMessage(chatId, { text: 'Converted audio file not found.' }, { quoted: msg });
-        }
+        await fs.unlink(fileName);
+        await fs.unlink(mp3Path);
       } catch (err) {
-        console.error('Conversion error:', err.message, err.stack);
-        await sock.sendMessage(chatId, { text: `Error while converting video to MP3: ${err.message}` }, { quoted: msg });
+        return await sock.sendMessage(chatId, { text: `Error while converting video to MP3: ${err.message}`, contextInfo }, { quoted: msg });
       }
     }
   },
+
   {
-    name: 'crop',
-    description: 'Create a cropped sticker from replied media.',
+    name: 'take',
+    description: 'Take sticker with custom pack name',
     category: 'Converter',
     execute: async (sock, msg, args) => {
       const chatId = msg.key.remoteJid;
-      const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const mediaMsg = quotedMsg?.imageMessage || quotedMsg?.videoMessage || quotedMsg?.stickerMessage;
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const mediaMsg = quoted?.imageMessage || quoted?.videoMessage || quoted?.stickerMessage;
 
       if (!mediaMsg) {
-        return await sock.sendMessage(chatId, { text: 'Reply to an image, video or sticker.' }, { quoted: msg });
+        return await sock.sendMessage(chatId, { text: 'Reply to an image, video or sticker.', contextInfo }, { quoted: msg });
       }
 
-      const stream = await downloadContentFromMessage(mediaMsg, mediaMsg.imageMessage ? 'image' : mediaMsg.videoMessage ? 'video' : 'sticker');
-      const chunks = [];
-      for await (const chunk of stream) chunks.push(chunk);
-      const buffer = Buffer.concat(chunks);
+      const type = mediaMsg.imageMessage ? 'image' : mediaMsg.videoMessage ? 'video' : 'sticker';
+      const buffer = await getBuffer(mediaMsg, type);
       const filePath = `./temp_${Date.now()}`;
       await fs.writeFile(filePath, buffer);
 
+      const pack = args.length ? args.join(' ') : msg.pushName || 'Flash-MD';
+
       const sticker = new Sticker(filePath, {
-        pack: 'Flash-MD',
-        type: StickerTypes.CROPPED,
+        pack,
+        type: StickerTypes.FULL,
         categories: ["🤩", "🎉"],
         id: "12345",
         quality: 70,
@@ -198,62 +159,37 @@ module.exports = [
       });
 
       const stickerBuffer = await sticker.toBuffer();
-      await sock.sendMessage(chatId, { sticker: stickerBuffer }, { quoted: msg });
+      await sock.sendMessage(chatId, { sticker: stickerBuffer, contextInfo }, { quoted: msg });
       await fs.unlink(filePath);
     }
   },
-  {
-    name: 'take',
-    description: 'Capture a screenshot from a video and send as image.',
-    category: 'Utility',
-    execute: async (sock, msg, args) => {
-      const chatId = msg.key.remoteJid;
-      const mtype = Object.keys(msg.message || {})[0];
-      const isQuoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const tagVideo = isQuoted?.videoMessage;
 
-      if (mtype !== 'videoMessage' && !tagVideo) {
-        return await sock.sendMessage(chatId, { text: 'Reply to a video message to capture a screenshot.' }, { quoted: msg });
+  {
+    name: 'url',
+    description: 'Upload media to Catbox and return URL',
+    category: 'Converter',
+    execute: async (sock, msg) => {
+      const chatId = msg.key.remoteJid;
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const mediaMsg = quoted?.imageMessage || quoted?.videoMessage;
+
+      if (!mediaMsg) {
+        return await sock.sendMessage(chatId, { text: 'Reply to an image or video to upload it.', contextInfo }, { quoted: msg });
       }
 
-      const videoMsg = msg.message.videoMessage || tagVideo;
-
       try {
-        const buffer = await getBuffer(videoMsg, 'video');
-        const fileName = `screenshot_${Date.now()}.mp4`;
-        const imgPath = `${fileName}.jpg`;
-
-        await fs.writeFile(fileName, buffer);
-
-        const captureImage = () => {
-          return new Promise((resolve, reject) => {
-            ffmpeg(fileName)
-              .screenshots({
-                timestamps: ['00:00:02.000'],
-                filename: imgPath,
-                folder: './'
-              })
-              .on('end', resolve)
-              .on('error', reject);
-          });
-        };
-
-        await captureImage();
-
-        if (fs.existsSync(imgPath)) {
-          const imgBuffer = await fs.readFile(imgPath);
-
-          await sock.sendMessage(chatId, { image: imgBuffer, caption: 'Screenshot captured from video.' }, { quoted: msg });
-
-          await fs.unlink(fileName);
-          await fs.unlink(imgPath);
-        } else {
-          await sock.sendMessage(chatId, { text: 'Screenshot not found.' }, { quoted: msg });
-        }
+        const type = mediaMsg.imageMessage ? 'image' : 'video';
+        const buffer = await getBuffer(mediaMsg, type);
+        const ext = type === 'image' ? 'jpg' : 'mp4';
+        const filePath = `./media_${Date.now()}.${ext}`;
+        await fs.writeFile(filePath, buffer);
+        const url = await uploadToCatbox(filePath);
+        await sock.sendMessage(chatId, { text: `Here is your URL:\n${url}`, contextInfo }, { quoted: msg });
+        await fs.unlink(filePath);
       } catch (err) {
-        console.error('Capture error:', err.message, err.stack);
-        await sock.sendMessage(chatId, { text: `Error while capturing screenshot: ${err.message}` }, { quoted: msg });
+        return await sock.sendMessage(chatId, { text: `Upload failed: ${err.message}`, contextInfo }, { quoted: msg });
       }
     }
   }
+
 ];
