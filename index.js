@@ -173,11 +173,9 @@ The following message was deleted:`,
         }
 
         const logBase = `
-Type: ${messageType}
+Message: ${messageType}
 From: ${senderName} (${senderNumber})
-Channel: ${channelInfo}
-Context: ${txt || '[No Text]'}
-`;
+Channel: ${channelInfo}`;
 
         console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
 
