@@ -58,17 +58,28 @@ async function startBot() {
         messageStore.set(messageId, msg);
 
         const fromJid = msg.key.remoteJid;
-            const participant = msg.key?.participant || msg.key.remoteJid;
-    const isGroup = fromJid.endsWith('@g.us');
-            const isFromMe = msg.key.fromMe;
-    const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
-    const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0]; 
+        const participant = msg.key?.participant || msg.key.remoteJid;
+        const isGroup = fromJid.endsWith('@g.us');
+        const isFromMe = msg.key.fromMe;
+        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0]; 
         let senderName = msg.pushName || senderNumber;
         const Myself = king.user.id;
-        const groupMetadata = await king.groupMetadata(msg.key.remoteJid);
-                const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
-                const isAdmin = groupAdmins.includes(senderJid);
-                const isBotAdmin = groupAdmins.includes(Myself);
+        let groupMetadata = null;
+        let groupAdmins = [];
+
+        if (isGroup) {
+            try {
+                groupMetadata = await king.groupMetadata(fromJid);
+                groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
+            } catch (err) {
+                groupMetadata = { subject: 'Unknown Group', participants: [] };
+                groupAdmins = [];
+            }
+        }
+
+        const isAdmin = groupAdmins.includes(senderJid);
+        const isBotAdmin = groupAdmins.includes(Myself);
         const goat = ['254742063632', '254757835036'];
         const isDev = goat.includes(senderNumber);
 
@@ -91,7 +102,7 @@ async function startBot() {
                     senderName = participant?.name || participant?.notify || msg.pushName || senderName;
                     chatName = metadata.subject;
                     chatType = 'Group Chat';
-                } catch (err) {
+                } catch {
                     chatName = 'Unknown Group';
                 }
             } else if (fromJid === 'status@broadcast') {
@@ -157,7 +168,8 @@ The following message was deleted:`,
         else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
         else if (m?.reactionMessage) messageType = '❤️ Reaction';
         else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
-if (m?.reactionMessage) return;
+        if (m?.reactionMessage) return;
+
         let chatType = 'Private Chat';
         let groupName = null;
 
@@ -166,7 +178,9 @@ if (m?.reactionMessage) return;
             try {
                 const metadata = await king.groupMetadata(fromJid);
                 groupName = metadata.subject;
-            } catch {}
+            } catch {
+                groupName = 'Unknown Group';
+            }
         } else if (fromJid === 'status@broadcast') {
             chatType = 'Status';
         } else if (fromJid.endsWith('@newsletter')) {
@@ -208,9 +222,8 @@ Sender: ${senderName} (${senderNumber})`;
             ? '$'
             : text.startsWith(prefix)
               ? prefix
-              : null;
-
-        if (!usedPrefix) return;
+              : null
+if (!usedPrefix) return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
@@ -269,3 +282,4 @@ Sender: ${senderName} (${senderNumber})`;
 }
 
 startBot();
+               
