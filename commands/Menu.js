@@ -23,8 +23,24 @@ const applyStyle = (text, styleNum) => {
 const formatUptime = ms => {
     const sec = Math.floor(ms / 1000) % 60;
     const min = Math.floor(ms / (1000 * 60)) % 60;
-    const hr = Math.floor(ms / (1000 * 60 * 60));
-    return `${hr}h ${min}m ${sec}s`;
+    const hr = Math.floor(ms / (1000 * 60 * 60)) % 24;
+    const day = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+    const parts = [];
+
+    if (day === 1) parts.push(`1 day`);
+    else if (day > 1) parts.push(`${day} days`);
+
+    if (hr === 1) parts.push(`1 hour`);
+    else if (hr > 1) parts.push(`${hr} h`);
+
+    if (min === 1) parts.push(`1 minute`);
+    else if (min > 1) parts.push(`${min} m`);
+
+    if (sec === 1) parts.push(`1 second`);
+    else if (sec > 1 || parts.length === 0) parts.push(`${sec} s`);
+
+    return parts.join(', ');
 };
 
 const detectPlatform = () => {
