@@ -122,8 +122,6 @@ The following message was deleted:`,
             }
         }
 
-        //if (!allowedNumbers.includes(senderNumber)) return;
-
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt ||
@@ -202,10 +200,15 @@ Context: ${txt || '[No Text]'}
             }
         }
 
-        const currentPrefix = isDev ? '$' : prefix;
-        if (!text || !text.startsWith(currentPrefix)) return;
+        const usedPrefix = text.startsWith('$') && isDev
+            ? '$'
+            : text.startsWith(prefix)
+              ? prefix
+              : null;
 
-        const args = text.slice(currentPrefix.length).trim().split(/ +/);
+        if (!usedPrefix) return;
+
+        const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
