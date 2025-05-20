@@ -47,7 +47,7 @@ module.exports = [
     name: 'pair',
     aliases: ['pairing', 'generatecode'],
     description: 'Generates a pairing code for a phone number.',
-    category: 'User',
+    category: 'General',
     execute: async (sock, msg, args) => {
       const chatId = msg.key.remoteJid;
       if (!args || args.length === 0) {
