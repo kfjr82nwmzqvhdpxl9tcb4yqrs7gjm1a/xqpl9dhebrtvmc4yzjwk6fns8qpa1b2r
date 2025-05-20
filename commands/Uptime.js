@@ -70,7 +70,7 @@ module.exports = [
     },
     {
         name: 'help',
-        aliases: ['commands', 'menu'],
+        aliases: [],
         description: 'Lists all commands and their descriptions',
         execute: async (sock, msg, args, allCommands) => {
             const realCommands = allCommands.filter(cmd => !cmd.aliases || cmd.aliases.length === 0);
