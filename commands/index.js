@@ -1,13 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const commandFiles = fs.readdirSync(__dirname).filter(file => file !== 'index.js' && file.endsWith('.js'));
-
-let all = [];
+const commandFiles = fs.readdirSync(__dirname).filter(file => file.endsWith('.js') && file !== 'index.js');
+const commands = [];
 
 for (const file of commandFiles) {
-    const commands = require(path.join(__dirname, file));
-    all = all.concat(commands);
+    const commandModule = require(path.join(__dirname, file));
+    if (Array.isArray(commandModule)) {
+        commands.push(...commandModule);
+    } else {
+        commands.push(commandModule);
+    }
 }
 
-module.exports = all;
+module.exports = commands;
