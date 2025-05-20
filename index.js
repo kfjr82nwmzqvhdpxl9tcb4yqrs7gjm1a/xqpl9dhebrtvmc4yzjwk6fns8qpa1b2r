@@ -152,7 +152,7 @@ The following message was deleted:`,
         else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
         else if (m?.reactionMessage) messageType = '❤️ Reaction';
         else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
-if (m?.message?.reactionMessage) return;
+if (m?.reactionMessage) return;
         let chatType = 'Private Chat';
         let groupName = null;
 
