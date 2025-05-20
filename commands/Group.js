@@ -1,4 +1,4 @@
-const DEVS = ['254742063632', '254757835036']; // Replace with your actual dev numbers
+const DEVS = ['254742063632', '254757835036'];
 
 module.exports = [
     {
@@ -11,23 +11,28 @@ module.exports = [
         botAdminOnly: true,
 
         execute: async (king, msg, args) => {
-            const jid = msg.key.remoteJid;
-            const newSubject = args.join(' ');
+            const fromJid = msg.key.remoteJid;
 
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
+
+            const newSubject = args.join(' ');
             if (!newSubject) {
-                return king.sendMessage(jid, {
+                return king.sendMessage(fromJid, {
                     text: '❗ Please provide a new subject for the group.'
                 }, { quoted: msg });
             }
 
             try {
-                await king.groupUpdateSubject(jid, newSubject);
-                await king.sendMessage(jid, {
+                await king.groupUpdateSubject(fromJid, newSubject);
+                await king.sendMessage(fromJid, {
                     text: `✅ Group name changed to: *${newSubject}*`
                 }, { quoted: msg });
             } catch (err) {
-                console.error('Failed to change group subject:', err);
-                await king.sendMessage(jid, {
+                await king.sendMessage(fromJid, {
                     text: '❌ Failed to change group name.'
                 }, { quoted: msg });
             }
@@ -42,22 +47,28 @@ module.exports = [
         groupOnly: true,
 
         execute: async (king, msg, args) => {
-            const jid = msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
+
             const senderJid = msg.key.participant || msg.key.remoteJid;
             const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
 
             const isDev = DEVS.includes(senderNumber);
             if (!isDev) {
-                return king.sendMessage(jid, {
+                return king.sendMessage(fromJid, {
                     text: '❌ This command is reserved for the bot developer.'
                 }, { quoted: msg });
             }
 
             try {
-                await king.groupLeave(jid);
+                await king.groupLeave(fromJid);
             } catch (err) {
-                console.error('Failed to leave group:', err);
-                await king.sendMessage(jid, {
+                await king.sendMessage(fromJid, {
                     text: '❌ Failed to leave the group.'
                 }, { quoted: msg });
             }
