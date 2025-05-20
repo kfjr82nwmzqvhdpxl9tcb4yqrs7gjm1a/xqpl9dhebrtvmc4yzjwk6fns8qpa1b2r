@@ -38,6 +38,107 @@ module.exports = [
             }
         }
     },
+{
+        name: 'broadcast',
+        aliases: ['bc', 'cast'],
+        description: 'Send a broadcast message to all groups.',
+        category: 'General',
+        reaction: '📢',
+
+        execute: async (king, msg, args) => {
+            const fromJid = msg.key.remoteJid;
+            const msgbc = args.join(' ');
+
+            if (!msgbc) {
+                return king.sendMessage(fromJid, {
+                    text: '❗ Type your message after the command to broadcast.'
+                }, { quoted: msg });
+            }
+
+            try {
+                const allGroups = await king.groupFetchAllParticipating();
+                const groupIds = Object.keys(allGroups);
+
+                await king.sendMessage(fromJid, {
+                    text: '*Sending broadcast to all groups...*'
+                }, { quoted: msg });
+
+                for (const groupId of groupIds) {
+                    const broadcastMsg = `*📢 FLASH-MD BROADCAST*\n\n🗒️ ${msgbc}`;
+                    await king.sendMessage(groupId, {
+                        image: { url: "https://telegra.ph/file/ee2916cd24336231d8194.jpg" },
+                        caption: broadcastMsg
+                    });
+                }
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Broadcast failed.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'disap-off',
+        description: 'Turn off disappearing messages.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '👻',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            try {
+                await king.groupToggleEphemeral(fromJid, 0);
+                await king.sendMessage(fromJid, {
+                    text: '🗑️ Disappearing messages turned off.'
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to change disappearing message settings.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'disap',
+        description: 'Instructions for disappearing messages.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '👻',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            await king.sendMessage(fromJid, {
+                text: '*Enable disappearing messages*\n\nType:\n• *disap1* — 24 hours\n• *disap7* — 7 days\n• *disap90* — 90 days\n• *disap-off* — Turn off'
+            }, { quoted: msg });
+        }
+    },
+    {
+        name: 'disap1',
+        description: 'Set disappearing messages to 24 hours.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '👻',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            try {
+                await king.groupToggleEphemeral(fromJid, 86400);
+                await king.sendMessage(fromJid, {
+                    text: '⏳ Disappearing messages set to 24 hours.'
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to set disappearing message timer.'
+                }, { quoted: msg });
+            }
+        }
+    }, 
 
     {
         name: 'left',
