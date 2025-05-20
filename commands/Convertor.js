@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs-extra');
 const ffmpeg = require('fluent-ffmpeg');
 const baileys = require('@whiskeysockets/baileys');
-const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const { Sticker } = require('wa-sticker-formatter');
 const { Catbox } = require('node-catbox');
 
 const catbox = new Catbox();
@@ -17,7 +17,7 @@ const getBuffer = async (mediaMsg, type) => {
 
 const uploadToCatbox = async (path) => {
   if (!fs.existsSync(path)) throw new Error("File does not exist");
-  const response = await catbox.uploadFile({ path });
+  const response = await catbox.uploadFile(path);
   if (!response) throw new Error("Failed to upload");
   return response;
 };
@@ -41,7 +41,6 @@ module.exports = [
     category: 'Converter',
     execute: async (sock, msg, args) => {
       const chatId = msg.key.remoteJid;
-      const mtype = Object.keys(msg.message || {})[0];
       const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const imageMsg = msg.message?.imageMessage || quoted?.imageMessage;
       const videoMsg = msg.message?.videoMessage || quoted?.videoMessage;
@@ -52,7 +51,7 @@ module.exports = [
           const sticker = new Sticker(buffer, {
             pack: 'FLASH-MD',
             author: msg.pushName || 'User',
-            type: args.includes('crop') ? StickerTypes.CROPPED : StickerTypes.FULL,
+            type: args.includes('crop') ? 'cropped' : 'full',
             quality: 70
           });
           return await sock.sendMessage(chatId, { sticker: await sticker.toBuffer(), contextInfo }, { quoted: msg });
@@ -60,26 +59,35 @@ module.exports = [
           const fileName = `video_${Date.now()}.mp4`;
           const webpPath = `sticker_${Date.now()}.webp`;
           const buffer = await getBuffer(videoMsg, 'video');
+
           await fs.writeFile(fileName, buffer);
-          await new Promise((res, rej) => {
-            ffmpeg(fileName)
-              .outputOptions([
-                "-vcodec", "libwebp",
-                "-vf", "fps=15,scale=512:512:force_original_aspect_ratio=decrease",
-                "-loop", "0", "-preset", "default", "-an", "-vsync", "0", "-s", "512:512"
-              ])
-              .save(webpPath)
-              .on('end', res).on('error', rej);
-          });
-          const sticker = new Sticker(await fs.readFile(webpPath), {
-            pack: 'FLASH-MD',
-            author: msg.pushName || 'User',
-            type: StickerTypes.FULL,
-            quality: 70
-          });
-          await sock.sendMessage(chatId, { sticker: await sticker.toBuffer(), contextInfo }, { quoted: msg });
-          await fs.unlink(fileName);
-          await fs.unlink(webpPath);
+
+          try {
+            await new Promise((res, rej) => {
+              ffmpeg(fileName)
+                .outputOptions([
+                  "-vcodec", "libwebp",
+                  "-vf", "fps=15,scale=512:512:force_original_aspect_ratio=decrease",
+                  "-loop", "0", "-preset", "default", "-an", "-vsync", "0", "-s", "512:512"
+                ])
+                .save(webpPath)
+                .on('end', res).on('error', rej);
+            });
+
+            const sticker = new Sticker(await fs.readFile(webpPath), {
+              pack: 'FLASH-MD',
+              author: msg.pushName || 'User',
+              type: 'full',
+              quality: 70
+            });
+
+            await sock.sendMessage(chatId, { sticker: await sticker.toBuffer(), contextInfo }, { quoted: msg });
+
+          } finally {
+            if (await fs.pathExists(fileName)) await fs.unlink(fileName);
+            if (await fs.pathExists(webpPath)) await fs.unlink(webpPath);
+          }
+
         } else {
           return await sock.sendMessage(chatId, { text: 'Reply to an image or video to make a sticker.', contextInfo }, { quoted: msg });
         }
@@ -119,12 +127,13 @@ module.exports = [
         });
 
         const audio = await fs.readFile(mp3Path);
-        await sock.sendMessage(chatId, { audio, mimetype: 'audio/mp4', contextInfo }, { quoted: msg });
+        await sock.sendMessage(chatId, { audio, mimetype: 'audio/mpeg', contextInfo }, { quoted: msg });
 
-        await fs.unlink(fileName);
-        await fs.unlink(mp3Path);
       } catch (err) {
         return await sock.sendMessage(chatId, { text: `Error while converting video to MP3: ${err.message}`, contextInfo }, { quoted: msg });
+      } finally {
+        if (await fs.pathExists(fileName)) await fs.unlink(fileName);
+        if (await fs.pathExists(mp3Path)) await fs.unlink(mp3Path);
       }
     }
   },
@@ -142,25 +151,34 @@ module.exports = [
         return await sock.sendMessage(chatId, { text: 'Reply to an image, video or sticker.', contextInfo }, { quoted: msg });
       }
 
-      const type = mediaMsg.imageMessage ? 'image' : mediaMsg.videoMessage ? 'video' : 'sticker';
+      const type = quoted?.imageMessage ? 'image' :
+                   quoted?.videoMessage ? 'video' :
+                   quoted?.stickerMessage ? 'sticker' : null;
+
+      if (!type) return await sock.sendMessage(chatId, { text: 'Unsupported media type.', contextInfo }, { quoted: msg });
+
       const buffer = await getBuffer(mediaMsg, type);
       const filePath = `./temp_${Date.now()}`;
       await fs.writeFile(filePath, buffer);
 
-      const pack = args.length ? args.join(' ') : msg.pushName || 'Flash-MD';
+      try {
+        const pack = args.length ? args.join(' ') : msg.pushName || 'Flash-MD';
 
-      const sticker = new Sticker(filePath, {
-        pack,
-        type: StickerTypes.FULL,
-        categories: ["🤩", "🎉"],
-        id: "12345",
-        quality: 70,
-        background: "transparent"
-      });
+        const sticker = new Sticker(filePath, {
+          pack,
+          type: 'full',
+          categories: ["🤩", "🎉"],
+          id: "12345",
+          quality: 70,
+          background: "transparent"
+        });
 
-      const stickerBuffer = await sticker.toBuffer();
-      await sock.sendMessage(chatId, { sticker: stickerBuffer, contextInfo }, { quoted: msg });
-      await fs.unlink(filePath);
+        const stickerBuffer = await sticker.toBuffer();
+        await sock.sendMessage(chatId, { sticker: stickerBuffer, contextInfo }, { quoted: msg });
+
+      } finally {
+        if (await fs.pathExists(filePath)) await fs.unlink(filePath);
+      }
     }
   },
 
@@ -179,15 +197,19 @@ module.exports = [
 
       try {
         const type = mediaMsg.imageMessage ? 'image' : 'video';
-        const buffer = await getBuffer(mediaMsg, type);
         const ext = type === 'image' ? 'jpg' : 'mp4';
+        const buffer = await getBuffer(mediaMsg, type);
         const filePath = `./media_${Date.now()}.${ext}`;
         await fs.writeFile(filePath, buffer);
+
         const url = await uploadToCatbox(filePath);
         await sock.sendMessage(chatId, { text: `Here is your URL:\n${url}`, contextInfo }, { quoted: msg });
-        await fs.unlink(filePath);
+
       } catch (err) {
         return await sock.sendMessage(chatId, { text: `Upload failed: ${err.message}`, contextInfo }, { quoted: msg });
+      } finally {
+        const path = `./media_${Date.now()}.jpg`; // safe fallback
+        if (await fs.pathExists(path)) await fs.unlink(path).catch(() => {});
       }
     }
   }
