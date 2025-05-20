@@ -144,7 +144,112 @@ module.exports = [
         }
     },
 
+{
+        name: 'invite',
+        aliases: ['link'],
+        description: 'Get the group invite code.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+
+        execute: async (king, msg, args) => {
+            const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
+
+            try {
+                const code = await king.groupInviteCode(fromJid);
+                await king.sendMessage(fromJid, {
+                    text: '🔗 Group invite link: https://chat.whatsapp.com/' + code
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to retrieve the invite link.'
+                }, { quoted: msg });
+            }
+        }
+    },
     {
+        name: 'revoke',
+        aliases: ['reset'],
+        description: 'Revoke and generate a new group invite link.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+
+        execute: async (king, msg, args) => {
+            const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
+
+            try {
+                const code = await king.groupRevokeInvite(fromJid);
+                await king.sendMessage(fromJid, {
+                    text: '♻️ New invite link: https://chat.whatsapp.com/' + code
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to revoke and generate new link.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'create',
+        aliases: ['newgroup', 'newgc'],
+        description: 'Create a new group with specified members.',
+        category: 'Group',
+
+        execute: async (king, msg, args) => {
+            const fromJid = msg.key.remoteJid;
+
+            if (!args.length) {
+                return king.sendMessage(fromJid, {
+                    text: '❗ Provide group name and at least one member (mention, reply or number).'
+                }, { quoted: msg });
+            }
+
+            const mentions = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+            const quotedJid = msg.message?.extendedTextMessage?.contextInfo?.participant;
+            const [groupName, ...rest] = args;
+            const membersFromArgs = rest.filter(x => /^\d+$/.test(x)).map(num => num + '@s.whatsapp.net');
+
+            const participants = [...new Set([
+                ...mentions,
+                ...(quotedJid ? [quotedJid] : []),
+                ...membersFromArgs
+            ])];
+
+            if (!groupName || participants.length === 0) {
+                return king.sendMessage(fromJid, {
+                    text: 'Usage: .create MyGroup @user or reply or phone numbers (e.g. 2547xxxxxxx)'
+                }, { quoted: msg });
+            }
+
+            try {
+                const group = await king.groupCreate(groupName, participants);
+                await king.sendMessage(group.id, {
+                    text: '👋 Welcome to the new group!'
+                });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to create the group.'
+                }, { quoted: msg });
+            }
+        }
+    }, 
+
+ {
         name: 'unlock',
         aliases: ['open'],
         description: 'Allow all members to send messages in the group.',
