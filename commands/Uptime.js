@@ -103,10 +103,10 @@ function formatUptime(seconds) {
 
     const parts = [];
 
-    if (d > 0) parts.push(`${d} day${d > 1 ? 's' : ''}`);
-    if (h > 0) parts.push(`${h} hour${h > 1 ? 's' : ''}`);
-    if (m > 0) parts.push(`${m} minute${m > 1 ? 's' : ''}`);
-    if (s > 0) parts.push(`${s} second${s > 1 ? 's' : ''}`);
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0) parts.push(`${m}m`);
+    if (s > 0) parts.push(`${s}s`);
 
-    return parts.join(', ') || '0 seconds';
+    return parts.join(', ') || '0s';
 }
