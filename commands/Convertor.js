@@ -164,14 +164,14 @@ module.exports = [
       try {
         const pack = args.length ? args.join(' ') : msg.pushName || 'Flash-MD';
 
-        const sticker = new Sticker(filePath, {
-          pack,
-          type: 'full',
-          categories: ["🤩", "🎉"],
-          id: "12345",
-          quality: 70,
-          background: "transparent"
-        });
+        const sticker = new Sticker(buffer, {
+  pack,
+  type: 'full',
+  categories: ["🤩", "🎉"],
+  id: "12345",
+  quality: 70,
+  background: "transparent"
+});
 
         const stickerBuffer = await sticker.toBuffer();
         await sock.sendMessage(chatId, { sticker: stickerBuffer, contextInfo }, { quoted: msg });
