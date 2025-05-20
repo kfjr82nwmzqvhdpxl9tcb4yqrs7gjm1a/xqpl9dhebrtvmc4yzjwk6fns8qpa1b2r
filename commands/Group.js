@@ -39,6 +39,122 @@ module.exports = [
         }
     },
 {
+        name: 'kick',
+        aliases: ['remove'],
+        description: 'Removes a user from the group.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+
+        execute: async (king, msg) => {
+            const jid = msg.key.remoteJid;
+            const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
+            const tagged = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const target = quoted || tagged;
+
+            if (!target) {
+                return king.sendMessage(jid, {
+                    text: '⚠️ Please tag or reply to the user you want to remove.'
+                }, { quoted: msg });
+            }
+
+            try {
+                await king.groupParticipantsUpdate(jid, [target], 'remove');
+                await king.sendMessage(jid, {
+                    text: `✅ @${target.split('@')[0]} has been removed.`,
+                    mentions: [target]
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(jid, {
+                    text: '❌ Failed to remove user.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'add',
+        aliases: [],
+        description: 'Adds a user to the group.',
+        category: 'Group',
+        groupOnly: true,
+
+        execute: async (king, msg, args) => {
+            const jid = msg.key.remoteJid;
+            const senderJid = msg.key.participant || msg.key.remoteJid;
+            const senderNum = senderJid.replace(/@.*$/, '').split(':')[0];
+
+            if (!DEVS.includes(senderNum)) {
+                return king.sendMessage(jid, {
+                    text: '❌ Only the developer can use this command.'
+                }, { quoted: msg });
+            }
+
+            if (!args[0]) {
+                return king.sendMessage(jid, {
+                    text: '⚠️ Provide a number to add.'
+                }, { quoted: msg });
+            }
+
+            const num = args[0].replace(/\D/g, '');
+            const userJid = `${num}@s.whatsapp.net`;
+
+            try {
+                await king.groupParticipantsUpdate(jid, [userJid], 'add');
+                await king.sendMessage(jid, {
+                    text: `✅ ${num} added to the group.`
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(jid, {
+                    text: '❌ Failed to add user. They may have privacy restrictions.'
+                }, { quoted: msg });
+            }
+        }
+    }, 
+
+{
+        name: 'kickall',
+        aliases: [],
+        description: 'Remove all non-admin members from the group.',
+        category: 'Group',
+        groupOnly: true,
+
+        execute: async (king, msg) => {
+            const jid = msg.key.remoteJid;
+            const metadata = await king.groupMetadata(jid);
+            const sender = msg.key.participant || msg.key.remoteJid;
+
+            const isOwner = metadata.owner === sender;
+            if (!isOwner) {
+                return king.sendMessage(jid, {
+                    text: '❌ Only the group owner can use this command.'
+                }, { quoted: msg });
+            }
+
+            await king.sendMessage(jid, {
+                text: '⚠️ Removing all non-admins in 5 seconds...'
+            }, { quoted: msg });
+            await new Promise(r => setTimeout(r, 5000));
+
+            const toKick = metadata.participants
+                .filter(p => !p.admin)
+                .map(p => p.id);
+
+            try {
+                for (const id of toKick) {
+                    await king.groupParticipantsUpdate(jid, [id], 'remove');
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            } catch {
+                await king.sendMessage(jid, {
+                    text: '❌ Failed to remove some users. Check admin permissions.'
+                }, { quoted: msg });
+            }
+        }
+    }, 
+    
+    
+{
         name: 'promote',
         aliases: [],
         description: 'Promotes a tagged member to admin.',
