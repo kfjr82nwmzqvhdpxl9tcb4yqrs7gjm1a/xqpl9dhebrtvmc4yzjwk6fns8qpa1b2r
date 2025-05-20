@@ -52,66 +52,85 @@ const detectPlatform = () => {
     return 'Linux';
 };
 
-module.exports = {
-    name: 'menu',
-    aliases: ['help', 'commands'],
-    description: 'Displays categorized list of commands',
-    execute: async (king, msg, args, allCommands) => {
-        const fromJid = msg.key.remoteJid;
+module.exports = [
+    {
+        name: 'menu',
+        aliases: ['help', 'commands'],
+        description: 'Displays categorized list of commands',
+        execute: async (king, msg, args, allCommands) => {
+            const fromJid = msg.key.remoteJid;
+            const time = moment().tz(config.timezone || 'Africa/Lagos');
+            const uptime = formatUptime(Date.now() - startTime);
+            const platform = detectPlatform();
+            const usedMem = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
+            const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
 
-        const time = moment().tz(config.timezone || 'Africa/Lagos');
-        const uptime = formatUptime(Date.now() - startTime);
-        const platform = detectPlatform();
-        const usedMem = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
-        const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-
-        const categorized = {};
-        for (const cmd of allCommands) {
-            const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
-            if (!categorized[category]) categorized[category] = [];
-            categorized[category].push(cmd);
-        }
-
-        let text = `*◇ FLASH-MD V2 MENU ◇*\n\n`;
-        text += `╭──── System Info ────◆\n`;
-        text += `│ *Platform:* ${platform}\n`;
-        text += `│ *RAM:* ${usedMem}/${totalMem} GB\n`;
-        text += `│ *Time:* ${time.format('HH:mm:ss')}\n`;
-        text += `│ *Date:* ${time.format('DD/MM/YYYY')}\n`;
-        text += `│ *Uptime:* ${uptime}\n`;
-        text += `╰────────────────────◆\n\n`;
-
-        let counter = 1;
-        const sortedCategories = Object.keys(categorized).sort();
-        for (const category of sortedCategories) {
-            text += `*╭──❒ ${applyStyle(category, 10)} ❒───⊷*\n`;
-            text += `│╭────────────\n`;
-            const sortedCommands = categorized[category].sort((a, b) => a.name.localeCompare(b.name));
-            for (const cmd of sortedCommands) {
-                text += `││ ${counter++}. ${applyStyle(cmd.name, 10)}\n`;
+            const categorized = {};
+            for (const cmd of allCommands) {
+                const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
+                if (!categorized[category]) categorized[category] = [];
+                categorized[category].push(cmd);
             }
-            text += `│╰────────────\n`;
-            text += `╰══════════════⊷\n\n`;
-        }
 
-        try {
-            await king.sendMessage(fromJid, {
-                text,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
+            let text = `*◇ FLASH-MD V2 MENU ◇*\n\n`;
+            text += `╭──── System Info ────◆\n`;
+            text += `│ *Platform:* ${platform}\n`;
+            text += `│ *RAM:* ${usedMem}/${totalMem} GB\n`;
+            text += `│ *Time:* ${time.format('HH:mm:ss')}\n`;
+            text += `│ *Date:* ${time.format('DD/MM/YYYY')}\n`;
+            text += `│ *Uptime:* ${uptime}\n`;
+            text += `╰────────────────────◆\n\n`;
+
+            let counter = 1;
+            const sortedCategories = Object.keys(categorized).sort();
+            for (const category of sortedCategories) {
+                text += `*╭──❒ ${applyStyle(category, 10)} ❒───⊷*\n`;
+                text += `│╭────────────\n`;
+                const sortedCommands = categorized[category].sort((a, b) => a.name.localeCompare(b.name));
+                for (const cmd of sortedCommands) {
+                    text += `││ ${counter++}. ${applyStyle(cmd.name, 10)}\n`;
                 }
-            });
-        } catch (err) {
-            console.error('Error in styled menu:', err);
-            await king.sendMessage(fromJid, {
-                text: '❌ Error displaying the command menu.'
-            });
+                text += `│╰────────────\n`;
+                text += `╰══════════════⊷\n\n`;
+            }
+
+            await king.sendMessage(fromJid, { text });
+        }
+    },
+    {
+        name: 'help',
+        aliases: [],
+        description: 'Provides help and guide for new users',
+        execute: async (king, msg, args, allCommands) => {
+            const fromJid = msg.key.remoteJid;
+
+            let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
+            text += `To use the bot:\n`;
+            text += `• Start commands with the prefix (e.g. ".", "!" depending on config)\n`;
+            text += `• Use .menu to view all available commands\n`;
+            text += `• Example: .ping\n\n`;
+            text += `*COMMANDS LIST:*\n\n`;
+
+            const categorized = {};
+            for (const cmd of allCommands) {
+                const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
+                if (!categorized[category]) categorized[category] = [];
+                categorized[category].push(cmd);
+            }
+
+            for (const [cat, cmds] of Object.entries(categorized)) {
+                text += `📂 *${cat}*\n`;
+                for (const cmd of cmds) {
+                    text += `- *${cmd.name}* - ${cmd.description}`;
+                    if (cmd.aliases && cmd.aliases.length > 0) {
+                        text += ` (Aliases: ${cmd.aliases.join(', ')})`;
+                    }
+                    text += `\n`;
+                }
+                text += `\n`;
+            }
+
+            await king.sendMessage(fromJid, { text });
         }
     }
-};
+];
