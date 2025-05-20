@@ -78,7 +78,7 @@ function formatDate(dateStr) {
     return `${day}/${month}/${year} at ${hours}:${minutes} ${ampm}`;
 }
  }
-}
+}, 
 {
  name: 'apk',
     aliases: ['app', 'application'],
@@ -153,8 +153,106 @@ _Enjoy using the app. Powered by FLASH-MD_`,
             }, { quoted: msg });
         }
     }
-}
+}, 
+
+{
+    name: 'fetch',
+    aliases: [],
+    description: 'Fetches content from a URL and responds with the appropriate media or text.',
+    category: 'Search',
+
+    execute: async (sock, msg, args) => {
+        const chatId = msg.key.remoteJid;
+        const url = args.join(' ');
+
+        if (!/^https?:\/\//.test(url)) {
+            return await sock.sendMessage(chatId, {
+                text: '❗ Please start the URL with *http://* or *https://*'
+            }, { quoted: msg });
+        }
+
+        try {
+            const response = await axios.get(url, {
+                responseType: 'arraybuffer',
+                maxContentLength: 100 * 1024 * 1024,
+                validateStatus: () => true
+            });
+
+            const contentType = response.headers['content-type'] || '';
+            const contentLength = parseInt(response.headers['content-length'] || '0');
+
+            if (response.status >= 400) {
+                return await sock.sendMessage(chatId, {
+                    text: `❌ Failed to fetch the URL. Status: ${response.status}`
+                }, { quoted: msg });
+            }
+
+            if (contentLength > 100 * 1024 * 1024) {
+                return await sock.sendMessage(chatId, {
+                    text: '⚠️ The content is too large to process (over 100MB).'
+                }, { quoted: msg });
+            }
+
+            const meta = {
+                quoted: msg,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            };
+
+            const buffer = Buffer.from(response.data);
+
+            if (/image\//.test(contentType)) {
+                return await sock.sendMessage(chatId, {
+                    image: buffer,
+                    caption: '> > *POWERED BY FLASH-MD*'
+                }, meta);
+            }
+
+            if (/video\//.test(contentType)) {
+                return await sock.sendMessage(chatId, {
+                    video: buffer,
+                    caption: '> > *POWERED BY FLASH-MD*'
+                }, meta);
+            }
+
+            if (/audio\//.test(contentType)) {
+                return await sock.sendMessage(chatId, {
+                    audio: buffer,
+                    caption: '> > *POWERED BY FLASH-MD*'
+                }, meta);
+            }
+
+            if (/json|text\//.test(contentType)) {
+                let textContent = buffer.toString();
+                try {
+                    const parsed = JSON.parse(textContent);
+                    textContent = JSON.stringify(parsed, null, 2);
+                } catch {}
+                return await sock.sendMessage(chatId, {
+                    text: `*FETCHED CONTENT*\n\n${textContent.slice(0, 65536)}`
+                }, meta);
+            }
+
+            return await sock.sendMessage(chatId, {
+                document: buffer,
+                mimetype: contentType,
+                fileName: 'fetched_content',
+                caption: '> > *POWERED BY FLASH-MD*'
+            }, meta);
+
+        } catch (err) {
+            return await sock.sendMessage(chatId, {
+                text: `❌ Error fetching content: ${err.message}`
+            }, { quoted: msg });
+        }
+    }
+};
 ];
-
-
 
