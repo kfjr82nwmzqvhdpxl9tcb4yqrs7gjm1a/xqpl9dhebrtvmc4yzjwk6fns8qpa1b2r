@@ -98,39 +98,48 @@ module.exports = [
         }
     },
     {
-        name: 'help',
-        aliases: [],
-        description: 'Provides help and guide for new users',
-        execute: async (king, msg, args, allCommands) => {
-            const fromJid = msg.key.remoteJid;
+    name: 'help',
+    aliases: [],
+    description: 'Provides help and guide for new users',
+    execute: async (sock, msg, args, allCommands) => {
+        const fromJid = msg.key.remoteJid;
 
-            let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
-            text += `To use the bot:\n`;
-            text += `• Start commands with the prefix (e.g. ".", "!" depending on config)\n`;
-            text += `• Use .menu to view all available commands\n`;
-            text += `• Example: .ping\n\n`;
-            text += `*COMMANDS LIST:*\n\n`;
+        let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
+        text += `To use the bot:\n`;
+        text += `• Start commands with the prefix\n`;
+        text += `• Use .menu to view all available commands\n`;
+        text += `*COMMANDS LIST:*\n\n`;
 
-            const categorized = {};
-            for (const cmd of allCommands) {
-                const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
-                if (!categorized[category]) categorized[category] = [];
-                categorized[category].push(cmd);
-            }
+        const categorized = {};
+        for (const cmd of allCommands) {
+            const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
+            if (!categorized[category]) categorized[category] = [];
+            categorized[category].push(cmd);
+        }
 
-            for (const [cat, cmds] of Object.entries(categorized)) {
-                text += `📂 *${cat}*\n`;
-                for (const cmd of cmds) {
-                    text += `- *${cmd.name}* - ${cmd.description}`;
-                    if (cmd.aliases && cmd.aliases.length > 0) {
-                        text += ` (Aliases: ${cmd.aliases.join(', ')})`;
-                    }
-                    text += `\n`;
+        for (const [cat, cmds] of Object.entries(categorized)) {
+            text += `📂 *${cat}*\n`;
+            for (const cmd of cmds) {
+                text += `• *${cmd.name}* - ${cmd.description}`;
+                if (cmd.aliases && cmd.aliases.length > 0) {
+                    text += ` (Aliases: ${cmd.aliases.join(', ')})`;
                 }
                 text += `\n`;
             }
-
-            await king.sendMessage(fromJid, { text });
+            text += `\n`;
         }
+
+        await sock.sendMessage(fromJid, {
+            text,
+            contextInfo: {
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363238139244263@newsletter',
+                    newsletterName: 'FLASH-MD',
+                    serverMessageId: -1
+                }
+            }
+        });
     }
-];
+}
