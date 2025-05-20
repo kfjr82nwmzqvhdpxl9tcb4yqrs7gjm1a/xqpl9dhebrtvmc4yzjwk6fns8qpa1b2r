@@ -44,8 +44,8 @@ module.exports = [
         aliases: ['runtime'],
         description: 'Displays the system uptime!',
         execute: async (sock, msg) => {
-            if (!global.botStartTime) global.botStartTime = Date.now();
-            
+            if (!global.botStartTime) global.botStartTime = Date.now(); // Ensures the botStartTime is only set once
+
             const currentTime = Date.now();
             const seconds = Math.floor((currentTime - global.botStartTime) / 1000);
             const formatted = formatUptime(seconds);
@@ -66,31 +66,6 @@ module.exports = [
                     },
                 }
             });
-        }
-    },
-    {
-        name: 'help',
-        aliases: [],
-        description: 'Lists all commands and their descriptions',
-        execute: async (sock, msg, args, allCommands) => {
-            const realCommands = allCommands.filter(cmd => !cmd.aliases || cmd.aliases.length === 0);
-            const aliasCommands = allCommands.filter(cmd => cmd.aliases && cmd.aliases.length > 0);
-            
-            let helpText = "*📜 LIST OF COMMANDS*\n\n";
-
-            helpText += "*🔑 REAL COMMANDS:*\n";
-            realCommands.forEach(cmd => {
-                helpText += `*${cmd.name}* - ${cmd.description}\n`;
-            });
-
-            helpText += "\n*🔄 ALIASES:*\n";
-            aliasCommands.forEach(cmd => {
-                helpText += `*${cmd.name}* (Aliases: ${cmd.aliases.join(', ')}) - ${cmd.description}\n`;
-            });
-
-            helpText += `\nTo use a command, type the prefix followed by the command name. Example: *${global.prefix}ping*`;
-
-            await sock.sendMessage(msg.key.remoteJid, { text: helpText });
         }
     }
 ];
