@@ -176,8 +176,8 @@ The following message was deleted:`,
 
         const logBase = `
 Message: ${messageType}
-From: ${senderName} (${senderNumber})
-Channel: ${channelInfo}`;
+Sender: ${senderName} (${senderNumber})
+Type: ${channelInfo}`;
 
         console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
 
