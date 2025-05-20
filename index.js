@@ -61,7 +61,7 @@ async function startBot() {
             const participant = msg.key?.participant || msg.key.remoteJid;
     const isGroup = fromJid.endsWith('@g.us');
             const isFromMe = msg.key.fromMe;
-    const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+    const senderJid = isFromMe ? sock.user.id : msg.key.participant || msg.key.remoteJid;
     const senderNumber = senderJid.replace(/@.*$/, '');
         let senderName = msg.pushName || senderNumber;
         const goat = ['254742063632', '254757835036'];
