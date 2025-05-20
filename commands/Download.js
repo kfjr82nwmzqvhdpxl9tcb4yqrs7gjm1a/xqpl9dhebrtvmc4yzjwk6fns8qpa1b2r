@@ -77,10 +77,10 @@ function formatDate(dateStr) {
     const ampm = date.getHours() >= 12 ? 'pm' : 'am';
     return `${day}/${month}/${year} at ${hours}:${minutes} ${ampm}`;
 }
-];
-
-module.exports = {
-    name: 'apk',
+ }
+}
+{
+ name: 'apk',
     aliases: ['app', 'application'],
     description: 'Search and download Android APK files.',
     category: 'Download',
@@ -153,9 +153,8 @@ _Enjoy using the app. Powered by FLASH-MD_`,
             }, { quoted: msg });
         }
     }
-};;
-
-
+}
+];
 
 
 
