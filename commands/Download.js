@@ -77,3 +77,85 @@ function formatDate(dateStr) {
     const ampm = date.getHours() >= 12 ? 'pm' : 'am';
     return `${day}/${month}/${year} at ${hours}:${minutes} ${ampm}`;
 }
+];
+
+module.exports = {
+    name: 'apk',
+    aliases: ['app', 'application'],
+    description: 'Search and download Android APK files.',
+    category: 'Download',
+
+    execute: async (sock, msg, args) => {
+        const chatId = msg.key.remoteJid;
+
+        if (!args || !args.length) {
+            return await sock.sendMessage(chatId, {
+                text: '❗ Please provide an app name to search for.'
+            }, { quoted: msg });
+        }
+
+        const query = args.join(' ');
+
+        try {
+            await sock.sendMessage(chatId, {
+                text: '🔍 Searching for the APK, please wait...'
+            }, { quoted: msg });
+
+            const searchRes = await axios.get(`https://bk9.fun/search/apk?q=${encodeURIComponent(query)}`);
+            const results = searchRes.data?.BK9;
+
+            if (!results || results.length === 0) {
+                return await sock.sendMessage(chatId, {
+                    text: `❌ No APKs found for "${query}".`
+                }, { quoted: msg });
+            }
+
+            const apk = results[0];
+            const downloadRes = await axios.get(`https://bk9.fun/download/apk?id=${apk.id}`);
+            const downloadLink = downloadRes.data?.BK9?.dllink;
+
+            if (!downloadLink) {
+                return await sock.sendMessage(chatId, {
+                    text: '❌ Failed to retrieve the download link.'
+                }, { quoted: msg });
+            }
+
+            await sock.sendMessage(chatId, {
+                document: { url: downloadLink },
+                mimetype: 'application/vnd.android.package-archive',
+                fileName: `${apk.name}.apk`,
+                caption: `*📥 APK DOWNLOADER*
+
+*📌 App:* ${apk.name}
+*📎 Type:* APK File
+*⚙️ Powered by:* FLASH-MD`
+            }, { quoted: msg });
+
+            await sock.sendMessage(chatId, {
+                text: `✅ Successfully fetched and sent APK for *${apk.name}*.
+
+_Enjoy using the app. Powered by FLASH-MD_`,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('APK Command Error:', error.message);
+            await sock.sendMessage(chatId, {
+                text: '❌ An error occurred while processing your APK request.'
+            }, { quoted: msg });
+        }
+    }
+};;
+
+
+
+
+
