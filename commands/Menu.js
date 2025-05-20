@@ -94,7 +94,18 @@ module.exports = [
                 text += `╰══════════════⊷\n\n`;
             }
 
-            await king.sendMessage(fromJid, { text });
+            await king.sendMessage(fromJid, {
+    text,
+    contextInfo: {
+        forwardingScore: 1,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+        }
+    }
+});
         }
     },
     {
