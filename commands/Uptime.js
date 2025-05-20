@@ -1,5 +1,7 @@
 const now = require('performance-now');
 
+if (!global.botStartTime) global.botStartTime = Date.now();
+
 module.exports = [
     {
         name: 'ping',
@@ -44,11 +46,9 @@ module.exports = [
         aliases: ['runtime'],
         description: 'Displays the system uptime!',
         execute: async (sock, msg) => {
-            if (!global.botStartTime) global.botStartTime = Date.now(); // Ensures the botStartTime is only set once
-
             const currentTime = Date.now();
-            const seconds = Math.floor((currentTime - global.botStartTime) / 1000);
-            const formatted = formatUptime(seconds);
+            const uptimeInMillis = currentTime - global.botStartTime;
+            const formatted = formatUptime(uptimeInMillis);
 
             const senderId = (msg.key?.participant || msg.key?.remoteJid || '0@s.whatsapp.net').split('@')[0];
             const jid = msg.key.remoteJid;
@@ -70,18 +70,25 @@ module.exports = [
     }
 ];
 
-function formatUptime(seconds) {
-    const d = Math.floor(seconds / (3600 * 24));
-    const h = Math.floor((seconds % (3600 * 24)) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
+function formatUptime(ms) {
+    const sec = Math.floor(ms / 1000) % 60;
+    const min = Math.floor(ms / (1000 * 60)) % 60;
+    const hr = Math.floor(ms / (1000 * 60 * 60)) % 24;
+    const day = Math.floor(ms / (1000 * 60 * 60 * 24));
 
     const parts = [];
 
-    if (d > 0) parts.push(`${d}d`);
-    if (h > 0) parts.push(`${h}h`);
-    if (m > 0) parts.push(`${m}m`);
-    if (s > 0) parts.push(`${s}s`);
+    if (day === 1) parts.push(`1 day`);
+    else if (day > 1) parts.push(`${day} days`);
 
-    return parts.join(', ') || '0s';
+    if (hr === 1) parts.push(`1 hour`);
+    else if (hr > 1) parts.push(`${hr} h`);
+
+    if (min === 1) parts.push(`1 minute`);
+    else if (min > 1) parts.push(`${min} m`);
+
+    if (sec === 1) parts.push(`1 second`);
+    else if (sec > 1 || parts.length === 0) parts.push(`${sec} s`);
+
+    return parts.join(', ') || '0 second';
 }
