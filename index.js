@@ -61,7 +61,7 @@ async function startBot() {
         const participant = msg.key?.participant || fromJid;
         const senderJid = participant;
         const senderNumber = senderJid.split('@')[0];
-        let senderName = msg.pushName || senderNumber;
+        let senderName = msg.key.fromMe || msg.key.remoteJid;
         const allowedNumbers = ['254742063632', '254757835036'];
         const isDev = allowedNumbers.includes(senderNumber);
 
