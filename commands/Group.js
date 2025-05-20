@@ -39,6 +39,84 @@ module.exports = [
         }
     },
 {
+        name: 'disap7',
+        description: 'Enable disappearing messages for 7 days.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '👻',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            try {
+                await king.groupToggleEphemeral(fromJid, 7 * 24 * 3600);
+                await king.sendMessage(fromJid, {
+                    text: '⏳ Disappearing messages set to 7 days.'
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to apply setting.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'disap90',
+        description: 'Enable disappearing messages for 90 days.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '👻',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            try {
+                await king.groupToggleEphemeral(fromJid, 90 * 24 * 3600);
+                await king.sendMessage(fromJid, {
+                    text: '⏳ Disappearing messages set to 90 days.'
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to apply setting.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'req',
+        description: 'List pending group join requests.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '☑️',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            try {
+                const requests = await king.groupRequestParticipantsList(fromJid);
+                if (requests.length === 0) {
+                    return king.sendMessage(fromJid, {
+                        text: '📭 No pending join requests.'
+                    }, { quoted: msg });
+                }
+
+                const formatted = requests.map(p => '+' + p.jid.split('@')[0]).join('\n');
+                await king.sendMessage(fromJid, {
+                    text: `📥 Pending Requests:\n${formatted}\n\nUse *approve* or *reject* to act.`
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to retrieve join requests.'
+                }, { quoted: msg });
+            }
+        }
+    }, 
+
+    
+{
         name: 'broadcast',
         aliases: ['bc', 'cast'],
         description: 'Send a broadcast message to all groups.',
