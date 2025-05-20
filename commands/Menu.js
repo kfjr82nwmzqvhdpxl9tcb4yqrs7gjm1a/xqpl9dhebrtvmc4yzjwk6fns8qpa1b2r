@@ -27,75 +27,75 @@ const formatUptime = ms => {
     return `${hr}h ${min}m ${sec}s`;
 };
 
-function detectPlatform() {
+const detectPlatform = () => {
     if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
     if (process.env.KOYEB_ENV) return 'Koyeb';
     if (process.env.RENDER) return 'Render';
     if (process.env.GITHUB_ACTIONS) return 'GitHub Actions';
     if (process.env.DYNO) return 'Heroku';
     return 'Linux';
-}
+};
 
 module.exports = {
     name: 'menu',
     aliases: ['help', 'commands'],
-    description: 'Displays a categorized command list',
-    category: 'general',
-    execute: async (king, msg, args, fromJid, allCommands) => {
-        const time = moment().tz(config.timezone || 'UTC');
-        const platform = detectPlatform();
-        const uptime = formatUptime(Date.now() - startTime);
-        const usedMem = (os.totalmem() - os.freemem()) / 1024 / 1024 / 1024;
-        const totalMem = os.totalmem() / 1024 / 1024 / 1024;
+    description: 'Displays categorized list of commands',
+    execute: async (king, msg, args, allCommands) => {
+        const fromJid = msg.key.remoteJid;
 
-        const grouped = {};
+        const time = moment().tz(config.timezone || 'Africa/Lagos');
+        const uptime = formatUptime(Date.now() - startTime);
+        const platform = detectPlatform();
+        const usedMem = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
+        const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+
+        const categorized = {};
         for (const cmd of allCommands) {
-            const cat = (cmd.category || 'General').toUpperCase();
-            if (!grouped[cat]) grouped[cat] = [];
-            if (!grouped[cat].find(c => c.name === cmd.name)) {
-                grouped[cat].push(cmd);
-            }
+            const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
+            if (!categorized[category]) categorized[category] = [];
+            categorized[category].push(cmd);
         }
 
-        let text = `*◇ FLASH-MD V2 ◇*\n\n`;
+        let text = `*◇ FLASH-MD V2 MENU ◇*\n\n`;
         text += `╭──── System Info ────◆\n`;
         text += `│ *Platform:* ${platform}\n`;
-        text += `│ *RAM:* ${usedMem.toFixed(2)} / ${totalMem.toFixed(2)} GB\n`;
+        text += `│ *RAM:* ${usedMem}/${totalMem} GB\n`;
         text += `│ *Time:* ${time.format('HH:mm:ss')}\n`;
         text += `│ *Date:* ${time.format('DD/MM/YYYY')}\n`;
         text += `│ *Uptime:* ${uptime}\n`;
         text += `╰────────────────────◆\n\n`;
 
         let counter = 1;
-        const categories = Object.keys(grouped).sort();
-
-        for (const cat of categories) {
-            text += `*╭──❒ ${applyStyle(cat, 10)} ❒───⊷*\n`;
+        const sortedCategories = Object.keys(categorized).sort();
+        for (const category of sortedCategories) {
+            text += `*╭──❒ ${applyStyle(category, 10)} ❒───⊷*\n`;
             text += `│╭────────────\n`;
-            grouped[cat].sort((a, b) => a.name.localeCompare(b.name)).forEach(cmd => {
+            const sortedCommands = categorized[category].sort((a, b) => a.name.localeCompare(b.name));
+            for (const cmd of sortedCommands) {
                 text += `││ ${counter++}. ${applyStyle(cmd.name, 10)}\n`;
-            });
+            }
             text += `│╰────────────\n`;
             text += `╰══════════════⊷\n\n`;
         }
 
-        const adInfo = {
-            externalAdReply: {
-                title: `FLASH-MD MENU`,
-                body: `Explore all available commands.`,
-                mediaType: 1,
-                thumbnailUrl: 'https://whatsapp.com/channel/0029VaTbb3p84Om9LRX1jg0P',
-                sourceUrl: 'https://github.com/franceking1/Flash-Md-V2',
-                showAdAttribution: true,
-                previewType: 0,
-                newsletterJid: '120363238139244263@newsletter',
-                newsletterName: "FLASH-MD V2 Menu"
-            }
-        };
-
-        await king.sendMessage(fromJid, {
-            text,
-            contextInfo: adInfo
-        }, { quoted: msg });
+        try {
+            await king.sendMessage(fromJid, {
+                text,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+        } catch (err) {
+            console.error('Error in styled menu:', err);
+            await king.sendMessage(fromJid, {
+                text: '❌ Error displaying the command menu.'
+            });
+        }
     }
 };
