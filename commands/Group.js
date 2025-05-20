@@ -39,6 +39,75 @@ module.exports = [
         }
     },
 {
+        name: 'promote',
+        aliases: [],
+        description: 'Promotes a tagged member to admin.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
+            const target = quoted || mentioned;
+
+            if (!target) {
+                return king.sendMessage(fromJid, {
+                    text: '⚠️ Tag or reply to the user you want to promote.'
+                }, { quoted: msg });
+            }
+
+            try {
+                await king.groupParticipantsUpdate(fromJid, [target], 'promote');
+                await king.sendMessage(fromJid, {
+                    text: `✅ @${target.split('@')[0]} is now an admin.`,
+                    mentions: [target]
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to promote user.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'demote',
+        aliases: [],
+        description: 'Demotes a tagged admin to a regular member.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+            const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
+            const target = quoted || mentioned;
+
+            if (!target) {
+                return king.sendMessage(fromJid, {
+                    text: '⚠️ Tag or reply to the admin you want to demote.'
+                }, { quoted: msg });
+            }
+
+            try {
+                await king.groupParticipantsUpdate(fromJid, [target], 'demote');
+                await king.sendMessage(fromJid, {
+                    text: `🛑 @${target.split('@')[0]} has been demoted from admin.`,
+                    mentions: [target]
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to demote user.'
+                }, { quoted: msg });
+            }
+        }
+    }, 
+    
+{
         name: 'approve',
         aliases: ['approve-all', 'accept'],
         description: 'Approve all pending join requests.',
