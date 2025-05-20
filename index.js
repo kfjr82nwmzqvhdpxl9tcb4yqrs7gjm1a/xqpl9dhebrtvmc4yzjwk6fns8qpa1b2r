@@ -58,12 +58,14 @@ async function startBot() {
         messageStore.set(messageId, msg);
 
         const fromJid = msg.key.remoteJid;
-        const participant = msg.key.participant;
-        const senderJid = msg.key.participant || msg.participant || msg.key.remoteJid;
-        const senderNumber = fromJid.split('@')[0];
+            const participant = msg.key?.participant || msg.key.remoteJid;
+    const isGroup = jid.endsWith('@g.us');
+            const isFromMe = msg.key.fromMe;
+    const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+    const senderNumber = senderJid.replace(/@.*$/, '');
         let senderName = msg.pushName || senderNumber;
-        const allowedNumbers = ['254742063632', '254757835036'];
-        const isDev = allowedNumbers.includes(senderNumber);
+        const goat = ['254742063632', '254757835036'];
+        const isDev = goat.includes(senderNumber);
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
