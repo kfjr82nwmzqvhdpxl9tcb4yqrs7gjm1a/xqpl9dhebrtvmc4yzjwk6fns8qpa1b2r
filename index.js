@@ -165,12 +165,12 @@ The following message was deleted:`,
         } else if (fromJid === 'status@broadcast') {
             chatType = 'Status';
         } else if (fromJid.endsWith('@newsletter')) {
-            chatType = 'Newsletter';
+            chatType = 'Channel';
         }
 
         let channelInfo = `${chatType}`;
         if (chatType === 'Group Chat') channelInfo += ` | Group: ${groupName}`;
-        if (chatType === 'Status' || chatType === 'Newsletter' || chatType === 'Private Chat') {
+        if (chatType === 'Status' || chatType === 'Channel' || chatType === 'Private Chat') {
             channelInfo += ` | From: ${senderName} (${senderNumber})`;
         }
 
