@@ -64,7 +64,7 @@ async function startBot() {
     const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
     const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0]; 
         let senderName = msg.pushName || senderNumber;
-        const Myself = await king.decodeJid(king.user.id);
+        const Myself = king.user.id;
         const groupMetadata = await king.groupMetadata(msg.key.remoteJid);
                 const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
                 const isAdmin = groupAdmins.includes(senderJid);
