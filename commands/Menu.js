@@ -13,8 +13,7 @@ function detectPlatform() {
     return 'Unknown (Linux)';
 }
 
-const __dirname = path.dirname(require.resolve('.'));
-const commandsPath = path.resolve(__dirname);
+const commandsPath = __dirname;
 const startTime = Date.now();
 
 const styles = {
