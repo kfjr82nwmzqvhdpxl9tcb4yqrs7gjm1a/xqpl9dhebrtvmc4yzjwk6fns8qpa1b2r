@@ -39,6 +39,77 @@ module.exports = [
         }
     },
 {
+        name: 'approve',
+        aliases: ['approve-all', 'accept'],
+        description: 'Approve all pending join requests.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '☑️',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+
+            try {
+                const responseList = await king.groupRequestParticipantsList(fromJid);
+                if (responseList.length === 0) {
+                    return king.sendMessage(fromJid, {
+                        text: '📭 No join requests to approve.'
+                    }, { quoted: msg });
+                }
+
+                for (const p of responseList) {
+                    await king.groupRequestParticipantsUpdate(fromJid, [p.jid], 'approve');
+                }
+
+                await king.sendMessage(fromJid, {
+                    text: '✅ All join requests have been approved.'
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to approve requests.'
+                }, { quoted: msg });
+            }
+        }
+    },
+    {
+        name: 'reject',
+        aliases: ['rejectall', 'rej', 'reject-all'],
+        description: 'Reject all pending join requests.',
+        category: 'Group',
+        groupOnly: true,
+        adminOnly: true,
+        botAdminOnly: true,
+        reaction: '👻',
+
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
+
+            try {
+                const responseList = await king.groupRequestParticipantsList(fromJid);
+                if (responseList.length === 0) {
+                    return king.sendMessage(fromJid, {
+                        text: '📭 No join requests to reject.'
+                    }, { quoted: msg });
+                }
+
+                for (const p of responseList) {
+                    await king.groupRequestParticipantsUpdate(fromJid, [p.jid], 'reject');
+                }
+
+                await king.sendMessage(fromJid, {
+                    text: '🚫 All join requests have been rejected.'
+                }, { quoted: msg });
+            } catch {
+                await king.sendMessage(fromJid, {
+                    text: '❌ Failed to reject requests.'
+                }, { quoted: msg });
+            }
+        }
+    }, 
+    
+{
         name: 'disap7',
         description: 'Enable disappearing messages for 7 days.',
         category: 'Group',
