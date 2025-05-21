@@ -1,0 +1,39 @@
+{
+  "name": "flash-md-whatsapp-bot",
+  "description": "A WhatsApp bot powered by Baileys.",
+  "repository": "https://github.com/franceking1/FLASH-MD-V2",
+  "keywords": ["node", "whatsapp", "baileys", "bot"],
+  "env": {
+    "SESSION": {
+      "description": "Flash md session string",
+      "required": true
+    },
+    "AUTO_READ_STATUS": {
+      "description": "Enable auto view of status updates (on/off)",
+      "value": "off"
+    },
+    "AUTO_LIKE": {
+      "description": "Enable auto-like on statuses (on/off)",
+      "value": "off"
+    },
+    "AUTO_READ_DM": {
+      "description": "Enable auto-reading of direct messages (on/off)",
+      "value": "off"
+    }
+  },
+  "scripts": {
+    "start": "node index"
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
