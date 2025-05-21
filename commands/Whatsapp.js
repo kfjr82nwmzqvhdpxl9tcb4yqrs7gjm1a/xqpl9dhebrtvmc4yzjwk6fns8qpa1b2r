@@ -344,15 +344,15 @@ module.exports = [
     aliases: ["bizp"],
     description: 'Fetches business description and category.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         const targetJid = args[0] ? `${args[0].replace(/[^0-9]/g, '')}@s.whatsapp.net` : jid;
 
         try {
             const profile = await king.getBusinessProfile(targetJid);
             const text = `Business Description: ${profile.description || 'N/A'}\nCategory: ${profile.category || 'N/A'}`;
-            await king.sendMessage(jid, { text }, { quoted: msg });
+            await king.sendMessage(fromJid, { text }, { quoted: msg });
         } catch {
-            await king.sendMessage(jid, { text: 'Failed to fetch business profile.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to fetch business profile.' }, { quoted: msg });
         }
     }
   },
@@ -361,16 +361,15 @@ module.exports = [
     aliases: [],
     description: 'Removes your profile picture.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
+    execute: async (king, msg, args, fromJid) => {
         if (!isDev) {
-            return await king.sendMessage(jid, { text: "This command is for my owner only!" }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: "This command is for my owner only!" }, { quoted: msg });
         }
         try {
-            await king.removeProfilePicture(jid);
-            await king.sendMessage(jid, { text: 'Profile picture removed.' }, { quoted: msg });
+            await king.removeProfilePicture(fromJid);
+            await king.sendMessage(fromJid, { text: 'Profile picture removed.' }, { quoted: msg });
         } catch (err) {
-            await king.sendMessage(jid, { text: 'Failed to remove profile picture.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to remove profile picture.' }, { quoted: msg });
         }
     }
   }, 
@@ -379,11 +378,11 @@ module.exports = [
     aliases: [],
     description: 'Saves and resends the replied media message.',
     category: 'User',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
         if (!quoted) {
-            return king.sendMessage(jid, { text: 'Mention the message you want to save.' }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: 'Mention the message you want to save.' }, { quoted: msg });
         }
 
         let forwardMsg;
@@ -421,10 +420,10 @@ module.exports = [
                 const botJid = king.user?.id;
                 await king.sendMessage(botJid, forwardMsg);
             } else {
-                await king.sendMessage(jid, { text: 'Unsupported or empty message.' }, { quoted: msg });
+                await king.sendMessage(fromJid, { text: 'Unsupported or empty message.' }, { quoted: msg });
             }
         } catch (error) {
-            await king.sendMessage(jid, { text: 'Failed to save or resend the message.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to save or resend the message.' }, { quoted: msg });
         }
     }
   },
@@ -433,19 +432,18 @@ module.exports = [
     aliases: [],
     description: 'Archives the current chat.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
-        if (!isDev) {
-            return await king.sendMessage(jid, { text: "This command is for my owner only!" }, { quoted: msg });
+    execute: async (king, msg, args, fromJid) => {
+         if (!isDev) {
+            return await king.sendMessage(fromJid, { text: "This command is for my owner only!" }, { quoted: msg });
         }
 
         try {
             const lastMsgInChat = msg;
             await king.chatModify({ archive: true, lastMessages: [lastMsgInChat] }, jid);
-            await king.sendMessage(jid, { text: 'Chat has been archived successfully.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Chat has been archived successfully.' }, { quoted: msg });
         } catch (error) {
             console.error('Error archiving chat:', error);
-            await king.sendMessage(jid, { text: 'There was an error while archiving the chat. Please try again.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'There was an error while archiving the chat. Please try again.' }, { quoted: msg });
         }
     }
   }, 
@@ -454,7 +452,7 @@ module.exports = [
     aliases: ['setdp'],
     description: 'Sets bot profile picture from a quoted image.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const senderJid = msg.key.participant || msg.key.remoteJid;
       const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
 
@@ -466,7 +464,7 @@ module.exports = [
 
       const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       if (!quotedMsg?.imageMessage) {
-        return await king.sendMessage(jid, {
+        return await king.sendMessage(fromJid, {
           text: 'Please reply to an image to set as DP.'
         }, { quoted: msg });
       }
@@ -474,10 +472,10 @@ module.exports = [
       try {
         const buffer = await downloadMediaMessage({ message: quotedMsg }, 'buffer');
         await king.updateProfilePicture(king.user.id, buffer);
-        await king.sendMessage(jid, { text: 'Profile picture updated.' }, { quoted: msg });
+        await king.sendMessage(fromJid, { text: 'Profile picture updated.' }, { quoted: msg });
       } catch (err) {
         console.error(err);
-        await king.sendMessage(jid, { text: 'Failed to update profile picture.' }, { quoted: msg });
+        await king.sendMessage(fromJid, { text: 'Failed to update profile picture.' }, { quoted: msg });
       }
     }
   },
@@ -486,7 +484,7 @@ module.exports = [
     aliases: [],
     description: 'Reveals view-once images, videos or audios.',
     category: 'User',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       if (!quoted) return;
 
@@ -516,7 +514,7 @@ module.exports = [
         }
 
         if (sendMsg) {
-          await king.sendMessage(jid, sendMsg, { quoted: msg });
+          await king.sendMessage(fromJid, sendMsg, { quoted: msg });
         }
       } catch (err) {
         console.error('vv command error:', err);
@@ -528,7 +526,7 @@ module.exports = [
     aliases: [],
     description: 'Sends the view once media to the bot user ID.',
     category: 'User',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
       if (!quoted) return;
@@ -576,12 +574,12 @@ module.exports = [
     aliases: [],
     description: 'Displays the full raw quoted message using Baileys structure.',
     category: 'User',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const context = msg.message?.extendedTextMessage?.contextInfo;
       const quoted = context?.quotedMessage;
 
       if (!quoted) {
-        return king.sendMessage(jid, { text: 'Please reply to a message to view its raw details.' }, { quoted: msg });
+        return king.sendMessage(fromJid, { text: 'Please reply to a message to view its raw details.' }, { quoted: msg });
       }
 
       try {
@@ -589,12 +587,12 @@ module.exports = [
         const parts = json.match(/[\s\S]{1,3500}/g) || [];
 
         for (const part of parts) {
-          await king.sendMessage(jid, {
+          await king.sendMessage(fromJid, {
             text: `*FLASH-MD Message Details:*\n\`\`\`\n${part}\n\`\`\``
           }, { quoted: msg });
         }
       } catch (error) {
-        await king.sendMessage(jid, { text: 'Failed to read quoted message.' }, { quoted: msg });
+        await king.sendMessage(fromJid, { text: 'Failed to read quoted message.' }, { quoted: msg });
       }
     }
   },
