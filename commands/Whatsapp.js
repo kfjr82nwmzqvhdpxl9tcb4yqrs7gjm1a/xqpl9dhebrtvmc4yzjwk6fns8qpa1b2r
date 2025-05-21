@@ -1,6 +1,6 @@
 const { downloadContentFromMessage, downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { prefix } = require('../config');
-const DEVS = ['254742063632', '254757835036'];
+const isDev = ['254742063632', '254757835036'];
 
 async function getBuffer(message, type) {
     const stream = await downloadContentFromMessage(message, type);
@@ -14,10 +14,10 @@ module.exports = [
     aliases: [],
     description: 'Displays your current privacy settings.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
+    execute: async (king, msg, args, fromJid) => {
+       // const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
 
-        if (!isDev) return king.sendMessage(jid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
 
         try {
             const {
@@ -45,13 +45,13 @@ module.exports = [
                 'https://telegra.ph/file/b34645ca1e3a34f1b3978.jpg'
             );
 
-            await king.sendMessage(jid, {
+            await king.sendMessage(fromJid, {
                 image: { url: avatar },
                 caption
             }, { quoted: msg });
 
         } catch (err) {
-            await king.sendMessage(jid, { text: 'Failed to fetch privacy settings.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to fetch privacy settings.' }, { quoted: msg });
         }
     }
   },
