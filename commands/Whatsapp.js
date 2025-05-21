@@ -604,7 +604,7 @@ module.exports = [
     description: 'Shows the list of blocked users.',
     category: 'Whatsapp',
 
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         if (!isDev) {
             return await king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
         }
@@ -612,7 +612,7 @@ module.exports = [
         try {
             const blockedJids = await king.fetchBlocklist();
             if (!blockedJids || blockedJids.length === 0) {
-                return await king.sendMessage(jid, { text: "Your block list is empty." }, { quoted: msg });
+                return await king.sendMessage(fromJid, { text: "Your block list is empty." }, { quoted: msg });
             }
 
             const formattedList = blockedJids.map((b, i) => `${i + 1}. ${b.replace('@s.whatsapp.net', '')}`).join('\n');
