@@ -15,7 +15,7 @@ module.exports = [
     description: 'Displays your current privacy settings.',
     category: 'Whatsapp',
     execute: async (king, msg, args, fromJid) => {
-       // const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
+       
 
         if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
 
@@ -59,13 +59,13 @@ module.exports = [
     name: 'pin',
     description: 'Pin a chat.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         try {
             await king.chatModify({ pin: true }, jid);
-            await king.sendMessage(jid, { text: 'Chat has been pinned.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Chat has been pinned.' }, { quoted: msg });
         } catch (err) {
             console.error('Pin error:', err);
-            await king.sendMessage(jid, { text: 'Failed to pin the chat.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to pin the chat.' }, { quoted: msg });
         }
     }
   },
@@ -73,13 +73,13 @@ module.exports = [
     name: 'unpin',
     description: 'Unpin a chat.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         try {
             await king.chatModify({ pin: false }, jid);
-            await king.sendMessage(jid, { text: 'Chat has been unpinned.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Chat has been unpinned.' }, { quoted: msg });
         } catch (err) {
             console.error('Unpin error:', err);
-            await king.sendMessage(jid, { text: 'Failed to unpin the chat.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to unpin the chat.' }, { quoted: msg });
         }
     }
   },
@@ -87,12 +87,12 @@ module.exports = [
     name: 'star',
     description: 'Star a quoted message.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
         const fromMe = msg.message?.extendedTextMessage?.contextInfo?.participant === king.user.id;
 
         if (!quoted) {
-            await king.sendMessage(jid, { text: 'Please reply to the message you want to star.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Please reply to the message you want to star.' }, { quoted: msg });
             return;
         }
 
@@ -104,10 +104,10 @@ module.exports = [
                 }
             }, jid);
 
-            await king.sendMessage(jid, { text: 'Message has been starred.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Message has been starred.' }, { quoted: msg });
         } catch (err) {
             console.error('Star error:', err);
-            await king.sendMessage(jid, { text: 'Failed to star the message.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to star the message.' }, { quoted: msg });
         }
     }
   },
@@ -115,12 +115,12 @@ module.exports = [
     name: 'unstar',
     description: 'Unstar a quoted message.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
         const fromMe = msg.message?.extendedTextMessage?.contextInfo?.participant === king.user.id;
 
         if (!quoted) {
-            await king.sendMessage(jid, { text: 'Please reply to the message you want to unstar.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Please reply to the message you want to unstar.' }, { quoted: msg });
             return;
         }
 
@@ -132,10 +132,10 @@ module.exports = [
                 }
             }, jid);
 
-            await king.sendMessage(jid, { text: 'Message has been unstarred.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Message has been unstarred.' }, { quoted: msg });
         } catch (err) {
             console.error('Unstar error:', err);
-            await king.sendMessage(jid, { text: 'Failed to unstar the message.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to unstar the message.' }, { quoted: msg });
         }
     }
   }, 
@@ -144,10 +144,10 @@ module.exports = [
     aliases: [],
     description: 'Updates your profile picture privacy setting.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
+    execute: async (king, msg, args, fromJid) => {
+        
 
-        if (!isDev) return king.sendMessage(jid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
 
         const options = {
             all: 'Everyone can see your profile photo',
@@ -162,14 +162,14 @@ module.exports = [
             const help = `*Choose a profile picture privacy setting:*\n\n` +
                 Object.entries(options).map(([k, v]) => `- *${k}*: ${v}`).join('\n') +
                 `\n\n_Example:_ *mydp contacts*`;
-            return king.sendMessage(jid, { text: help }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: help }, { quoted: msg });
         }
 
         try {
             await king.updateProfilePicturePrivacy(choice);
-            await king.sendMessage(jid, { text: `Profile picture privacy updated to *${choice}*.` }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: `Profile picture privacy updated to *${choice}*.` }, { quoted: msg });
         } catch {
-            await king.sendMessage(jid, { text: 'Failed to update profile picture privacy.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to update profile picture privacy.' }, { quoted: msg });
         }
     }
   },
@@ -178,10 +178,10 @@ module.exports = [
     aliases: [],
     description: 'Updates your status privacy setting.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
+    execute: async (king, msg, args, fromJid) => {
+        
 
-        if (!isDev) return king.sendMessage(jid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
 
         const options = {
             all: 'Everyone can see your status updates',
@@ -196,14 +196,14 @@ module.exports = [
             const help = `*Choose a status privacy setting:*\n\n` +
                 Object.entries(options).map(([k, v]) => `- *${k}*: ${v}`).join('\n') +
                 `\n\n_Example:_ *mystatus contact_blacklist*`;
-            return king.sendMessage(jid, { text: help }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: help }, { quoted: msg });
         }
 
         try {
             await king.updateStatusPrivacy(choice);
-            await king.sendMessage(jid, { text: `Status privacy updated to *${choice}*.` }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: `Status privacy updated to *${choice}*.` }, { quoted: msg });
         } catch {
-            await king.sendMessage(jid, { text: 'Failed to update status privacy.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to update status privacy.' }, { quoted: msg });
         }
     }
   },
@@ -212,10 +212,8 @@ module.exports = [
     aliases: [],
     description: 'Updates who can add you to groups.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
-
-        if (!isDev) return king.sendMessage(jid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+    execute: async (king, msg, args, fromJid) => {
+        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
 
         const options = {
             all: 'Everyone can add you to groups',
@@ -230,14 +228,14 @@ module.exports = [
             const help = `*Choose a group add privacy setting:*\n\n` +
                 Object.entries(options).map(([k, v]) => `- *${k}*: ${v}`).join('\n') +
                 `\n\n_Example:_ *groupadd contacts*`;
-            return king.sendMessage(jid, { text: help }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: help }, { quoted: msg });
         }
 
         try {
             await king.updateGroupsAddPrivacy(choice);
-            await king.sendMessage(jid, { text: `Group add privacy updated to *${choice}*.` }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: `Group add privacy updated to *${choice}*.` }, { quoted: msg });
         } catch {
-            await king.sendMessage(jid, { text: 'Failed to update group add privacy.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to update group add privacy.' }, { quoted: msg });
         }
     }
   }, 
@@ -246,10 +244,9 @@ module.exports = [
     aliases: [],
     description: 'Updates your last seen privacy settings.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
+    execute: async (king, msg, args, fromJid) => {
         if (!isDev) {
-            return await king.sendMessage(jid, { text: "Only Owners can use this command." }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
         }
 
         const availablePrivacies = {
@@ -267,17 +264,17 @@ module.exports = [
                 helpText += `- *${key}*: ${desc}\n`;
             }
             helpText += `\n_Example:_ *lastseen contacts*`;
-            return await king.sendMessage(jid, { text: helpText }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: helpText }, { quoted: msg });
         }
 
         try {
             await king.updateLastSeenPrivacy(priv);
-            await king.sendMessage(jid, {
+            await king.sendMessage(fromJid, {
                 text: `Last seen privacy updated to *${priv}*.\n${availablePrivacies[priv]}`
             }, { quoted: msg });
         } catch (error) {
             console.error('Failed to update last seen:', error);
-            await king.sendMessage(jid, {
+            await king.sendMessage(fromJid, {
                 text: 'An error occurred while updating last seen settings.'
             }, { quoted: msg });
         }
@@ -288,10 +285,8 @@ module.exports = [
     aliases: [],
     description: 'Updates your online privacy setting.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
-
-        if (!isDev) return king.sendMessage(jid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+    execute: async (king, msg, args, fromJid) => {
+        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
 
         const options = {
             all: "Everyone can see when you're online",
@@ -304,30 +299,30 @@ module.exports = [
             const help = `*Choose an online privacy setting:*\n\n` +
                 Object.entries(options).map(([k, v]) => `- *${k}*: ${v}`).join('\n') +
                 `\n\n_Example:_ *myonline match_last_seen*`;
-            return king.sendMessage(jid, { text: help }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: help }, { quoted: msg });
         }
 
         try {
             await king.updateOnlinePrivacy(choice);
-            await king.sendMessage(jid, { text: `Online privacy updated to *${choice}*.` }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: `Online privacy updated to *${choice}*.` }, { quoted: msg });
         } catch (err) {
-            await king.sendMessage(jid, { text: 'Failed to update online privacy.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'Failed to update online privacy.' }, { quoted: msg });
         }
     }
   }, 
 
   {
-    name: 'checkid',
-    aliases: ["onwa", "checkno"],
+    name: 'onwa',
+    aliases: ["checkid", "checkno"],
     description: 'Checks if a WhatsApp ID exists.',
     category: 'Whatsapp',
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         const rawNumber = args[0];
-        if (!rawNumber) return await king.sendMessage(jid, { text: 'Please provide a valid number.' }, { quoted: msg });
+        if (!rawNumber) return await king.sendMessage(fromJid, { text: 'Please provide a valid number.' }, { quoted: msg });
 
         const number = rawNumber.replace(/[^\d]/g, '');
         if (number.length < 10) {
-            return await king.sendMessage(jid, { text: 'Please provide a valid phone number with country code.' }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: 'Please provide a valid phone number with country code.' }, { quoted: msg });
         }
 
         const waJid = `${number}@s.whatsapp.net`;
@@ -337,9 +332,9 @@ module.exports = [
             const response = result?.exists
                 ? `${rawNumber} exists on WhatsApp!`
                 : `${rawNumber} does not exist on WhatsApp.`;
-            await king.sendMessage(jid, { text: response }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: response }, { quoted: msg });
         } catch (error) {
-            await king.sendMessage(jid, { text: 'An error occurred while checking the number.' }, { quoted: msg });
+            await king.sendMessage(fromJid, { text: 'An error occurred while checking the number.' }, { quoted: msg });
             console.error('checkIdCommand error:', error);
         }
     }
@@ -610,9 +605,8 @@ module.exports = [
     category: 'Whatsapp',
 
     execute: async (king, msg, args, jid) => {
-        const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
         if (!isDev) {
-            return await king.sendMessage(jid, { text: "Only Owners can use this command." }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
         }
 
         try {
@@ -623,13 +617,13 @@ module.exports = [
 
             const formattedList = blockedJids.map((b, i) => `${i + 1}. ${b.replace('@s.whatsapp.net', '')}`).join('\n');
 
-            await king.sendMessage(jid, {
+            await king.sendMessage(fromJid, {
                 text: `*Blocked Contacts:*\n\n${formattedList}`
             }, { quoted: msg });
 
         } catch (error) {
             console.error('Error fetching block list:', error);
-            await king.sendMessage(jid, {
+            await king.sendMessage(fromJid, {
                 text: 'An error occurred while retrieving the block list.'
             }, { quoted: msg });
         }
@@ -641,16 +635,16 @@ module.exports = [
     description: 'Save a contact from a replied message with a custom name.',
     category: 'WhatsApp',
 
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         const quotedContext = msg.message?.extendedTextMessage?.contextInfo;
         const quotedSender = quotedContext?.participant || quotedContext?.remoteJid;
 
         if (!quotedSender) {
-            return await king.sendMessage(jid, { text: 'Reply to a user\'s message to save their number.' }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: 'Reply to a user\'s message to save their number.' }, { quoted: msg });
         }
 
         if (!args[0]) {
-            return await king.sendMessage(jid, { text: 'Please provide a name for the contact.' }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: 'Please provide a name for the contact.' }, { quoted: msg });
         }
 
         const name = args.join(' ');
@@ -664,7 +658,7 @@ module.exports = [
             `END:VCARD`;
 
         await king.sendMessage(
-            jid,
+            fromJid,
             {
                 contacts: {
                     displayName: name,
@@ -681,18 +675,18 @@ module.exports = [
     description: 'Returns Google Maps link from a replied location message.',
     category: 'WhatsApp',
 
-    execute: async (king, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         const locMsg = quoted?.locationMessage;
 
         if (!locMsg) {
-            return await king.sendMessage(jid, { text: 'Reply to a location message to get the map link.' }, { quoted: msg });
+            return await king.sendMessage(fromJid, { text: 'Reply to a location message to get the map link.' }, { quoted: msg });
         }
 
         const { degreesLatitude, degreesLongitude } = locMsg;
         const mapUrl = `https://maps.google.com/?q=${degreesLatitude},${degreesLongitude}`;
 
-        await king.sendMessage(jid, {
+        await king.sendMessage(fromJid, {
             text: `Live Location: ${mapUrl}`,
             previewType: 0,
             contextInfo: { isForwarded: true }
