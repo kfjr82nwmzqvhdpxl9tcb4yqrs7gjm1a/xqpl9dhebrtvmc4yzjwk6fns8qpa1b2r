@@ -27,10 +27,19 @@ const formatUptime = ms => {
     const day = Math.floor(ms / (1000 * 60 * 60 * 24));
 
     const parts = [];
-    if (day) parts.push(`${day} ${day > 1 ? 'days' : 'day'}`);
-    if (hr) parts.push(`${hr} ${hr > 1 ? 'h' : 'hour'}`);
-    if (min) parts.push(`${min} ${min > 1 ? 'm' : 'minute'}`);
-    if (sec || parts.length === 0) parts.push(`${sec} s`);
+
+    if (day === 1) parts.push(`1 day`);
+    else if (day > 1) parts.push(`${day} days`);
+
+    if (hr === 1) parts.push(`1 hour`);
+    else if (hr > 1) parts.push(`${hr} h`);
+
+    if (min === 1) parts.push(`1 minute`);
+    else if (min > 1) parts.push(`${min} m`);
+
+    if (sec === 1) parts.push(`1 second`);
+    else if (sec > 1 || parts.length === 0) parts.push(`${sec} s`);
+
     return parts.join(', ');
 };
 
@@ -48,7 +57,6 @@ module.exports = [
         name: 'menu',
         aliases: ['help', 'commands'],
         description: 'Displays categorized list of commands',
-        category: 'System',
         execute: async (king, msg, args, allCommands) => {
             const fromJid = msg.key.remoteJid;
             const time = moment().tz(config.timezone || 'Africa/Lagos');
@@ -78,7 +86,7 @@ module.exports = [
             for (const category of sortedCategories) {
                 text += `*╭──❒ ${applyStyle(category, 10)} ❒───⊷*\n`;
                 text += `│╭────────────\n`;
-                const sortedCommands = categorized[category].filter(c => c.name).sort((a, b) => a.name.localeCompare(b.name));
+                const sortedCommands = categorized[category].sort((a, b) => a.name.localeCompare(b.name));
                 for (const cmd of sortedCommands) {
                     text += `││ ${counter++}. ${applyStyle(cmd.name, 10)}\n`;
                 }
@@ -87,63 +95,63 @@ module.exports = [
             }
 
             await king.sendMessage(fromJid, {
-                text,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
-                }
-            });
+    text,
+    contextInfo: {
+        forwardingScore: 1,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+        }
+    }
+});
         }
     },
     {
-        name: 'help',
-        aliases: [],
-        description: 'Provides help and guide for new users',
-        category: 'System',
-        execute: async (king, msg, args, allCommands) => {
-            const fromJid = msg.key.remoteJid;
-            let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
-            text += `To use the bot:\n`;
-            text += `• Start commands with the prefix\n`;
-            text += `• Use .menu to view all available commands\n`;
-            text += `*COMMANDS LIST:*\n\n`;
+    name: 'help',
+    aliases: [],
+    description: 'Provides help and guide for new users',
+    execute: async (sock, msg, args, allCommands) => {
+        const fromJid = msg.key.remoteJid;
 
-            const categorized = {};
-            for (const cmd of allCommands) {
-                const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
-                if (!categorized[category]) categorized[category] = [];
-                categorized[category].push(cmd);
-            }
+        let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
+        text += `To use the bot:\n`;
+        text += `• Start commands with the prefix\n`;
+        text += `• Use .menu to view all available commands\n`;
+        text += `*COMMANDS LIST:*\n\n`;
 
-            for (const [cat, cmds] of Object.entries(categorized)) {
-                text += `📂 *${cat}*\n`;
-                for (const cmd of cmds) {
-                    text += `• *${cmd.name}* - ${cmd.description}`;
-                    if (cmd.aliases?.length) {
-                        text += ` (Aliases: ${cmd.aliases.join(', ')})`;
-                    }
-                    text += `\n`;
+        const categorized = {};
+        for (const cmd of allCommands) {
+            const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
+            if (!categorized[category]) categorized[category] = [];
+            categorized[category].push(cmd);
+        }
+
+        for (const [cat, cmds] of Object.entries(categorized)) {
+            text += `📂 *${cat}*\n`;
+            for (const cmd of cmds) {
+                text += `• *${cmd.name}* - ${cmd.description}`;
+                if (cmd.aliases && cmd.aliases.length > 0) {
+                    text += ` (Aliases: ${cmd.aliases.join(', ')})`;
                 }
                 text += `\n`;
             }
-
-            await king.sendMessage(fromJid, {
-                text,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
-                }
-            });
+            text += `\n`;
         }
+
+        await sock.sendMessage(fromJid, {
+            text,
+            contextInfo: {
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363238139244263@newsletter',
+                    newsletterName: 'FLASH-MD',
+                    serverMessageId: -1
+                }
+            }
+        });
     }
+}
 ];
