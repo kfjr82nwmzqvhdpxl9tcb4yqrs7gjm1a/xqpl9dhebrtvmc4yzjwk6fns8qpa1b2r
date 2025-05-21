@@ -62,7 +62,7 @@ async function startBot() {
         const isGroup = fromJid.endsWith('@g.us');
         const isFromMe = msg.key.fromMe;
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0]; 
+        const senderNumber = senderJid.split("@s.whatsapp.net")[0] + " ]");
         let senderName = msg.pushName || senderNumber;
         const Myself = king.user.id;
         let groupMetadata = null;
