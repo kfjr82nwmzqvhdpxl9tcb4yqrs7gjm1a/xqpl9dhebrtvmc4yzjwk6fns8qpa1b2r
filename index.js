@@ -193,9 +193,14 @@ The following message was deleted:`,
             channelInfo += ` | From: ${senderName} (${senderNumber})`;
         }
 
-        const logBase = `
+        let logBase = `
 Message: ${messageType}
 Sender: ${senderName} (${senderNumber})`;
+
+        if (chatType === 'Group Chat' && groupName) {
+            logBase += `
+Group: ${groupName}`;
+        }
 
         console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
 
@@ -222,8 +227,8 @@ Sender: ${senderName} (${senderNumber})`;
             ? '$'
             : text.startsWith(prefix)
               ? prefix
-              : null
-if (!usedPrefix) return;
+              : null;
+        if (!usedPrefix) return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
@@ -282,4 +287,3 @@ if (!usedPrefix) return;
 }
 
 startBot();
-               
