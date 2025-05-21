@@ -6,10 +6,10 @@ const commands = [];
 
 for (const file of commandFiles) {
     const commandModule = require(path.join(__dirname, file));
-    if (Array.isArray(commandModule)) {
-        commands.push(...commandModule);
-    } else {
-        commands.push(commandModule);
+    const cmds = Array.isArray(commandModule) ? commandModule : [commandModule];
+    for (const cmd of cmds) {
+        if (!cmd.name || typeof cmd.name !== 'string') continue;
+        commands.push(cmd);
     }
 }
 
