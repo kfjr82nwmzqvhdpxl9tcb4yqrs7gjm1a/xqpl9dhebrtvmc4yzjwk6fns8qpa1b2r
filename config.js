@@ -1,11 +1,11 @@
 require('dotenv').config();
 
 module.exports = {
-    prefix: '', // Can be '', or any other single prefix
+    prefix: '',
     owners: ['254742063632'],
     MODE: 'private', 
-    AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS || 'off',
-    AUTO_LIKE: process.env.AUTO_LIKE || 'off',
-    AUTO_READ_MESSAGES: process.env.AUTO_READ_DM || 'off',
-    sessionBase64: process.env.SESSION_BASE64 || ''
+    AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS === 'on',
+    AUTO_LIKE: process.env.AUTO_LIKE === 'on',
+    AUTO_READ_MESSAGES: process.env.AUTO_READ_DM === 'on',
+    sessionBase64: process.env.SESSION || ''
 };
