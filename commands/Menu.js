@@ -25,15 +25,12 @@ const formatUptime = ms => {
     const min = Math.floor(ms / (1000 * 60)) % 60;
     const hr = Math.floor(ms / (1000 * 60 * 60)) % 24;
     const day = Math.floor(ms / (1000 * 60 * 60 * 24));
+
     const parts = [];
-    if (day === 1) parts.push(`1 day`);
-    else if (day > 1) parts.push(`${day} days`);
-    if (hr === 1) parts.push(`1 hour`);
-    else if (hr > 1) parts.push(`${hr} h`);
-    if (min === 1) parts.push(`1 minute`);
-    else if (min > 1) parts.push(`${min} m`);
-    if (sec === 1) parts.push(`1 second`);
-    else if (sec > 1 || parts.length === 0) parts.push(`${sec} s`);
+    if (day) parts.push(`${day} ${day > 1 ? 'days' : 'day'}`);
+    if (hr) parts.push(`${hr} ${hr > 1 ? 'h' : 'hour'}`);
+    if (min) parts.push(`${min} ${min > 1 ? 'm' : 'minute'}`);
+    if (sec || parts.length === 0) parts.push(`${sec} s`);
     return parts.join(', ');
 };
 
@@ -51,6 +48,7 @@ module.exports = [
         name: 'menu',
         aliases: ['help', 'commands'],
         description: 'Displays categorized list of commands',
+        category: 'System',
         execute: async (king, msg, args, allCommands) => {
             const fromJid = msg.key.remoteJid;
             const time = moment().tz(config.timezone || 'Africa/Lagos');
@@ -61,7 +59,6 @@ module.exports = [
 
             const categorized = {};
             for (const cmd of allCommands) {
-                if (!cmd.name) continue;
                 const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
                 if (!categorized[category]) categorized[category] = [];
                 categorized[category].push(cmd);
@@ -81,9 +78,7 @@ module.exports = [
             for (const category of sortedCategories) {
                 text += `*╭──❒ ${applyStyle(category, 10)} ❒───⊷*\n`;
                 text += `│╭────────────\n`;
-                const sortedCommands = categorized[category].sort((a, b) =>
-                    (a.name || '').localeCompare(b.name || '')
-                );
+                const sortedCommands = categorized[category].filter(c => c.name).sort((a, b) => a.name.localeCompare(b.name));
                 for (const cmd of sortedCommands) {
                     text += `││ ${counter++}. ${applyStyle(cmd.name, 10)}\n`;
                 }
@@ -109,9 +104,9 @@ module.exports = [
         name: 'help',
         aliases: [],
         description: 'Provides help and guide for new users',
+        category: 'System',
         execute: async (king, msg, args, allCommands) => {
             const fromJid = msg.key.remoteJid;
-
             let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
             text += `To use the bot:\n`;
             text += `• Start commands with the prefix\n`;
@@ -120,7 +115,6 @@ module.exports = [
 
             const categorized = {};
             for (const cmd of allCommands) {
-                if (!cmd.name) continue;
                 const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
                 if (!categorized[category]) categorized[category] = [];
                 categorized[category].push(cmd);
@@ -130,7 +124,7 @@ module.exports = [
                 text += `📂 *${cat}*\n`;
                 for (const cmd of cmds) {
                     text += `• *${cmd.name}* - ${cmd.description}`;
-                    if (cmd.aliases && cmd.aliases.length > 0) {
+                    if (cmd.aliases?.length) {
                         text += ` (Aliases: ${cmd.aliases.join(', ')})`;
                     }
                     text += `\n`;
