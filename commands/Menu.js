@@ -57,7 +57,7 @@ module.exports = [
         name: 'menu',
         aliases: [],
         description: 'Displays categorized list of commands',
-        execute: async (king, msg, args, msg.key.remoteJid, allCommands) => {
+        execute: async (king, msg, args, allCommands) => {
             const fromJid = msg.key.remoteJid;
             const time = moment().tz(config.timezone || 'Africa/Lagos');
             const uptime = formatUptime(Date.now() - startTime);
@@ -114,7 +114,7 @@ module.exports = [
         name: 'help',
         aliases: [],
         description: 'Provides help and guide for new users',
-        execute: async (sock, msg, args, msg.key.remoteJid, allCommands) => {
+        execute: async (sock, msg, args, allCommands) => {
             const fromJid = msg.key.remoteJid;
 
             let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
