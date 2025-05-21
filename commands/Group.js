@@ -48,7 +48,13 @@ module.exports = [
         botAdminOnly: true,
 
         execute: async (king, msg) => {
-            const jid = msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
             const tagged = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             const target = quoted || tagged;
@@ -80,7 +86,13 @@ module.exports = [
         groupOnly: true,
 
         execute: async (king, msg, args) => {
-            const jid = msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             const senderJid = msg.key.participant || msg.key.remoteJid;
             const senderNum = senderJid.replace(/@.*$/, '').split(':')[0];
 
@@ -120,7 +132,13 @@ module.exports = [
         groupOnly: true,
 
         execute: async (king, msg) => {
-            const jid = msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             const metadata = await king.groupMetadata(jid);
             const sender = msg.key.participant || msg.key.remoteJid;
 
@@ -165,6 +183,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
             const target = quoted || mentioned;
@@ -199,6 +223,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
             const target = quoted || mentioned;
@@ -236,6 +266,12 @@ module.exports = [
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
 
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
+
             try {
                 const responseList = await king.groupRequestParticipantsList(fromJid);
                 if (responseList.length === 0) {
@@ -271,6 +307,12 @@ module.exports = [
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
 
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
+
             try {
                 const responseList = await king.groupRequestParticipantsList(fromJid);
                 if (responseList.length === 0) {
@@ -305,6 +347,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             try {
                 await king.groupToggleEphemeral(fromJid, 7 * 24 * 3600);
                 await king.sendMessage(fromJid, {
@@ -328,6 +376,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             try {
                 await king.groupToggleEphemeral(fromJid, 90 * 24 * 3600);
                 await king.sendMessage(fromJid, {
@@ -351,6 +405,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             try {
                 const requests = await king.groupRequestParticipantsList(fromJid);
                 if (requests.length === 0) {
@@ -422,6 +482,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             try {
                 await king.groupToggleEphemeral(fromJid, 0);
                 await king.sendMessage(fromJid, {
@@ -445,6 +511,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             await king.sendMessage(fromJid, {
                 text: '*Enable disappearing messages*\n\nType:\n• *disap1* — 24 hours\n• *disap7* — 7 days\n• *disap90* — 90 days\n• *disap-off* — Turn off'
             }, { quoted: msg });
@@ -461,6 +533,12 @@ module.exports = [
 
         execute: async (king, msg) => {
             const fromJid = msg.key.remoteJid;
+
+            if (!fromJid.endsWith('@g.us')) {
+                return king.sendMessage(fromJid, {
+                    text: '❌ This command only works in groups.'
+                }, { quoted: msg });
+            }
             try {
                 await king.groupToggleEphemeral(fromJid, 86400);
                 await king.sendMessage(fromJid, {
