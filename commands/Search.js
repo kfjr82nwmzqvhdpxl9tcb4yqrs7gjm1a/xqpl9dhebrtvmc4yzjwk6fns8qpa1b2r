@@ -13,14 +13,11 @@ module.exports = [
     aliases: ['attp-sticker'],
     description: 'Converts text into an ATTP sticker.',
     category: 'User',
-    execute: async (sock, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const text = args.join(" ");
-      if (!text) {
-        return await sock.sendMessage(jid, { text: 'Please provide the text to convert into a sticker!' }, { quoted: msg });
-      }
+      if (!text) return await king.sendMessage(fromJid, { text: 'Please provide the text to convert into a sticker!' }, { quoted: msg });
 
-      const apiKey = "with_love_souravkl11";
-      const gifUrl = `https://raganork-api.onrender.com/api/attp?text=${encodeURIComponent(text)}&apikey=${apiKey}`;
+      const gifUrl = `https://raganork-api.onrender.com/api/attp?text=${encodeURIComponent(text)}&apikey=with_love_souravkl11`;
 
       try {
         const packname = msg.pushName || 'FLASH-MD';
@@ -35,10 +32,20 @@ module.exports = [
         });
 
         const stickerBuffer = await stickerMess.toBuffer();
-        await sock.sendMessage(jid, { sticker: stickerBuffer }, { quoted: msg, contextInfo: { forwardingScore: 1, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363238139244263@newsletter', newsletterName: 'FLASH-MD', serverMessageId: -1 } } });
-      } catch (error) {
-        console.error('Error creating sticker:', error);
-        await sock.sendMessage(jid, { text: 'Error while creating that sticker. Please try again.' }, { quoted: msg });
+        await king.sendMessage(fromJid, { sticker: stickerBuffer }, {
+          quoted: msg,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        });
+      } catch {
+        await king.sendMessage(fromJid, { text: 'Error while creating that sticker. Please try again.' }, { quoted: msg });
       }
     }
   },
@@ -47,21 +54,16 @@ module.exports = [
     aliases: ['stsearch', 'stickerfind'],
     description: 'Search and create stickers from Tenor GIFs.',
     category: 'Search',
-    execute: async (sock, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const search = args.join(' ');
-      if (!search) {
-        return await sock.sendMessage(jid, { text: 'Insert the type of stickers you want!' }, { quoted: msg });
-      }
-
-      const tenorApiKey = 'AIzaSyCyouca1_KKy4W_MG1xsPzuku5oa8W358c';
+      if (!search) return await king.sendMessage(fromJid, { text: 'Insert the type of stickers you want!' }, { quoted: msg });
 
       try {
-        const gifRes = await axios.get(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(search)}&key=${tenorApiKey}&client_key=my_project&limit=5&media_filter=gif`);
-        const gifs = gifRes.data.results;
+        const res = await axios.get(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(search)}&key=AIzaSyCyouca1_KKy4W_MG1xsPzuku5oa8W358c&client_key=my_project&limit=5&media_filter=gif`);
+        const gifs = res.data.results;
 
-        for (let i = 0; i < gifs.length; i++) {
-          const gifUrl = gifs[i].media_formats.gif.url;
-          const sticker = new Sticker(gifUrl, {
+        for (let gif of gifs) {
+          const sticker = new Sticker(gif.media_formats.gif.url, {
             pack: msg.pushName || 'FLASH-MD',
             author: 'FLASH-MD',
             type: StickerTypes.FULL,
@@ -70,11 +72,21 @@ module.exports = [
           });
 
           const buffer = await sticker.toBuffer();
-          await sock.sendMessage(jid, { sticker: buffer }, { quoted: msg, contextInfo: { forwardingScore: 1, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363238139244263@newsletter', newsletterName: 'FLASH-MD', serverMessageId: -1 } } });
+          await king.sendMessage(fromJid, { sticker: buffer }, {
+            quoted: msg,
+            contextInfo: {
+              forwardingScore: 1,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363238139244263@newsletter',
+                newsletterName: 'FLASH-MD',
+                serverMessageId: -1
+              }
+            }
+          });
         }
-      } catch (error) {
-        console.error('stickerSearchCommand error:', error);
-        await sock.sendMessage(jid, { text: 'Error searching for stickers.' }, { quoted: msg });
+      } catch {
+        await king.sendMessage(fromJid, { text: 'Error searching for stickers.' }, { quoted: msg });
       }
     }
   },
@@ -83,11 +95,9 @@ module.exports = [
     aliases: ['climate'],
     description: 'Get the current weather for a specific location.',
     category: 'Search',
-    execute: async (sock, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const location = args.join(' ');
-      if (!location) {
-        return await sock.sendMessage(jid, { text: 'Give me a location to check the weather.' }, { quoted: msg });
-      }
+      if (!location) return await king.sendMessage(fromJid, { text: 'Give me a location to check the weather.' }, { quoted: msg });
 
       try {
         const res = await axios.get(`https://api.openweathermap.org/data/2.5/weather`, {
@@ -100,10 +110,9 @@ module.exports = [
         });
 
         const data = res.data;
-
         const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
         const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString();
-        const rainVolume = data.rain ? data.rain['1h'] : 0;
+        const rain = data.rain ? data.rain['1h'] : 0;
 
         const text = `❄️ *Weather in ${data.name}, ${data.sys.country}*
 
@@ -113,17 +122,27 @@ module.exports = [
 💧 *Humidity:* ${data.main.humidity}%
 🌬️ *Wind:* ${data.wind.speed} m/s
 ☁️ *Cloudiness:* ${data.clouds.all}%
-🌧️ *Rain (last hour):* ${rainVolume} mm
+🌧️ *Rain (last hour):* ${rain} mm
 🌄 *Sunrise:* ${sunrise}
 🌅 *Sunset:* ${sunset}
 🧭 *Coordinates:* ${data.coord.lat}, ${data.coord.lon}
 
 *°Powered by FLASH-MD*`;
 
-        await sock.sendMessage(jid, { text }, { quoted: msg, contextInfo: { forwardingScore: 1, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363238139244263@newsletter', newsletterName: 'FLASH-MD', serverMessageId: -1 } } });
-      } catch (error) {
-        console.error('weatherCommand error:', error);
-        await sock.sendMessage(jid, { text: 'Failed to fetch weather data. Try again later.' }, { quoted: msg });
+        await king.sendMessage(fromJid, { text }, {
+          quoted: msg,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        });
+      } catch {
+        await king.sendMessage(fromJid, { text: 'Failed to fetch weather data.' }, { quoted: msg });
       }
     }
   },
@@ -132,34 +151,39 @@ module.exports = [
     aliases: ['ytsearch'],
     description: 'Searches YouTube videos by keyword.',
     category: 'Search',
-    execute: async (sock, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const query = args.join(' ');
-      if (!query) {
-        return await sock.sendMessage(jid, { text: 'What do you want to search for?' }, { quoted: msg });
-      }
+      if (!query) return await king.sendMessage(fromJid, { text: 'What do you want to search for?' }, { quoted: msg });
 
       try {
         const info = await yts(query);
-        const result = info.videos.slice(0, 10);
+        const videos = info.videos.slice(0, 10);
 
         let text = `*YouTube Search Results for:* _${query}_\n\n`;
-        for (let i = 0; i < result.length; i++) {
-          text += `*${i + 1}. ${result[i].title}*\n`;
-          text += `📺 Channel: ${result[i].author.name}\n`;
-          text += `⏱ Duration: ${result[i].timestamp}\n`;
-          text += `🔗 Link: ${result[i].url}\n\n`;
+        for (let i = 0; i < videos.length; i++) {
+          text += `*${i + 1}. ${videos[i].title}*\n`;
+          text += `📺 Channel: ${videos[i].author.name}\n`;
+          text += `⏱ Duration: ${videos[i].timestamp}\n`;
+          text += `🔗 Link: ${videos[i].url}\n\n`;
         }
 
-        text += '*Powered by FLASH-MD*';
-
-        await sock.sendMessage(jid, {
-          image: { url: result[0].thumbnail },
-          caption: text
-        }, { quoted: msg, contextInfo: { forwardingScore: 1, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363238139244263@newsletter', newsletterName: 'FLASH-MD', serverMessageId: -1 } } });
-
-      } catch (error) {
-        await sock.sendMessage(jid, { text: 'Error occurred while searching YouTube.' }, { quoted: msg });
-        console.error('ytsCommand error:', error);
+        await king.sendMessage(fromJid, {
+          image: { url: videos[0].thumbnail },
+          caption: text + '*Powered by FLASH-MD*'
+        }, {
+          quoted: msg,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        });
+      } catch {
+        await king.sendMessage(fromJid, { text: 'Error occurred while searching YouTube.' }, { quoted: msg });
       }
     }
   },
@@ -168,28 +192,29 @@ module.exports = [
     aliases: [],
     description: 'Downloads a YouTube video.',
     category: 'Download',
-    execute: async (sock, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const url = args[0];
-      if (!url) {
-        return await sock.sendMessage(jid, { text: 'Insert a YouTube link.' }, { quoted: msg });
-      }
+      if (!url) return await king.sendMessage(fromJid, { text: 'Insert a YouTube link.' }, { quoted: msg });
 
       try {
         const result = await fg.yta(url);
-        const videoUrl = result.dl_url;
-        const title = result.title;
-
-        if (videoUrl) {
-          await sock.sendMessage(jid, {
-            video: { url: videoUrl },
-            caption: `*🎬 Title:* ${title}\n*🔗 Source:* ${url}\n\n_Powered by FLASH-MD_`
-          }, { quoted: msg, contextInfo: { forwardingScore: 1, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363238139244263@newsletter', newsletterName: 'FLASH-MD', serverMessageId: -1 } } });
-        } else {
-          await sock.sendMessage(jid, { text: 'Failed to get video download link.' }, { quoted: msg });
-        }
-      } catch (error) {
-        await sock.sendMessage(jid, { text: 'Error downloading video.' }, { quoted: msg });
-        console.error('ytmp4Command error:', error);
+        await king.sendMessage(fromJid, {
+          video: { url: result.dl_url },
+          caption: `*🎬 Title:* ${result.title}\n*🔗 Source:* ${url}\n\n_Powered by FLASH-MD_`
+        }, {
+          quoted: msg,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        });
+      } catch {
+        await king.sendMessage(fromJid, { text: 'Error downloading video.' }, { quoted: msg });
       }
     }
   },
@@ -198,30 +223,31 @@ module.exports = [
     aliases: [],
     description: 'Downloads audio from a YouTube video.',
     category: 'Download',
-    execute: async (sock, msg, args, jid) => {
+    execute: async (king, msg, args, fromJid) => {
       const url = args[0];
-      if (!url) {
-        return await sock.sendMessage(jid, { text: 'Insert a YouTube link.' }, { quoted: msg });
-      }
+      if (!url) return await king.sendMessage(fromJid, { text: 'Insert a YouTube link.' }, { quoted: msg });
 
       try {
         const result = await fg.yta(url);
-        const audioUrl = result.dl_url;
-        const title = result.title;
-
-        if (audioUrl) {
-          await sock.sendMessage(jid, {
-            audio: { url: audioUrl },
-            mimetype: 'audio/mp4',
-            fileName: title,
-            ptt: false
-          }, { quoted: msg, contextInfo: { forwardingScore: 1, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363238139244263@newsletter', newsletterName: 'FLASH-MD', serverMessageId: -1 } } });
-        } else {
-          await sock.sendMessage(jid, { text: 'Failed to get audio download link.' }, { quoted: msg });
-        }
-      } catch (error) {
-        await sock.sendMessage(jid, { text: 'Error downloading audio.' }, { quoted: msg });
-        console.error('ytmp3Command error:', error);
+        await king.sendMessage(fromJid, {
+          audio: { url: result.dl_url },
+          mimetype: 'audio/mp4',
+          fileName: result.title,
+          ptt: false
+        }, {
+          quoted: msg,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        });
+      } catch {
+        await king.sendMessage(fromJid, { text: 'Error downloading audio.' }, { quoted: msg });
       }
     }
   }
