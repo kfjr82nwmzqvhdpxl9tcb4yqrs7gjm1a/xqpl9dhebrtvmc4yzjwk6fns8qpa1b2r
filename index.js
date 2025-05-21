@@ -244,7 +244,7 @@ try {
         }
     });
 
-    await command.execute(king, msg, args, msg.key.remoteJid);
+    await command.execute(king, msg, args,);
 } catch (err) {
     console.error('Command failed:', err);
     await king.sendMessage(fromJid, { text: 'Something went wrong.' });
