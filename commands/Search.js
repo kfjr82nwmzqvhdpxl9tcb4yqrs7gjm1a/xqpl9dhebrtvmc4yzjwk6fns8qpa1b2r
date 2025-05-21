@@ -1,11 +1,7 @@
 const axios = require('axios');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
-const gis = require('g-i-s');
 const yts = require('yt-search');
 const fg = require('api-dylux');
-const now = require('performance-now');
-
-if (!global.botStartTime) global.botStartTime = Date.now();
 
 module.exports = [
   {
@@ -32,8 +28,8 @@ module.exports = [
         });
 
         const stickerBuffer = await stickerMess.toBuffer();
-        await king.sendMessage(fromJid, { sticker: stickerBuffer }, {
-          quoted: msg,
+        await king.sendMessage(fromJid, {
+          sticker: stickerBuffer,
           contextInfo: {
             forwardingScore: 1,
             isForwarded: true,
@@ -43,9 +39,20 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        });
+        }, { quoted: msg });
       } catch {
-        await king.sendMessage(fromJid, { text: 'Error while creating that sticker. Please try again.' }, { quoted: msg });
+        await king.sendMessage(fromJid, {
+          text: 'Error while creating that sticker. Please try again.',
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        }, { quoted: msg });
       }
     }
   },
@@ -56,7 +63,18 @@ module.exports = [
     category: 'Search',
     execute: async (king, msg, args, fromJid) => {
       const search = args.join(' ');
-      if (!search) return await king.sendMessage(fromJid, { text: 'Insert the type of stickers you want!' }, { quoted: msg });
+      if (!search) return await king.sendMessage(fromJid, {
+        text: 'Insert the type of stickers you want!',
+        contextInfo: {
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+          }
+        }
+      }, { quoted: msg });
 
       try {
         const res = await axios.get(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(search)}&key=AIzaSyCyouca1_KKy4W_MG1xsPzuku5oa8W358c&client_key=my_project&limit=5&media_filter=gif`);
@@ -72,8 +90,8 @@ module.exports = [
           });
 
           const buffer = await sticker.toBuffer();
-          await king.sendMessage(fromJid, { sticker: buffer }, {
-            quoted: msg,
+          await king.sendMessage(fromJid, {
+            sticker: buffer,
             contextInfo: {
               forwardingScore: 1,
               isForwarded: true,
@@ -83,10 +101,21 @@ module.exports = [
                 serverMessageId: -1
               }
             }
-          });
+          }, { quoted: msg });
         }
       } catch {
-        await king.sendMessage(fromJid, { text: 'Error searching for stickers.' }, { quoted: msg });
+        await king.sendMessage(fromJid, {
+          text: 'Error searching for stickers.',
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        }, { quoted: msg });
       }
     }
   },
@@ -97,7 +126,18 @@ module.exports = [
     category: 'Search',
     execute: async (king, msg, args, fromJid) => {
       const location = args.join(' ');
-      if (!location) return await king.sendMessage(fromJid, { text: 'Give me a location to check the weather.' }, { quoted: msg });
+      if (!location) return await king.sendMessage(fromJid, {
+        text: 'Give me a location to check the weather.',
+        contextInfo: {
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+          }
+        }
+      }, { quoted: msg });
 
       try {
         const res = await axios.get(`https://api.openweathermap.org/data/2.5/weather`, {
@@ -129,8 +169,8 @@ module.exports = [
 
 *°Powered by FLASH-MD*`;
 
-        await king.sendMessage(fromJid, { text }, {
-          quoted: msg,
+        await king.sendMessage(fromJid, {
+          text,
           contextInfo: {
             forwardingScore: 1,
             isForwarded: true,
@@ -140,9 +180,20 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        });
+        }, { quoted: msg });
       } catch {
-        await king.sendMessage(fromJid, { text: 'Failed to fetch weather data.' }, { quoted: msg });
+        await king.sendMessage(fromJid, {
+          text: 'Failed to fetch weather data.',
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        }, { quoted: msg });
       }
     }
   },
@@ -153,7 +204,18 @@ module.exports = [
     category: 'Search',
     execute: async (king, msg, args, fromJid) => {
       const query = args.join(' ');
-      if (!query) return await king.sendMessage(fromJid, { text: 'What do you want to search for?' }, { quoted: msg });
+      if (!query) return await king.sendMessage(fromJid, {
+        text: 'What do you want to search for?',
+        contextInfo: {
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+          }
+        }
+      }, { quoted: msg });
 
       try {
         const info = await yts(query);
@@ -169,9 +231,20 @@ module.exports = [
 
         await king.sendMessage(fromJid, {
           image: { url: videos[0].thumbnail },
-          caption: text + '*Powered by FLASH-MD*'
-        }, {
-          quoted: msg,
+          caption: text + '*Powered by FLASH-MD*',
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+            }
+        }, { quoted: msg });
+      } catch {
+        await king.sendMessage(fromJid, {
+          text: 'Error occurred while searching YouTube.',
           contextInfo: {
             forwardingScore: 1,
             isForwarded: true,
@@ -181,9 +254,7 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        });
-      } catch {
-        await king.sendMessage(fromJid, { text: 'Error occurred while searching YouTube.' }, { quoted: msg });
+        }, { quoted: msg });
       }
     }
   },
@@ -194,15 +265,24 @@ module.exports = [
     category: 'Download',
     execute: async (king, msg, args, fromJid) => {
       const url = args[0];
-      if (!url) return await king.sendMessage(fromJid, { text: 'Insert a YouTube link.' }, { quoted: msg });
+      if (!url) return await king.sendMessage(fromJid, {
+        text: 'Insert a YouTube link.',
+        contextInfo: {
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+          }
+        }
+      }, { quoted: msg });
 
       try {
         const result = await fg.yta(url);
         await king.sendMessage(fromJid, {
           video: { url: result.dl_url },
-          caption: `*🎬 Title:* ${result.title}\n*🔗 Source:* ${url}\n\n_Powered by FLASH-MD_`
-        }, {
-          quoted: msg,
+          caption: `*🎬 Title:* ${result.title}\n*🔗 Source:* ${url}\n\n_Powered by FLASH-MD_`,
           contextInfo: {
             forwardingScore: 1,
             isForwarded: true,
@@ -212,9 +292,20 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        });
+        }, { quoted: msg });
       } catch {
-        await king.sendMessage(fromJid, { text: 'Error downloading video.' }, { quoted: msg });
+        await king.sendMessage(fromJid, {
+          text: 'Error downloading video.',
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        }, { quoted: msg });
       }
     }
   },
@@ -225,7 +316,18 @@ module.exports = [
     category: 'Download',
     execute: async (king, msg, args, fromJid) => {
       const url = args[0];
-      if (!url) return await king.sendMessage(fromJid, { text: 'Insert a YouTube link.' }, { quoted: msg });
+      if (!url) return await king.sendMessage(fromJid, {
+        text: 'Insert a YouTube link.',
+        contextInfo: {
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+          }
+        }
+      }, { quoted: msg });
 
       try {
         const result = await fg.yta(url);
@@ -233,9 +335,7 @@ module.exports = [
           audio: { url: result.dl_url },
           mimetype: 'audio/mp4',
           fileName: result.title,
-          ptt: false
-        }, {
-          quoted: msg,
+          ptt: false,
           contextInfo: {
             forwardingScore: 1,
             isForwarded: true,
@@ -245,9 +345,20 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        });
+        }, { quoted: msg });
       } catch {
-        await king.sendMessage(fromJid, { text: 'Error downloading audio.' }, { quoted: msg });
+        await king.sendMessage(fromJid, {
+          text: 'Error downloading audio.',
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          }
+        }, { quoted: msg });
       }
     }
   }
