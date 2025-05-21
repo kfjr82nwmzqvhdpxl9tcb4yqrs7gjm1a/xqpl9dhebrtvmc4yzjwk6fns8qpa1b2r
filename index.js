@@ -224,40 +224,31 @@ Group: ${groupName}`;
         }
 
         const usedPrefix = text.startsWith('$') && isDev
-            ? '$'
-            : text.startsWith(prefix)
-              ? prefix
-              : null;
-        if (!usedPrefix) return;
+    ? '$'
+    : text.startsWith(prefix)
+      ? prefix
+      : null;
+if (!usedPrefix) return;
 
-        const args = text.slice(usedPrefix.length).trim().split(/ +/);
-        const cmdName = args.shift().toLowerCase();
+const args = text.slice(usedPrefix.length).trim().split(/ +/);
+const cmdName = args.shift().toLowerCase();
 
-       /* const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-        if (!command) return;
-
-        try {
-         await command.execute(king, msg, args, msg.key.remoteJid); //  await command.execute(king, msg, args, allCommands);
-        } catch (err) {
-            console.error('Command failed:', err);
-            await king.sendMessage(fromJid, { text: 'Something went wrong.' });
-        }
-    });*/
-        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
 if (!command) return;
 
 try {
-    await command.execute(king, msg, args, msg.key.remoteJid);
     await king.sendMessage(fromJid, {
         react: {
             text: '🤍',
             key: msg.key
         }
     });
+
+    await command.execute(king, msg, args, msg.key.remoteJid);
 } catch (err) {
     console.error('Command failed:', err);
     await king.sendMessage(fromJid, { text: 'Something went wrong.' });
-} 
+}
 
     });
     king.ev.on('creds.update', () => {
