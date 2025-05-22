@@ -244,7 +244,7 @@ Group: ${groupName}`;
                 }
             });
 
-            await command.execute(king, msg, args, allCommands);
+            await command.execute(king, msg.key.remoteJid, msg, args, allCommands);
         } catch (err) {
             console.error('Command failed:', err);
             await king.sendMessage(fromJid, { text: 'Something went wrong.' });
