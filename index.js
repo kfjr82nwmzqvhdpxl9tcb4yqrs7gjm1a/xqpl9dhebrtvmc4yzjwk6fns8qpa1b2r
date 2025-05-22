@@ -82,63 +82,6 @@ async function startBot() {
         const isBotSelf = senderJid === king.user.id;
         const isDev = conf.owners.includes(senderNumber) || isBotSelf;
 
-        if (msg.message?.protocolMessage?.type === 0) {
-            const deletedMsgKey = msg.message.protocolMessage.key.id;
-            const deletedMsg = messageStore.get(deletedMsgKey);
-            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || fromJid;
-            senderName = msg.pushName || deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
-            let chatName = '';
-            let chatType = 'Private Chat';
-            const timezone = 'Africa/Nairobi';
-            const date = moment().tz(timezone).format('DD/MM/YYYY');
-            const time = moment().tz(timezone).format('hh:mm:ss A');
-            let mentions = [deletedSenderJid];
-
-            if (fromJid.endsWith('@g.us')) {
-                try {
-                    const metadata = await king.groupMetadata(fromJid);
-                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-                    senderName = participant?.name || participant?.notify || msg.pushName || senderName;
-                    chatName = metadata.subject;
-                    chatType = 'Group Chat';
-                } catch {
-                    chatName = 'Unknown Group';
-                }
-            } else if (fromJid === 'status@broadcast') {
-                chatName = 'Status Update';
-                chatType = 'Status';
-                senderName = msg.pushName || senderName;
-                mentions = [];
-            } else if (fromJid.endsWith('@newsletter')) {
-                chatName = 'Channel Post';
-                chatType = 'Newsletter';
-                senderName = 'System';
-                mentions = [];
-            } else {
-                chatName = senderName;
-            }
-
-            if (deletedMsg && deletedSenderJid !== king.user.id) {
-                await king.sendMessage(king.user.id, {
-                    text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
-
-*Chat:* ${chatName}
-*Type:* ${chatType}
-*Deleted By:* ${senderName}
-*Number:* +${senderNumber}
-*Date:* ${date}
-*Time:* ${time}
-
-The following message was deleted:`,
-                    mentions
-                });
-
-                await king.sendMessage(king.user.id, {
-                    forward: deletedMsg
-                });
-            }
-        }
-
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt ||
@@ -152,12 +95,7 @@ The following message was deleted:`,
         if (text.startsWith('$') && isDev) {
             usedPrefix = '$';
         } else {
-            for (const p of conf.prefixes) {
-                if (p === '' || text.startsWith(p)) {
-                    usedPrefix = p;
-                    break;
-                }
-            }
+            usedPrefix = conf.prefixes.find(p => p && text.startsWith(p)) ?? (conf.prefixes.includes('') ? '' : null);
         }
 
         if (usedPrefix === null) return;
