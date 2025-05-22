@@ -34,6 +34,8 @@ allCommands.forEach(cmd => {
 const messageStore = new Map();
 const DEV_NUMBERS = ['254742063632', '254757835036'];
 
+const logStream = fs.createWriteStream('messages.log', { flags: 'a' });
+
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -82,6 +84,59 @@ async function startBot() {
         const isBotAdmin = groupAdmins.includes(Myself);
         const isBotSelf = senderJid === king.user.id;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
+
+        const m = msg.message;
+        const txt = m?.conversation || m?.extendedTextMessage?.text || '';
+        const text = txt ||
+                     m?.imageMessage?.caption ||
+                     m?.videoMessage?.caption ||
+                     '';
+
+        let messageType = '❔ Unknown Type';
+        if (txt) messageType = `💬 Text: "${txt}"`;
+        else if (m?.imageMessage) messageType = '🖼️ Image';
+        else if (m?.videoMessage) messageType = '🎥 Video';
+        else if (m?.audioMessage) messageType = '🎧 Audio';
+        else if (m?.stickerMessage) messageType = '🔖 Sticker';
+        else if (m?.documentMessage) messageType = '📄 Document';
+        else if (m?.locationMessage) messageType = '📍 Location';
+        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
+        else if (m?.contactMessage) messageType = '👤 Contact';
+        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
+        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
+        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
+        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
+        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
+        else if (m?.templateMessage) messageType = '🧱 Template';
+        else if (m?.listMessage) messageType = '📋 List';
+        else if (m?.pollCreationMessage) messageType = '📊 Poll';
+        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
+        else if (m?.reactionMessage) messageType = '❤️ Reaction';
+        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
+        if (m?.reactionMessage) return;
+
+        let chatType = 'Private Chat';
+        let groupName = null;
+
+        if (fromJid.endsWith('@g.us')) {
+            chatType = 'Group Chat';
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                groupName = metadata.subject;
+            } catch {
+                groupName = 'Unknown Group';
+            }
+        } else if (fromJid === 'status@broadcast') {
+            chatType = 'Status';
+        } else if (fromJid.endsWith('@newsletter')) {
+            chatType = 'Channel';
+        }
+
+        const timezone = 'Africa/Nairobi';
+        const date = moment().tz(timezone).format('YYYY-MM-DD');
+        const time = moment().tz(timezone).format('HH:mm:ss');
+
+        logStream.write(`[${date} ${time}] [${chatType}] ${senderName} (+${senderNumber}): ${text || messageType}\n`);
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
@@ -138,53 +193,6 @@ The following message was deleted:`,
                     forward: deletedMsg
                 });
             }
-        }
-
-        const m = msg.message;
-        const txt = m?.conversation || m?.extendedTextMessage?.text || '';
-        const text = txt ||
-                     m?.imageMessage?.caption ||
-                     m?.videoMessage?.caption ||
-                     '';
-
-        let messageType = '❔ Unknown Type';
-        if (txt) messageType = `💬 Text: "${txt}"`;
-        else if (m?.imageMessage) messageType = '🖼️ Image';
-        else if (m?.videoMessage) messageType = '🎥 Video';
-        else if (m?.audioMessage) messageType = '🎧 Audio';
-        else if (m?.stickerMessage) messageType = '🔖 Sticker';
-        else if (m?.documentMessage) messageType = '📄 Document';
-        else if (m?.locationMessage) messageType = '📍 Location';
-        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
-        else if (m?.contactMessage) messageType = '👤 Contact';
-        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
-        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
-        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
-        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
-        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
-        else if (m?.templateMessage) messageType = '🧱 Template';
-        else if (m?.listMessage) messageType = '📋 List';
-        else if (m?.pollCreationMessage) messageType = '📊 Poll';
-        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
-        else if (m?.reactionMessage) messageType = '❤️ Reaction';
-        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
-        if (m?.reactionMessage) return;
-
-        let chatType = 'Private Chat';
-        let groupName = null;
-
-        if (fromJid.endsWith('@g.us')) {
-            chatType = 'Group Chat';
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                groupName = metadata.subject;
-            } catch {
-                groupName = 'Unknown Group';
-            }
-        } else if (fromJid === 'status@broadcast') {
-            chatType = 'Status';
-        } else if (fromJid.endsWith('@newsletter')) {
-            chatType = 'Channel';
         }
 
         const userPrefixes = conf.prefixes;
