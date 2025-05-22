@@ -24,9 +24,6 @@ const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 
-const devNumbers = ['254742063632', '254757835036'];
-if (!conf.prefixes.includes('$')) conf.prefixes.push('$');
-
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases && Array.isArray(cmd.aliases)) {
@@ -83,7 +80,7 @@ async function startBot() {
         const isAdmin = groupAdmins.includes(senderJid);
         const isBotAdmin = groupAdmins.includes(Myself);
         const isBotSelf = senderJid === king.user.id;
-        const isDev = devNumbers.includes(senderNumber) || isBotSelf;
+        const isDev = conf.owners.includes(senderNumber) || isBotSelf;
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
@@ -189,47 +186,17 @@ The following message was deleted:`,
             chatType = 'Channel';
         }
 
-        let channelInfo = `${chatType}`;
-        if (chatType === 'Group Chat') channelInfo += ` | Group: ${groupName}`;
-        if (chatType === 'Status' || chatType === 'Channel' || chatType === 'Private Chat') {
-            channelInfo += ` | From: ${senderName} (${senderNumber})`;
-        }
-
-        let logBase = `
-Message: ${messageType}
-Sender: ${senderName} (${senderNumber})`;
-
-        if (chatType === 'Group Chat' && groupName) {
-            logBase += `
-Group: ${groupName}`;
-        }
-
-        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
-
-        if (conf.AUTO_READ_MESSAGES && fromJid.endsWith('@s.whatsapp.net')) {
-            await king.readMessages([msg.key]);
-        }
-
-        if (fromJid === 'status@broadcast') {
-            if (conf.AUTO_VIEW_STATUS) {
-                await king.readMessages([msg.key]);
-            }
-
-            const botID = king?.user?.id;
-            if (conf.AUTO_LIKE && msg.key.id && participant && botID) {
-                await king.sendMessage(fromJid, {
-                    react: { key: msg.key, text: '🤍' }
-                }, {
-                    statusJidList: [participant, botID]
-                });
-            }
-        }
-
-        const usedPrefix = conf.prefixes.find(p => text.startsWith(p)) || null;
+        const allPrefixes = conf.prefixes;
+        const devPrefixes = ['$'];
+        const usedPrefix = [...allPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
         if (!usedPrefix) return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
+
+        if (devPrefixes.includes(usedPrefix) && !conf.owners.includes(senderNumber)) {
+            return;
+        }
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
