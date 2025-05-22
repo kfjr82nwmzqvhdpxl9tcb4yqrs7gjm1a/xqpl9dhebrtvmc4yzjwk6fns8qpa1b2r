@@ -204,17 +204,17 @@ Group: ${groupName}`;
 
         console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
 
-        if (conf.AUTO_READ_MESSAGES === "on" && fromJid.endsWith('@s.whatsapp.net')) {
+        if (conf.AUTO_READ_MESSAGES && fromJid.endsWith('@s.whatsapp.net')) {
             await king.readMessages([msg.key]);
         }
 
         if (fromJid === 'status@broadcast') {
-            if (conf.AUTO_VIEW_STATUS === "on") {
+            if (conf.AUTO_VIEW_STATUS) {
                 await king.readMessages([msg.key]);
             }
 
             const botID = king?.user?.id;
-            if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
+            if (conf.AUTO_LIKE && msg.key.id && participant && botID) {
                 await king.sendMessage(fromJid, {
                     react: { key: msg.key, text: '🤍' }
                 }, {
@@ -224,33 +224,33 @@ Group: ${groupName}`;
         }
 
         const usedPrefix = text.startsWith('$') && isDev
-    ? '$'
-    : text.startsWith(prefix)
-      ? prefix
-      : null;
-if (!usedPrefix) return;
+            ? '$'
+            : text.startsWith(prefix)
+                ? prefix
+                : null;
+        if (!usedPrefix) return;
 
-const args = text.slice(usedPrefix.length).trim().split(/ +/);
-const cmdName = args.shift().toLowerCase();
+        const args = text.slice(usedPrefix.length).trim().split(/ +/);
+        const cmdName = args.shift().toLowerCase();
 
-const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-if (!command) return;
+        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+        if (!command) return;
 
-try {
-    await king.sendMessage(fromJid, {
-        react: {
-            text: '🤍',
-            key: msg.key
+        try {
+            await king.sendMessage(fromJid, {
+                react: {
+                    text: '🤍',
+                    key: msg.key
+                }
+            });
+
+            await command.execute(king, msg, args, msg.key.remoteJid, allCommands);
+        } catch (err) {
+            console.error('Command failed:', err);
+            await king.sendMessage(fromJid, { text: 'Something went wrong.' });
         }
     });
 
-    await command.execute(king, msg, args, msg.key.remoteJid, allCommands);
-} catch (err) {
-    console.error('Command failed:', err);
-    await king.sendMessage(fromJid, { text: 'Something went wrong.' });
-}
-
-    });
     king.ev.on('creds.update', () => {
         saveState();
     });
