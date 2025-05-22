@@ -19,8 +19,8 @@ const allCommands = require('./commands');
 const conf = require('./config');
 const fs = require('fs');
 const moment = require('moment-timezone');
-const logger = require('./logger');
 
+const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 
@@ -41,11 +41,11 @@ async function startBot() {
     const king = makeWASocket({
         auth: {
             creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, logger)
+            keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
         },
         markOnlineOnConnect: true,
         printQRInTerminal: true,
-        logger,
+        logger: logger.child({ level: 'fatal' }),
         browser: Browsers.macOS('Safari'),
         version
     });
@@ -72,7 +72,7 @@ async function startBot() {
             try {
                 groupMetadata = await king.groupMetadata(fromJid);
                 groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
-            } catch {
+            } catch (err) {
                 groupMetadata = { subject: 'Unknown Group', participants: [] };
                 groupAdmins = [];
             }
@@ -83,12 +83,69 @@ async function startBot() {
         const isBotSelf = senderJid === king.user.id;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
+        if (msg.message?.protocolMessage?.type === 0) {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedMsg = messageStore.get(deletedMsgKey);
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || fromJid;
+            senderName = msg.pushName || deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            let chatName = '';
+            let chatType = 'Private Chat';
+            const timezone = 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderName;
+                    chatName = metadata.subject;
+                    chatType = 'Group Chat';
+                } catch {
+                    chatName = 'Unknown Group';
+                }
+            } else if (fromJid === 'status@broadcast') {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = msg.pushName || senderName;
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Newsletter';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
+                    text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await king.sendMessage(king.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
+
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt ||
-            m?.imageMessage?.caption ||
-            m?.videoMessage?.caption ||
-            '';
+                     m?.imageMessage?.caption ||
+                     m?.videoMessage?.caption ||
+                     '';
 
         let messageType = '❔ Unknown Type';
         if (txt) messageType = `💬 Text: "${txt}"`;
@@ -130,34 +187,6 @@ async function startBot() {
             chatType = 'Channel';
         }
 
-        const logDetails = `
-===== ${chatType.toUpperCase()} MESSAGE =====
-Message: ${messageType}
-Sender: ${senderName} (${senderNumber})
-${groupName ? `Group: ${groupName}` : ''}
-===========================================
-`;
-        logger.info(logDetails);
-
-        if (conf.AUTO_READ_MESSAGES === 'on' && fromJid.endsWith('@s.whatsapp.net')) {
-            await king.readMessages([msg.key]);
-        }
-
-        if (fromJid === 'status@broadcast') {
-            if (conf.AUTO_VIEW_STATUS === 'on') {
-                await king.readMessages([msg.key]);
-            }
-
-            const botID = king?.user?.id;
-            if (conf.AUTO_LIKE === 'on' && msg.key.id && participant && botID) {
-                await king.sendMessage(fromJid, {
-                    react: { key: msg.key, text: '🤍' }
-                }, {
-                    statusJidList: [participant, botID]
-                });
-            }
-        }
-
         const userPrefixes = conf.prefixes;
         const devPrefixes = ['$'];
         const usedPrefix = [...userPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
@@ -179,7 +208,7 @@ ${groupName ? `Group: ${groupName}` : ''}
 
             await command.execute(king, msg, args, msg.key.remoteJid, allCommands);
         } catch (err) {
-            logger.error('Command failed:', err);
+            console.error('Command failed:', err);
             await king.sendMessage(fromJid, { text: 'Something went wrong.' });
         }
     });
@@ -221,7 +250,7 @@ ${groupName ? `Group: ${groupName}` : ''}
                 }
             });
 
-            logger.info(`Bot connected as ${king.user.id}`);
+            console.log(`Bot connected as ${king.user.id}`);
         }
     });
 }
