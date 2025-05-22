@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
-    prefixes: ['', '.', '+'],
+    prefixes: process.env.PREFIX ? process.env.PREFIX.split(',') : ['', '.', '+'],
     owners: ['254742063632', '254757835036'],
     MODE: 'private',
     AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS === 'on',
