@@ -32,7 +32,7 @@ allCommands.forEach(cmd => {
 });
 
 const messageStore = new Map();
-const DEV_NUMBERS = ['254742063630', '254757835036'];
+const DEV_NUMBERS = ['254742063632', '254757835036'];
 
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
