@@ -97,13 +97,13 @@ module.exports = [
             const senderNum = senderJid.replace(/@.*$/, '').split(':')[0];
 
             if (!DEVS.includes(senderNum)) {
-                return king.sendMessage(jid, {
+                return king.sendMessage(fromJid, {
                     text: '❌ Only the developer can use this command.'
                 }, { quoted: msg });
             }
 
             if (!args[0]) {
-                return king.sendMessage(jid, {
+                return king.sendMessage(fromJid, {
                     text: '⚠️ Provide a number to add.'
                 }, { quoted: msg });
             }
