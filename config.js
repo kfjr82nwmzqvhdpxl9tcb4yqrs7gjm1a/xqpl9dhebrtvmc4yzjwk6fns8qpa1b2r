@@ -1,8 +1,8 @@
 require('dotenv').config();
 
 module.exports = {
-    prefix: '',
-    owners: ['254742063632'],
+    prefixes: ['', '.', '+'],
+    owners: ['254742063632', '254757835036'],
     MODE: 'private',
     AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS === 'on',
     AUTO_LIKE: process.env.AUTO_LIKE === 'on',
