@@ -1,3 +1,5 @@
+
+
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -186,17 +188,47 @@ The following message was deleted:`,
             chatType = 'Channel';
         }
 
-        const allPrefixes = conf.prefixes;
-        const devPrefixes = ['$'];
-        const usedPrefix = [...allPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
+        let channelInfo = `${chatType}`;
+        if (chatType === 'Group Chat') channelInfo += ` | Group: ${groupName}`;
+        if (chatType === 'Status' || chatType === 'Channel' || chatType === 'Private Chat') {
+            channelInfo += ` | From: ${senderName} (${senderNumber})`;
+        }
+
+        let logBase = `
+Message: ${messageType}
+Sender: ${senderName} (${senderNumber})`;
+
+        if (chatType === 'Group Chat' && groupName) {
+            logBase += `
+Group: ${groupName}`;
+        }
+
+        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
+
+        if (conf.AUTO_READ_MESSAGES && fromJid.endsWith('@s.whatsapp.net')) {
+            await king.readMessages([msg.key]);
+        }
+
+        if (fromJid === 'status@broadcast') {
+            if (conf.AUTO_VIEW_STATUS) {
+                await king.readMessages([msg.key]);
+            }
+
+            const botID = king?.user?.id;
+            if (conf.AUTO_LIKE && msg.key.id && participant && botID) {
+                await king.sendMessage(fromJid, {
+                    react: { key: msg.key, text: '🤍' }
+                }, {
+                    statusJidList: [participant, botID]
+                });
+            }
+        }
+
+        const usedPrefix = conf.prefixes.find(p => text.startsWith(p)) || null;
         if (!usedPrefix) return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
-
-        if (devPrefixes.includes(usedPrefix) && !conf.owners.includes(senderNumber)) {
-            return;
-        }
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
