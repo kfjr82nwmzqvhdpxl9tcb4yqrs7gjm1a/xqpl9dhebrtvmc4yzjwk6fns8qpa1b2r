@@ -57,8 +57,8 @@ module.exports = [
         name: 'menu',
         aliases: [],
         description: 'Displays categorized list of commands',
-        execute: async (king, msg, args, allCommands) => {
-            const fromJid = msg.key.remoteJid;
+        category: 'General',
+        execute: async (king, msg, args, fromJid, allCommands) => {
             const time = moment().tz(config.timezone || 'Africa/Lagos');
             const uptime = formatUptime(Date.now() - startTime);
             const platform = detectPlatform();
@@ -84,12 +84,12 @@ module.exports = [
             let counter = 1;
             const sortedCategories = Object.keys(categorized).sort();
             for (const category of sortedCategories) {
+                const commandsInCategory = categorized[category].filter(c => c.name);
+                if (commandsInCategory.length === 0) continue;
+
                 text += `*╭──❒ ${applyStyle(category, 10)} ❒───⊷*\n`;
                 text += `│╭────────────\n`;
-                const sortedCommands = categorized[category]
-                    .filter(cmd => cmd.name) // Ensure `name` exists
-                    .sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
-                for (const cmd of sortedCommands) {
+                for (const cmd of commandsInCategory) {
                     text += `││ ${counter++}. ${applyStyle(cmd.name, 10)}\n`;
                 }
                 text += `│╰────────────\n`;
@@ -114,9 +114,8 @@ module.exports = [
         name: 'help',
         aliases: [],
         description: 'Provides help and guide for new users',
-        execute: async (sock, msg, args, allCommands) => {
-            const fromJid = msg.key.remoteJid;
-
+        category: 'General',
+        execute: async (sock, msg, args, fromJid, allCommands) => {
             let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
             text += `To use the bot:\n`;
             text += `• Start commands with the prefix\n`;
@@ -131,6 +130,7 @@ module.exports = [
             }
 
             for (const [cat, cmds] of Object.entries(categorized)) {
+                if (cmds.length === 0) continue;
                 text += `📂 *${cat}*\n`;
                 for (const cmd of cmds) {
                     text += `• *${cmd.name}* - ${cmd.description}`;
