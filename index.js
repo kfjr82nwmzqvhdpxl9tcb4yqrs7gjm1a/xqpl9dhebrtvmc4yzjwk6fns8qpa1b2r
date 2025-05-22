@@ -83,6 +83,11 @@ async function startBot() {
             const isBotSelf = senderJid === king.user.id;
             const isDev = conf.owners.includes(senderNumber) || isBotSelf;
 
+            // Check if bot is in private mode and sender is not the bot user or an owner
+            if (conf.MODE === 'private' && !conf.owners.includes(senderNumber) && senderNumber !== king.user.id) {
+                return;
+            }
+
             const messageType = Object.keys(msg.message)[0];
             const textContent = msg.message?.conversation ||
                 msg.message?.extendedTextMessage?.text ||
@@ -258,16 +263,14 @@ The following message was deleted:`,
                     forwardingScore: 1,
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
+                        newsletterJid: '120363238139244', // Replace this with your newsletter ID
                     }
                 }
             });
 
-            console.log('Bot connected and styled welcome message sent.');
+            console.log('Bot is connected and running!');
         }
     });
 }
 
-startBot();
+startBot().catch(err => console.log('Error starting bot:', err)); 
