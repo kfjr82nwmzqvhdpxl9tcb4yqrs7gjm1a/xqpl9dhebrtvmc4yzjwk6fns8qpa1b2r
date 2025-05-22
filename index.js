@@ -222,7 +222,9 @@ Group: ${groupName}`;
             }
         }
 
-        const usedPrefix = conf.prefixes.find(p => text.startsWith(p)) || null;
+        const usedPrefix = text.startsWith(conf.devPrefix) && isDev
+    ? conf.devPrefix
+    : conf.prefixes.find(p => text.startsWith(p)) || null; 
         if (!usedPrefix) return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
@@ -249,20 +251,20 @@ Group: ${groupName}`;
     king.ev.on('creds.update', () => {
         saveState();
     });
+king.ev.on('connection.update', async (update) => {
+    const { connection, lastDisconnect } = update;
+    if (connection === 'close') {
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        if (shouldReconnect) startBot();
+    }
 
-    king.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) startBot();
-        }
+    if (connection === 'open') {
+        const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
+        const prefixList = conf.prefixes.length > 0 ? conf.prefixes.map(p => p === '' ? '' : p).join(', ') : 'No Prefix';
+        const prefixInfo = `Prefixes: [${prefixList}]`;
+        const totalCmds = commands.size;
 
-        if (connection === 'open') {
-            const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-            const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-            const totalCmds = commands.size;
-
-            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
+        const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
 
 *✅ Using Version 2.5!*
 
@@ -270,22 +272,23 @@ Group: ${groupName}`;
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-            await king.sendMessage(king.user.id, {
-                text: connInfo,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
+        await king.sendMessage(king.user.id, {
+            text: connInfo,
+            contextInfo: {
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363238139244263@newsletter',
+                    newsletterName: 'FLASH-MD',
+                    serverMessageId: -1
                 }
-            });
+            }
+        });
 
-            console.log('Bot connected and styled welcome message sent.');
-        }
-    });
+        console.log('Bot connected and styled welcome message sent.');
+    }
+});
+    
 }
 
 startBot();
