@@ -138,6 +138,17 @@ async function startBot() {
 
         logStream.write(`[${date} ${time}] [${chatType}] ${senderName} (+${senderNumber}): ${text || messageType}\n`);
 
+        let logBase = `
+Message: ${messageType}
+Sender: ${senderName} (+${senderNumber})`;
+
+        if (chatType === 'Group Chat' && groupName) {
+            logBase += `
+Group: ${groupName}`;
+        }
+
+        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
+
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
@@ -195,7 +206,7 @@ The following message was deleted:`,
             }
         }
 
-        const userPrefixes = conf.prefixes;
+        const userPrefixes = conf.prefixes || [conf.prefix || ''];
         const devPrefixes = ['$'];
         const usedPrefix = [...userPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
         if (!usedPrefix) return;
@@ -234,7 +245,7 @@ The following message was deleted:`,
 
         if (connection === 'open') {
             const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-            const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
+            const prefixInfo = conf.prefix ? `Prefix: "${conf.prefix}"` : 'Prefix: [No Prefix]';
             const totalCmds = commands.size;
 
             const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
@@ -258,7 +269,7 @@ The following message was deleted:`,
                 }
             });
 
-            console.log(`Bot connected as ${king.user.id}`);
+            console.log('Bot connected and styled welcome message sent.');
         }
     });
 }
