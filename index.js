@@ -35,7 +35,7 @@ const messageStore = new Map();
 const DEV_NUMBERS = ['254742063632', '254757835036'];
 
 function normalizeJid(jid) {
-    return jid.split(':')[0];
+    return jid?.split('@')[0]?.split(':')[0] || jid;
 }
 
 async function startBot() {
@@ -69,7 +69,7 @@ async function startBot() {
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
         const Myself = king.user.id;
-        const botJid = normalizeJid(king.user.id + '@s.whatsapp.net');
+        const botJid = king.user.id + '@s.whatsapp.net';
         let groupMetadata = null;
         let groupAdmins = [];
 
@@ -78,21 +78,19 @@ async function startBot() {
                 groupMetadata = await king.groupMetadata(fromJid);
                 groupAdmins = groupMetadata.participants
                     .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
-                    .map(p => normalizeJid(p.id));
+                    .map(p => p.id);
             } catch (err) {
                 groupMetadata = { subject: 'Unknown Group', participants: [] };
                 groupAdmins = [];
             }
         }
 
-        // DEBUG LOGS to verify bot admin status check
-        console.log('Bot JID:', botJid);
+        console.log('Bot JID:', normalizeJid(botJid));
         console.log('Group Admins:', groupAdmins);
 
-        // Safer check for bot admin status with normalization
-        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.includes(botJid); 
-        const isBotSelf = normalizeJid(senderJid) === botJid;
+        const isAdmin = groupAdmins.some(admin => normalizeJid(admin) === normalizeJid(senderJid));
+        const isBotAdmin = groupAdmins.some(admin => normalizeJid(admin) === normalizeJid(botJid));
+        const isBotSelf = normalizeJid(senderJid) === normalizeJid(botJid);
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
         console.log('Is bot admin?', isBotAdmin);
