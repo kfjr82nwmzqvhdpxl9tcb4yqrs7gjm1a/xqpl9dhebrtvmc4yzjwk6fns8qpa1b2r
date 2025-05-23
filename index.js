@@ -1,4 +1,4 @@
-const express = require('express');
+ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -64,23 +64,26 @@ async function startBot() {
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
-        const Myself = king.user.id;
+        const Myself = king.user.id.split(':')[0];
         let groupMetadata = null;
         let groupAdmins = [];
 
         if (isGroup) {
             try {
                 groupMetadata = await king.groupMetadata(fromJid);
-                groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
+                groupAdmins = groupMetadata.participants
+                    .filter(p => ['admin', 'superadmin', true].includes(p.admin))
+                    .map(p => p.id.split(':')[0]);
             } catch (err) {
                 groupMetadata = { subject: 'Unknown Group', participants: [] };
                 groupAdmins = [];
             }
         }
 
-        const isAdmin = groupAdmins.includes(senderJid);
+        const normalizedSender = senderJid.split(':')[0];
+        const isAdmin = groupAdmins.includes(normalizedSender);
         const isBotAdmin = groupAdmins.includes(Myself);
-        const isBotSelf = senderJid === king.user.id;
+        const isBotSelf = normalizedSender === Myself;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
         if (msg.message?.protocolMessage?.type === 0) {
