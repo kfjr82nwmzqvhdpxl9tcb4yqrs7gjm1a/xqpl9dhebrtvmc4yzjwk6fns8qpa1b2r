@@ -1,7 +1,7 @@
 const DEVS = ['254742063632', '254757835036'];
 
 module.exports = [
-    {
+    /*{
         name: 'rename',
         aliases: ['gname'],
         description: 'Change the subject (name) of a group.',
@@ -35,7 +35,38 @@ module.exports = [
                 }, { quoted: msg });
             }
         }
-    },
+    },*/
+
+{
+    name: 'rename',
+    aliases: ['gname'],
+    description: 'Change the subject (name) of a group.',
+    category: 'Group',
+    groupOnly: true,
+    adminOnly: true,
+    botAdminOnly: true,
+
+    execute: async (king, msg, args, fromJid) => {
+        const newSubject = args.join(' ');
+        if (!newSubject) {
+            return king.sendMessage(fromJid, {
+                text: '❗ Please provide a new subject for the group.'
+            }, { quoted: msg });
+        }
+
+        try {
+            await king.groupUpdateSubject(fromJid, newSubject);
+            await king.sendMessage(fromJid, {
+                text: `✅ Group name changed to: *${newSubject}*`
+            }, { quoted: msg });
+        } catch {
+            await king.sendMessage(fromJid, {
+                text: '❌ Failed to change group name.'
+            }, { quoted: msg });
+        }
+    }
+}
+    
     {
         name: 'kick',
         aliases: ['remove'],
@@ -759,7 +790,7 @@ module.exports = [
         }
     }, 
 
- {
+/* {
         name: 'unlock',
         aliases: ['open'],
         description: 'Allow all members to send messages in the group.',
@@ -788,5 +819,27 @@ module.exports = [
                 }, { quoted: msg });
             }
         }
+    }*/
+    {
+    name: 'unlock',
+    aliases: ['open'],
+    description: 'Allow all members to send messages in the group.',
+    category: 'Group',
+    groupOnly: true,
+    adminOnly: true,
+    botAdminOnly: true,
+
+    execute: async (king, msg, args, fromJid) => {
+        try {
+            await king.groupSettingUpdate(fromJid, 'not_announcement');
+            await king.sendMessage(fromJid, {
+                text: '🔓 Group unlocked. All members can now send messages.'
+            }, { quoted: msg });
+        } catch {
+            await king.sendMessage(fromJid, {
+                text: '❌ Failed to unlock the group.'
+            }, { quoted: msg });
+        }
     }
+}
 ];
