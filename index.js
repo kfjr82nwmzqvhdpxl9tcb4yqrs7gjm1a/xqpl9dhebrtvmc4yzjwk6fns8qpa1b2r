@@ -79,7 +79,7 @@ async function startBot() {
         }
 
         const isAdmin = groupAdmins.includes(senderJid);
-        const isBotAdmin = groupAdmins.includes(Myself);
+       const isBotAdmin = groupAdmins.includes(Myself.split(':')[0] + '@s.whatsapp.net');// const isBotAdmin = groupAdmins.includes(Myself);
         const isBotSelf = senderJid === king.user.id;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
