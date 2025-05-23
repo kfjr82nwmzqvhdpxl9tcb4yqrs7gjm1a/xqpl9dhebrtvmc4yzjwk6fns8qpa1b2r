@@ -187,6 +187,17 @@ The following message was deleted:`,
             chatType = 'Channel';
         }
 
+        let logBase = `
+Message: ${messageType}
+Sender: ${senderName} (${senderNumber})`;
+
+        if (chatType === 'Group Chat' && groupName) {
+            logBase += `
+Group: ${groupName}`;
+        }
+
+        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
+
         const userPrefixes = conf.prefixes;
         const devPrefixes = ['$'];
         const usedPrefix = [...userPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
