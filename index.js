@@ -209,6 +209,24 @@ Group: ${groupName}`;
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
+        if (command.groupOnly && !isGroup) {
+            return king.sendMessage(fromJid, {
+                text: '❌ This command only works in groups.'
+            }, { quoted: msg });
+        }
+
+        if (command.adminOnly && !isAdmin && !isDev) {
+            return king.sendMessage(fromJid, {
+                text: '⛔ This command is restricted to group admins.'
+            }, { quoted: msg });
+        }
+
+        if (command.botAdminOnly && !isBotAdmin) {
+            return king.sendMessage(fromJid, {
+                text: '⚠️ I need to be an admin to do that.'
+            }, { quoted: msg });
+        }
+
         try {
             await king.sendMessage(fromJid, {
                 react: {
@@ -217,7 +235,7 @@ Group: ${groupName}`;
                 }
             });
 
-            await command.execute(king, msg, args, msg.key.remoteJid, allCommands);
+            await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
             console.error('Command failed:', err);
             await king.sendMessage(fromJid, { text: 'Something went wrong.' });
