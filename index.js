@@ -1,4 +1,4 @@
- const express = require('express');
+const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -64,26 +64,23 @@ async function startBot() {
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
-        const Myself = king.user.id.split(':')[0];
+        const Myself = king.user.id;
         let groupMetadata = null;
         let groupAdmins = [];
 
         if (isGroup) {
             try {
                 groupMetadata = await king.groupMetadata(fromJid);
-                groupAdmins = groupMetadata.participants
-                    .filter(p => ['admin', 'superadmin', true].includes(p.admin))
-                    .map(p => p.id.split(':')[0]);
+                groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
             } catch (err) {
                 groupMetadata = { subject: 'Unknown Group', participants: [] };
                 groupAdmins = [];
             }
         }
 
-        const normalizedSender = senderJid.split(':')[0];
-        const isAdmin = groupAdmins.includes(normalizedSender);
+        const isAdmin = groupAdmins.includes(senderJid);
         const isBotAdmin = groupAdmins.includes(Myself);
-        const isBotSelf = normalizedSender === Myself;
+        const isBotSelf = senderJid === king.user.id;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
         if (msg.message?.protocolMessage?.type === 0) {
@@ -200,12 +197,6 @@ The following message was deleted:`,
         const cmdName = args.shift().toLowerCase();
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
-
-        if (command.adminOnly) {
-            if (!isGroup) return await king.sendMessage(fromJid, { text: '❌ This command can only be used in groups.' });
-            if (!isBotAdmin) return await king.sendMessage(fromJid, { text: '❌ I\'m not an admin in this group.' });
-            if (!isAdmin && !isDev) return await king.sendMessage(fromJid, { text: '❌ You need to be an admin to use this command.' });
-        }
 
         try {
             await king.sendMessage(fromJid, {
