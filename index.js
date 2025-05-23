@@ -1,4 +1,3 @@
-
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -86,10 +85,17 @@ async function startBot() {
             }
         }
 
+        // DEBUG LOGS to verify bot admin status check
+        console.log('Bot JID:', botJid);
+        console.log('Group Admins:', groupAdmins);
+
+        // Safer check for bot admin status with normalization
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.includes(botJid);
+        const isBotAdmin = groupAdmins.some(adminJid => normalizeJid(adminJid) === botJid);
         const isBotSelf = normalizeJid(senderJid) === botJid;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
+
+        console.log('Is bot admin?', isBotAdmin);
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
