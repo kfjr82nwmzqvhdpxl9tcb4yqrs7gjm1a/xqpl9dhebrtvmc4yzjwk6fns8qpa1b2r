@@ -69,7 +69,7 @@ async function startBot() {
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
         const Myself = king.user.id;
-        const botJid = normalizeJid(Myself);
+        const botJid = king.user.id;
         let groupMetadata = null;
         let groupAdmins = [];
 
@@ -91,7 +91,7 @@ async function startBot() {
 
         // Safer check for bot admin status with normalization
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.some(adminJid => normalizeJid(adminJid) === botJid);
+        const isBotAdmin = groupAdmins.includes(botJid); 
         const isBotSelf = normalizeJid(senderJid) === botJid;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
