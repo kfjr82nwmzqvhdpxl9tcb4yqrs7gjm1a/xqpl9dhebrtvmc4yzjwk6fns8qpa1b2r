@@ -198,6 +198,12 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
+        if (command.adminOnly) {
+            if (!isGroup) return await king.sendMessage(fromJid, { text: '❌ This command can only be used in groups.' });
+            if (!isBotAdmin) return await king.sendMessage(fromJid, { text: '❌ I\'m not an admin in this group.' });
+            if (!isAdmin && !isDev) return await king.sendMessage(fromJid, { text: '❌ You need to be an admin to use this command.' });
+        }
+
         try {
             await king.sendMessage(fromJid, {
                 react: {
