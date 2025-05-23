@@ -65,7 +65,7 @@ module.exports = [
             }, { quoted: msg });
         }
     }
-}
+}, 
     
     {
         name: 'kick',
