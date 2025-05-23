@@ -34,6 +34,10 @@ allCommands.forEach(cmd => {
 const messageStore = new Map();
 const DEV_NUMBERS = ['254742063632', '254757835036'];
 
+function normalizeJid(jid) {
+    return jid.split(':')[0];
+}
+
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -65,23 +69,25 @@ async function startBot() {
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
         const Myself = king.user.id;
-        const botJid = Myself.split(':')[0] + '@s.whatsapp.net';
+        const botJid = normalizeJid(Myself);
         let groupMetadata = null;
         let groupAdmins = [];
 
         if (isGroup) {
             try {
                 groupMetadata = await king.groupMetadata(fromJid);
-                groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
+                groupAdmins = groupMetadata.participants
+                    .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
+                    .map(p => normalizeJid(p.id));
             } catch (err) {
                 groupMetadata = { subject: 'Unknown Group', participants: [] };
                 groupAdmins = [];
             }
         }
 
-        const isAdmin = groupAdmins.includes(senderJid);
+        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(botJid);
-        const isBotSelf = senderJid === king.user.id;
+        const isBotSelf = normalizeJid(senderJid) === botJid;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
         if (msg.message?.protocolMessage?.type === 0) {
@@ -144,9 +150,9 @@ The following message was deleted:`,
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt ||
-                     m?.imageMessage?.caption ||
-                     m?.videoMessage?.caption ||
-                     '';
+            m?.imageMessage?.caption ||
+            m?.videoMessage?.caption ||
+            '';
 
         let messageType = '❔ Unknown Type';
         if (txt) messageType = `💬 Text: "${txt}"`;
@@ -220,7 +226,7 @@ Group: ${groupName}`;
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to group admins.'
             }, { quoted: msg });
-            }
+        }
 
         if (command.botAdminOnly && !isBotAdmin) {
             return king.sendMessage(fromJid, {
