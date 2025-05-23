@@ -10,9 +10,7 @@ module.exports = [
         adminOnly: true,
         botAdminOnly: true,
 
-        execute: async (king, msg, args) => {
-            const fromJid = msg.key.remoteJid;
-
+        execute: async (king, msg, args, fromJid) => {
             if (!fromJid.endsWith('@g.us')) {
                 return king.sendMessage(fromJid, {
                     text: '❌ This command only works in groups.'
@@ -38,7 +36,7 @@ module.exports = [
             }
         }
     },
-{
+    {
         name: 'kick',
         aliases: ['remove'],
         description: 'Removes a user from the group.',
@@ -47,37 +45,36 @@ module.exports = [
         adminOnly: true,
         botAdminOnly: true,
 
-        execute: async (king, msg) => {
-            const fromJid = msg.key.remoteJid;
-
+        execute: async (king, msg, args, fromJid) => {
             if (!fromJid.endsWith('@g.us')) {
                 return king.sendMessage(fromJid, {
                     text: '❌ This command only works in groups.'
                 }, { quoted: msg });
             }
+
             const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
             const tagged = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             const target = quoted || tagged;
 
             if (!target) {
-                return king.sendMessage(jid, {
+                return king.sendMessage(fromJid, {
                     text: '⚠️ Please tag or reply to the user you want to remove.'
                 }, { quoted: msg });
             }
 
             try {
-                await king.groupParticipantsUpdate(jid, [target], 'remove');
-                await king.sendMessage(jid, {
+                await king.groupParticipantsUpdate(fromJid, [target], 'remove');
+                await king.sendMessage(fromJid, {
                     text: `✅ @${target.split('@')[0]} has been removed.`,
                     mentions: [target]
                 }, { quoted: msg });
             } catch {
-                await king.sendMessage(jid, {
+                await king.sendMessage(fromJid, {
                     text: '❌ Failed to remove user.'
                 }, { quoted: msg });
             }
         }
-    },
+    }, 
     {
         name: 'add',
         aliases: [],
