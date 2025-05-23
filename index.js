@@ -65,6 +65,7 @@ async function startBot() {
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
         const Myself = king.user.id;
+        const botJid = Myself.split(':')[0] + '@s.whatsapp.net';
         let groupMetadata = null;
         let groupAdmins = [];
 
@@ -79,7 +80,7 @@ async function startBot() {
         }
 
         const isAdmin = groupAdmins.includes(senderJid);
-       const isBotAdmin = groupAdmins.includes(Myself.split(':')[0] + '@s.whatsapp.net');// const isBotAdmin = groupAdmins.includes(Myself);
+        const isBotAdmin = groupAdmins.includes(botJid);
         const isBotSelf = senderJid === king.user.id;
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
 
@@ -219,7 +220,7 @@ Group: ${groupName}`;
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to group admins.'
             }, { quoted: msg });
-        }
+            }
 
         if (command.botAdminOnly && !isBotAdmin) {
             return king.sendMessage(fromJid, {
