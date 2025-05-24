@@ -287,4 +287,4 @@ king.ev.on('connection.update', async (update) => {
 });
 }
 
-startBot();a
+startBot();
