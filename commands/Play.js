@@ -30,7 +30,7 @@ module.exports = [
         const search = await yts(query);
         const video = search.videos[0];
         const videoId = video.videoId;
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${videoId}&format=mp3`;
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=https://youtube.com/watch?v=${videoId}&format=mp3`;
 
         const infoMessage = {
           image: { url: video.thumbnail },
@@ -61,7 +61,7 @@ module.exports = [
         const response = await axios.get(apiURL);
         const data = response.data;
 
-        if (data.success !== 'true' || !data.downloadLink) {
+        if (!data.downloadLink) {
           return await king.sendMessage(fromJid, {
             text: 'Failed to retrieve the MP3 download link.',
             contextInfo: {
@@ -93,7 +93,6 @@ module.exports = [
         }, { quoted: msg });
 
       } catch (err) {
-        console.error(err);
         await king.sendMessage(fromJid, {
           text: 'An error occurred while fetching the music.',
           contextInfo: {
@@ -136,7 +135,7 @@ module.exports = [
         const search = await yts(query);
         const video = search.videos[0];
         const videoId = video.videoId;
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${videoId}&format=mp4`;
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=https://youtube.com/watch?v=${videoId}&format=mp4`;
 
         const infoMessage = {
           image: { url: video.thumbnail },
@@ -167,7 +166,7 @@ module.exports = [
         const response = await axios.get(apiURL);
         const data = response.data;
 
-        if (data.success !== 'true' || !data.downloadLink) {
+        if (!data.downloadLink) {
           return await king.sendMessage(fromJid, {
             text: 'Failed to retrieve the MP4 download link.',
             contextInfo: {
@@ -198,7 +197,6 @@ module.exports = [
         }, { quoted: msg });
 
       } catch (err) {
-        console.error(err);
         await king.sendMessage(fromJid, {
           text: 'An error occurred while fetching the video.',
           contextInfo: {
@@ -215,3 +213,4 @@ module.exports = [
     }
   }
 ];
+
