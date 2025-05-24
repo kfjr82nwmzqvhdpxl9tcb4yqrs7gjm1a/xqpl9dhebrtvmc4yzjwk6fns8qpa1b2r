@@ -18,7 +18,7 @@ const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const conf = require('./config');
 const fs = require('fs');
-require(./flash.js);
+require('./flash.js');
 const moment = require('moment-timezone');
 
 const logger = pino({ level: 'fatal' });
