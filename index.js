@@ -86,10 +86,15 @@ async function startBot() {
             }
         }
 
+        console.log('Bot JID:', normalizeJid(botJid));
+        console.log('Group Admins:', groupAdmins);
+
         const isAdmin = groupAdmins.some(admin => normalizeJid(admin) === normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.some(admin => normalizeJid(admin) === normalizeJid(botJid));
         const isBotSelf = normalizeJid(senderJid) === normalizeJid(botJid);
         const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
+
+        console.log('Is bot admin?', isBotAdmin);
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
@@ -164,104 +169,109 @@ The following message was deleted:`,
         else if (m?.documentMessage) messageType = '📄 Document';
         else if (m?.locationMessage) messageType = '📍 Location';
         else if (m?.liveLocationMessage) messageType = '📡 Live Location';
-else if (m?.contactMessage) messageType = '👤 Contact';
-else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
-else if (m?.buttonsMessage) messageType = '🧩 Buttons';
-else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
-else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
-else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
-else if (m?.templateMessage) messageType = '🧱 Template';
-else if (m?.listMessage) messageType = '📋 List';
-else if (m?.pollCreationMessage) messageType = '📊 Poll';
-else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
-else if (m?.reactionMessage) messageType = '❤️ Reaction';
-else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
-if (m?.reactionMessage) return;
+        else if (m?.contactMessage) messageType = '👤 Contact';
+        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
+        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
+        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
+        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
+        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
+        else if (m?.templateMessage) messageType = '🧱 Template';
+        else if (m?.listMessage) messageType = '📋 List';
+        else if (m?.pollCreationMessage) messageType = '📊 Poll';
+        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
+        else if (m?.reactionMessage) messageType = '❤️ Reaction';
+        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
+        if (m?.reactionMessage) return;
 
-let chatType = 'Private Chat';
-let groupName = null;
+        let chatType = 'Private Chat';
+        let groupName = null;
 
-if (fromJid.endsWith('@g.us')) {
-    chatType = 'Group Chat';
-    try {
-        const metadata = await king.groupMetadata(fromJid);
-        groupName = metadata.subject;
-    } catch {
-        groupName = 'Unknown Group';
-    }
-} else if (fromJid === 'status@broadcast') {
-    chatType = 'Status';
-} else if (fromJid.endsWith('@newsletter')) {
-    chatType = 'Newsletter';
-}
+        if (fromJid.endsWith('@g.us')) {
+            chatType = 'Group Chat';
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                groupName = metadata.subject;
+            } catch {
+                groupName = 'Unknown Group';
+            }
+        } else if (fromJid === 'status@broadcast') {
+            chatType = 'Status';
+        } else if (fromJid.endsWith('@newsletter')) {
+            chatType = 'Channel';
+        }
 
-let logBase = `
+        let logBase = `
 Message: ${messageType}
 Sender: ${senderName} (${senderNumber})`;
 
-if (chatType === 'Group Chat' && groupName) {
-    logBase += `
+        if (chatType === 'Group Chat' && groupName) {
+            logBase += `
 Group: ${groupName}`;
-} else if (chatType === 'Status') {
-    logBase += `
-Status viewed by: ${senderName}`;
-} else if (chatType === 'Newsletter') {
-    logBase += `
-Channel interaction from: ${senderName}`;
-} else {
-    logBase += `
-Private chat with bot`;
-}
+        }
 
-console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
+        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
 
-const userPrefixes = conf.prefixes;
-const devPrefixes = ['$'];
-const usedPrefix = [...userPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
-if (!usedPrefix) return;
-if (usedPrefix === '$' && !isDev) return;
+        const userPrefixes = conf.prefixes;
+        const devPrefixes = ['$'];
+        const usedPrefix = [...userPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
+        if (!usedPrefix) return;
+        if (usedPrefix === '$' && !isDev) return;
 
-const args = text.slice(usedPrefix.length).trim().split(/ +/);
-const cmdName = args.shift().toLowerCase();
-const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-if (!command) return;
+        const args = text.slice(usedPrefix.length).trim().split(/ +/);
+        const cmdName = args.shift().toLowerCase();
+        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+        if (!command) return;
 
-if (command.groupOnly && !isGroup) return;
-if (command.adminOnly && !isAdmin && !isDev) return;
-if (command.botAdminOnly && !isBotAdmin) return;
+        if (command.groupOnly && !isGroup) {
+            return king.sendMessage(fromJid, {
+                text: '❌ This command only works in groups.'
+            }, { quoted: msg });
+        }
 
-try {
-    await king.sendMessage(fromJid, {
-        react: {
-            text: '🤍',
-            key: msg.key
+        if (command.adminOnly && !isAdmin && !isDev) {
+            return king.sendMessage(fromJid, {
+                text: '⛔ This command is restricted to group admins.'
+            }, { quoted: msg });
+        }
+
+        if (command.botAdminOnly && !isBotAdmin) {
+            return king.sendMessage(fromJid, {
+                text: '⚠️ I need to be an admin to do that.'
+            }, { quoted: msg });
+        }
+
+        try {
+            await king.sendMessage(fromJid, {
+                react: {
+                    text: '🤍',
+                    key: msg.key
+                }
+            });
+
+            await command.execute(king, msg, args, fromJid, allCommands);
+        } catch (err) {
+            console.error('Command failed:', err);
+            await king.sendMessage(fromJid, { text: 'Something went wrong.' });
         }
     });
 
-    await command.execute(king, msg, args, fromJid, allCommands);
-} catch (err) {
-    console.error('Command failed:', err);
-    await king.sendMessage(fromJid, { text: 'Something went wrong.' });
-}
-});
+    king.ev.on('creds.update', () => {
+        saveState();
+    });
 
-king.ev.on('creds.update', () => {
-    saveState();
-});
+    king.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            if (shouldReconnect) startBot();
+        }
 
-king.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect } = update;
-    if (connection === 'close') {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-        if (shouldReconnect) startBot();
-    }
+        if (connection === 'open') {
+            const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
+            const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
+            const totalCmds = commands.size;
 
-    if (connection === 'open') {
-        const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-        const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-        const totalCmds = commands.size;
-
-        const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
+            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
 
 *✅ Using Version 2.5!*
 
@@ -269,22 +279,22 @@ king.ev.on('connection.update', async (update) => {
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-        await king.sendMessage(king.user.id, {
-            text: connInfo,
-            contextInfo: {
-                forwardingScore: 1,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363238139244263@newsletter',
-                    newsletterName: 'FLASH-MD',
-                    serverMessageId: -1
+            await king.sendMessage(king.user.id, {
+                text: connInfo,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
                 }
-            }
-        });
+            });
 
-        console.log(`Bot connected as ${king.user.id}`);
-    }
-});
+            console.log(`Bot connected as ${king.user.id}`);
+        }
+    });
 }
 
 startBot();
