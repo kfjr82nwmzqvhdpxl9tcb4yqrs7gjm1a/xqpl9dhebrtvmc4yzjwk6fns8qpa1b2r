@@ -1,11 +1,18 @@
+const cron = require('node-cron');
 const axios = require('axios');
 
-function keepAlive() {
-    setInterval(() => {
-        axios.get('https://new-6tot.onrender.com')
-            .then(() => console.log('Session Generator Pinged'))
-            .catch(err => console.error('Keep-alive failed:', err));
-    }, 1000 * 60 * 4);
-}
+const url = process.env.ALIVE_URL || 'https://new-6tot.onrender.com';
 
-keepAlive();
+cron.schedule('*/14 * * * *', () => {
+    axios.get(url)
+        .then(response => {
+            if (response.status === 200) {
+                console.log(`[FLASH-MD KEEP-ALIVE] Service pinged successfully at ${new Date().toLocaleString()}`);
+            } else {
+                console.error(`[FLASH-MD KEEP-ALIVE] Unexpected status code: ${response.status}`);
+            }
+        })
+        .catch(error => {
+            console.error('[FLASH-MD KEEP-ALIVE] Ping failed:', error.message);
+        });
+});
