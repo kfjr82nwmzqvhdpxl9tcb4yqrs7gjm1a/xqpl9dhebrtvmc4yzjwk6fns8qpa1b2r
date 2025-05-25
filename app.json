@@ -2,35 +2,53 @@
   "name": "flash-md-whatsapp-bot",
   "description": "A WhatsApp bot powered by Baileys.",
   "repository": "https://github.com/franceking1/FLASH-MD-V2",
-  "keywords": ["node", "whatsapp", "baileys", "bot"],
+  "stack": "heroku-24",
+  "scripts": {
+    "postdeploy": "echo 'Deployment complete!'"
+  },
   "env": {
     "SESSION": {
-      "description": "Flash md session string",
-      "required": true
+      "description": "WhatsApp session string (QR-based)",
+      "value": "",
+      "required": false
     },
     "AUTO_READ_STATUS": {
-      "description": "Enable auto view of status updates (on/off)",
-      "value": "off"
+      "description": "Auto-view statuses",
+      "value": "off",
+      "required": false
     },
     "AUTO_LIKE": {
-      "description": "Enable auto-like on statuses (on/off)",
-      "value": "off"
+      "description": "Auto-like statuses",
+      "value": "off",
+      "required": false
     },
     "AUTO_READ_DM": {
-      "description": "Enable auto-reading of direct messages (on/off)",
-      "value": "off"
+      "description": "Auto-read DMs",
+      "value": "off",
+      "required": false
+    },
+    "OWNER_NUMBER": {
+      "description": "Your WhatsApp number in international format",
+      "value": "",
+      "required": true
+    },
+    "HEROKU_API_KEY": {
+      "description": "Your Heroku API Key",
+      "value": "",
+      "required": true
+    },
+    "HEROKU_APP_NAME": {
+      "description": "The name of this Heroku app",
+      "value": "",
+      "required": true
     }
-  },
-  "scripts": {
-    "start": "node index"
   },
   "formation": {
     "web": {
       "quantity": 1,
-      "size": "eco"
+      "size": "Basic"
     }
   },
-  "addons": [],
   "buildpacks": [
     {
       "url": "heroku/nodejs"
