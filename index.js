@@ -68,6 +68,7 @@ async function startBot() {
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
+        const Myself = king.user.id;
         const botJid = king.user.id + '@s.whatsapp.net';
         let groupMetadata = null;
         let groupAdmins = [];
@@ -206,52 +207,37 @@ Group: ${groupName}`;
 
         const userPrefixes = conf.prefixes;
         const devPrefixes = ['$'];
-        const allPrefixes = userPrefixes.length > 0 ? [...userPrefixes, ...devPrefixes] : devPrefixes;
 
-        const usedPrefix = allPrefixes.find(p => text.startsWith(p)) || null;
+        let usedPrefix = null;
+        let isDevPrefix = false;
+
+        for (const p of userPrefixes) {
+            if (text.startsWith(p)) {
+                usedPrefix = p;
+                break;
+            }
+        }
+
+        if (!usedPrefix && isDev && text.startsWith('$')) {
+            usedPrefix = '$';
+            isDevPrefix = true;
+        }
 
         if (!usedPrefix) {
             if (userPrefixes.length === 0) {
-                const commandText = text.trim().split(/ +/)[0].toLowerCase();
-                const command = commands.get(commandText) || commands.get(aliases.get(commandText));
-                if (!command) return;
-                if (command.groupOnly && !isGroup) {
-                    return king.sendMessage(fromJid, {
-                        text: '❌ This command only works in groups.'
-                    }, { quoted: msg });
-                }
-                if (command.adminOnly && !isAdmin && !isDev) {
-                    return king.sendMessage(fromJid, {
-                        text: '⛔ This command is restricted to group admins.'
-                    }, { quoted: msg });
-                }
-                if (command.botAdminOnly && !isBotAdmin) {
-                    return king.sendMessage(fromJid, {
-                        text: '⚠️ I need to be an admin to do that.'
-                    }, { quoted: msg });
-                }
-                try {
-                    await king.sendMessage(fromJid, {
-                        react: {
-                            text: '🤍',
-                            key: msg.key
-                        }
-                    });
-                    await command.execute(king, msg, [], fromJid, allCommands);
-                } catch (err) {
-                    await king.sendMessage(fromJid, { text: 'Something went wrong.' });
-                }
+                usedPrefix = '';
+            } else {
                 return;
             }
-            return;
         }
 
         if (usedPrefix === '$' && !isDev) return;
 
-        const body = text.slice(usedPrefix.length).trim();
+        const body = usedPrefix === '' ? text : text.slice(usedPrefix.length).trim();
         const args = body.split(/ +/);
-        const commandText = args.shift().toLowerCase();
-        const command = commands.get(commandText) || commands.get(aliases.get(commandText));
+        const cmdName = args.shift().toLowerCase();
+
+        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
         if (command.groupOnly && !isGroup) {
@@ -273,37 +259,51 @@ Group: ${groupName}`;
         }
 
         try {
-            await king.sendMessage(fromJid, {
-                react: {
-                    text: '🤍',
+            await king.sendMessage(fromJid, { text: '⏳',
                     key: msg.key
                 }
             });
-            await command.execute(king, msg, args, fromJid, allCommands);
-        } catch (err) {
-            await king.sendMessage(fromJid, { text: 'Something went wrong.' });
+
+            await command.run({
+                king,
+                msg,
+                args,
+                fromJid,
+                senderJid,
+                isGroup,
+                isAdmin,
+                isBotAdmin,
+                isDev,
+                usedPrefix,
+                text,
+                groupMetadata,
+                groupAdmins
+            });
+
+            await king.sendMessage(fromJid, {
+                react: {
+                    text: '✅',
+                    key: msg.key
+                }
+            });
+        } catch (error) {
+            console.error('Command error:', error);
+            await king.sendMessage(fromJid, {
+                text: '❌ An error occurred while executing the command.'
+            }, { quoted: msg });
         }
     });
 
     king.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
-        if (qr) {
-            console.log('Scan this QR code to connect:', qr);
-        }
+        const { connection, lastDisconnect } = update;
         if (connection === 'close') {
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
-            if (statusCode === DisconnectReason.loggedOut) {
-                console.log('Logged out. Please reauthenticate.');
-                process.exit(0);
+            if ((lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut) {
+                startBot();
+            } else {
+                console.log('Connection closed. You are logged out.');
             }
-            console.log('Connection closed. Reconnecting...');
-            startBot();
-        }
-        if (connection === 'open') {
-            console.log(`Bot connected as ${king.user.id}`);
-            king.sendMessage(king.user.id, {
-                text: `*FLASH-MD-V2 IS CONNECTED ⚡*\n\n*✅ Using Version 2.5!*\n\n*📌 Commands:* ${commands.size}\n*⚙️ Prefixes:* ${conf.prefixes.length === 0 ? '[]' : JSON.stringify(conf.prefixes)}\n*🗓️ Date:* ${moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY')}`
-            });
+        } else if (connection === 'open') {
+            console.log('Bot connected.');
         }
     });
 
@@ -311,3 +311,6 @@ Group: ${groupName}`;
 }
 
 startBot();
+
+
+                react: {
