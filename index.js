@@ -12,14 +12,15 @@ const {
     makeCacheableSignalKeyStore,
     Browsers
 } = require('@whiskeysockets/baileys');
-const { Boom } = require('@hapi/boom');
 const pino = require('pino');
+const { Boom } = require('@hapi/boom');
+const moment = require('moment-timezone');
+const fs = require('fs');
+
 const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const conf = require('./config');
-const fs = require('fs');
 require('./flash.js');
-const moment = require('moment-timezone');
 
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -33,7 +34,7 @@ allCommands.forEach(cmd => {
 });
 
 const messageStore = new Map();
-const DEV_NUMBERS = ['254742063632', '254757835036'];
+const DEV_NUMBERS = conf.owners;
 
 function normalizeJid(jid) {
     return jid?.split('@')[0]?.split(':')[0] || jid;
@@ -59,185 +60,73 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
-        const messageId = msg.key.id;
-        messageStore.set(messageId, msg);
-
         const fromJid = msg.key.remoteJid;
-        const participant = msg.key?.participant || msg.key.remoteJid;
-        const isGroup = fromJid.endsWith('@g.us');
         const isFromMe = msg.key.fromMe;
-        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
-        let senderName = msg.pushName || senderNumber;
-        const Myself = king.user.id;
-        const botJid = king.user.id + '@s.whatsapp.net';
-        let groupMetadata = null;
-        let groupAdmins = [];
+        const isDM = fromJid.endsWith('@s.whatsapp.net');
+        const isStatus = fromJid === 'status@broadcast';
 
-        if (isGroup) {
-            try {
-                groupMetadata = await king.groupMetadata(fromJid);
-                groupAdmins = groupMetadata.participants
-                    .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
-                    .map(p => p.id);
-            } catch (err) {
-                groupMetadata = { subject: 'Unknown Group', participants: [] };
-                groupAdmins = [];
-            }
+        // Auto-read DMs
+        if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
+            await king.readMessages([msg.key]);
         }
 
-        console.log('Bot JID:', normalizeJid(botJid));
-        console.log('Group Admins:', groupAdmins);
-
-        const isAdmin = groupAdmins.some(admin => normalizeJid(admin) === normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.some(admin => normalizeJid(admin) === normalizeJid(botJid));
-        const isBotSelf = normalizeJid(senderJid) === normalizeJid(botJid);
-        const isDev = DEV_NUMBERS.includes(senderNumber) || isBotSelf;
-
-        console.log('Is bot admin?', isBotAdmin);
-
-        if (msg.message?.protocolMessage?.type === 0) {
-            const deletedMsgKey = msg.message.protocolMessage.key.id;
-            const deletedMsg = messageStore.get(deletedMsgKey);
-            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || fromJid;
-            senderName = msg.pushName || deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
-            let chatName = '';
-            let chatType = 'Private Chat';
-            const timezone = 'Africa/Nairobi';
-            const date = moment().tz(timezone).format('DD/MM/YYYY');
-            const time = moment().tz(timezone).format('hh:mm:ss A');
-            let mentions = [deletedSenderJid];
-
-            if (fromJid.endsWith('@g.us')) {
-                try {
-                    const metadata = await king.groupMetadata(fromJid);
-                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-                    senderName = participant?.name || participant?.notify || msg.pushName || senderName;
-                    chatName = metadata.subject;
-                    chatType = 'Group Chat';
-                } catch {
-                    chatName = 'Unknown Group';
-                }
-            } else if (fromJid === 'status@broadcast') {
-                chatName = 'Status Update';
-                chatType = 'Status';
-                senderName = msg.pushName || senderName;
-                mentions = [];
-            } else if (fromJid.endsWith('@newsletter')) {
-                chatName = 'Channel Post';
-                chatType = 'Newsletter';
-                senderName = 'System';
-                mentions = [];
-            } else {
-                chatName = senderName;
-            }
-
-            if (deletedMsg && deletedSenderJid !== king.user.id) {
-                await king.sendMessage(king.user.id, {
-                    text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
-
-*Chat:* ${chatName}
-*Type:* ${chatType}
-*Deleted By:* ${senderName}
-*Number:* +${senderNumber}
-*Date:* ${date}
-*Time:* ${time}
-
-The following message was deleted:`,
-                    mentions
-                });
-
-                await king.sendMessage(king.user.id, {
-                    forward: deletedMsg
+        // Auto-view/react status
+        if (isStatus) {
+            if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
+            if (conf.AUTO_LIKE && !msg.message?.reactionMessage) {
+                await king.sendMessage(fromJid, {
+                    react: { text: '❤️', key: msg.key }
                 });
             }
         }
 
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
-        const text = txt ||
-            m?.imageMessage?.caption ||
-            m?.videoMessage?.caption ||
-            '';
+        const text = txt || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
+        if (!text) return;
 
-        let messageType = '❔ Unknown Type';
-        if (txt) messageType = `💬 Text: "${txt}"`;
-        else if (m?.imageMessage) messageType = '🖼️ Image';
-        else if (m?.videoMessage) messageType = '🎥 Video';
-        else if (m?.audioMessage) messageType = '🎧 Audio';
-        else if (m?.stickerMessage) messageType = '🔖 Sticker';
-        else if (m?.documentMessage) messageType = '📄 Document';
-        else if (m?.locationMessage) messageType = '📍 Location';
-        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
-        else if (m?.contactMessage) messageType = '👤 Contact';
-        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
-        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
-        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
-        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
-        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
-        else if (m?.templateMessage) messageType = '🧱 Template';
-        else if (m?.listMessage) messageType = '📋 List';
-        else if (m?.pollCreationMessage) messageType = '📊 Poll';
-        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
-        else if (m?.reactionMessage) messageType = '❤️ Reaction';
-        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
-        if (m?.reactionMessage) return;
+        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
 
-        let chatType = 'Private Chat';
-        let groupName = null;
-
-        if (fromJid.endsWith('@g.us')) {
-            chatType = 'Group Chat';
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                groupName = metadata.subject;
-            } catch {
-                groupName = 'Unknown Group';
-            }
-        } else if (fromJid === 'status@broadcast') {
-            chatType = 'Status';
-        } else if (fromJid.endsWith('@newsletter')) {
-            chatType = 'Channel';
-        }
-
-        let logBase = `
-Message: ${messageType}
-Sender: ${senderName} (${senderNumber})`;
-
-        if (chatType === 'Group Chat' && groupName) {
-            logBase += `
-Group: ${groupName}`;
-        }
-
-        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
-
-        const userPrefixes = conf.prefixes;
-        const devPrefixes = ['$'];
-        const usedPrefix = [...userPrefixes, ...devPrefixes].find(p => text.startsWith(p)) || null;
-        if (!usedPrefix) return;
+        const prefixes = [...conf.prefixes, '$'];
+        const usedPrefix = prefixes.find(p => text.startsWith(p)) ?? '';
         if (usedPrefix === '$' && !isDev) return;
+
+        // If no prefix and not a DM, ignore
+        if (!isDM && usedPrefix === '') return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
+        const isGroup = fromJid.endsWith('@g.us');
+        const botJid = king.user.id + '@s.whatsapp.net';
+        let groupAdmins = [];
+
+        if (isGroup) {
+            try {
+                const groupMetadata = await king.groupMetadata(fromJid);
+                groupAdmins = groupMetadata.participants
+                    .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
+                    .map(p => p.id);
+            } catch { groupAdmins = []; }
+        }
+
+        const isAdmin = groupAdmins.includes(senderJid);
+        const isBotAdmin = groupAdmins.includes(botJid);
+
         if (command.groupOnly && !isGroup) {
-            return king.sendMessage(fromJid, {
-                text: '❌ This command only works in groups.'
-            }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
         }
 
         if (command.adminOnly && !isAdmin && !isDev) {
-            return king.sendMessage(fromJid, {
-                text: '⛔ This command is restricted to group admins.'
-            }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
         }
 
         if (command.botAdminOnly && !isBotAdmin) {
-            return king.sendMessage(fromJid, {
-                text: '⚠️ I need to be an admin to do that.'
-            }, { quoted: msg });
+            return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
         }
 
         try {
@@ -259,8 +148,7 @@ Group: ${groupName}`;
         saveState();
     });
 
-    king.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
+    king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) startBot();
@@ -274,7 +162,6 @@ Group: ${groupName}`;
             const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
 
 *✅ Using Version 2.5!*
-
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
