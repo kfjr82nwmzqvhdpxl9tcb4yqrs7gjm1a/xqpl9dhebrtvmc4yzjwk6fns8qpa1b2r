@@ -49,7 +49,6 @@ async function startBot() {
             keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
         },
         markOnlineOnConnect: true,
-        printQRInTerminal: true,
         logger: logger.child({ level: 'fatal' }),
         browser: Browsers.macOS('Safari'),
         version
@@ -69,7 +68,6 @@ async function startBot() {
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         let senderName = msg.pushName || senderNumber;
-        const Myself = king.user.id;
         const botJid = king.user.id + '@s.whatsapp.net';
         let groupMetadata = null;
         let groupAdmins = [];
@@ -206,17 +204,54 @@ Group: ${groupName}`;
 
         console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
 
-        const prefixes = conf.prefixes.length > 0 ? conf.prefixes : [''];
-        const allPrefixes = [...prefixes, '$'];
-        const usedPrefix = allPrefixes.find(p => text.startsWith(p));
-        if (!usedPrefix && conf.prefixes.length > 0) return;
+        const userPrefixes = conf.prefixes;
+        const devPrefixes = ['$'];
+        const allPrefixes = userPrefixes.length > 0 ? [...userPrefixes, ...devPrefixes] : devPrefixes;
+
+        const usedPrefix = allPrefixes.find(p => text.startsWith(p)) || null;
+
+        if (!usedPrefix) {
+            if (userPrefixes.length === 0) {
+                const commandText = text.trim().split(/ +/)[0].toLowerCase();
+                const command = commands.get(commandText) || commands.get(aliases.get(commandText));
+                if (!command) return;
+                if (command.groupOnly && !isGroup) {
+                    return king.sendMessage(fromJid, {
+                        text: '❌ This command only works in groups.'
+                    }, { quoted: msg });
+                }
+                if (command.adminOnly && !isAdmin && !isDev) {
+                    return king.sendMessage(fromJid, {
+                        text: '⛔ This command is restricted to group admins.'
+                    }, { quoted: msg });
+                }
+                if (command.botAdminOnly && !isBotAdmin) {
+                    return king.sendMessage(fromJid, {
+                        text: '⚠️ I need to be an admin to do that.'
+                    }, { quoted: msg });
+                }
+                try {
+                    await king.sendMessage(fromJid, {
+                        react: {
+                            text: '🤍',
+                            key: msg.key
+                        }
+                    });
+                    await command.execute(king, msg, [], fromJid, allCommands);
+                } catch (err) {
+                    await king.sendMessage(fromJid, { text: 'Something went wrong.' });
+                }
+                return;
+            }
+            return;
+        }
+
         if (usedPrefix === '$' && !isDev) return;
 
-        console.log(`[MESSAGE LOG] From: ${senderNumber}, ChatType: ${chatType}, Text: ${text}`);
-
-        const args = text.slice(usedPrefix.length).trim().split(/ +/);
-        const cmdName = args.shift().toLowerCase();
-        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+        const body = text.slice(usedPrefix.length).trim();
+        const args = body.split(/ +/);
+        const commandText = args.shift().toLowerCase();
+        const command = commands.get(commandText) || commands.get(aliases.get(commandText));
         if (!command) return;
 
         if (command.groupOnly && !isGroup) {
@@ -244,54 +279,35 @@ Group: ${groupName}`;
                     key: msg.key
                 }
             });
-
             await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
-            console.error('Command failed:', err);
             await king.sendMessage(fromJid, { text: 'Something went wrong.' });
         }
     });
 
-    king.ev.on('creds.update', () => {
-        saveState();
-    });
-
-    king.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
+    king.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        if (qr) {
+            console.log('Scan this QR code to connect:', qr);
+        }
         if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) startBot();
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            if (statusCode === DisconnectReason.loggedOut) {
+                console.log('Logged out. Please reauthenticate.');
+                process.exit(0);
+            }
+            console.log('Connection closed. Reconnecting...');
+            startBot();
         }
-
         if (connection === 'open') {
-            const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-            const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-            const totalCmds = commands.size;
-
-            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
-
-*✅ Using Version 2.5!*
-
-*📌 Commands:* ${totalCmds}
-*⚙️ ${prefixInfo}*
-*🗓️ Date:* ${date}`;
-
-            await king.sendMessage(king.user.id, {
-                text: connInfo,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
-                }
-            });
-
             console.log(`Bot connected as ${king.user.id}`);
+            king.sendMessage(king.user.id, {
+                text: `*FLASH-MD-V2 IS CONNECTED ⚡*\n\n*✅ Using Version 2.5!*\n\n*📌 Commands:* ${commands.size}\n*⚙️ Prefixes:* ${conf.prefixes.length === 0 ? '[]' : JSON.stringify(conf.prefixes)}\n*🗓️ Date:* ${moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY')}`
+            });
         }
     });
+
+    king.ev.on('creds.update', saveState);
 }
 
 startBot();
