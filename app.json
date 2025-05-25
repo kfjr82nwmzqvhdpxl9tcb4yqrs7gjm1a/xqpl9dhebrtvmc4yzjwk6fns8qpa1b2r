@@ -8,39 +8,20 @@
   },
   "env": {
     "SESSION": {
-      "description": "WhatsApp session string (QR-based)",
-      "value": "",
-      "required": false
+      "description": "Flash md session string",
+      "required": true
     },
     "AUTO_READ_STATUS": {
-      "description": "Auto-view statuses",
-      "value": "off",
+      "description": "Enable auto view of status updates (on/off)",
       "required": false
     },
     "AUTO_LIKE": {
-      "description": "Auto-like statuses",
-      "value": "off",
+      "description": "Enable auto-like on statuses (on/off)",
       "required": false
     },
     "AUTO_READ_DM": {
-      "description": "Auto-read DMs",
-      "value": "off",
+      "description": "Enable auto-reading of direct messages (on/off)",
       "required": false
-    },
-    "OWNER_NUMBER": {
-      "description": "Your WhatsApp number in international format",
-      "value": "",
-      "required": true
-    },
-    "HEROKU_API_KEY": {
-      "description": "Your Heroku API Key",
-      "value": "",
-      "required": true
-    },
-    "HEROKU_APP_NAME": {
-      "description": "The name of this Heroku app",
-      "value": "",
-      "required": true
     }
   },
   "formation": {
@@ -49,6 +30,7 @@
       "size": "Basic"
     }
   },
+  "addons": [],
   "buildpacks": [
     {
       "url": "heroku/nodejs"
