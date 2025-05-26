@@ -76,14 +76,14 @@ async function startBot() {
             
             const botID = king?.user?.id;
             if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
-                await king.sendMessage(jid, {
+                await king.sendMessage(fromJid, {
                     react: { key: msg.key, text: '🤍' }
                 }, {
                     statusJidList: [participant, botID]
                 });
             };
             
-
+        }        
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
