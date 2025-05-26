@@ -11,5 +11,9 @@ module.exports = {
     AUTO_LIKE: process.env.AUTO_LIKE === 'on',
     AUTO_READ_MESSAGES: process.env.AUTO_READ_DM === 'on',
     sessionBase64: process.env.SESSION || '',
-    timezone: 'Africa/Nairobi'
+    timezone: 'Africa/Nairobi',
+    PRESENCE: {
+        DM: process.env.PRESENCE_DM || 'composing',
+        GROUP: process.env.PRESENCE_GROUP || 'paused'
+    }
 };
