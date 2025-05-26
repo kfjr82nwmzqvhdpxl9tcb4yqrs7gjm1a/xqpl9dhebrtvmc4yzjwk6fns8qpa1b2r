@@ -53,17 +53,15 @@ module.exports = {
         const freeMem = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
         const usedMem = (totalMem - freeMem).toFixed(2);
 
-        const uptimeSys = formatUptime(os.uptime());
         const uptimeBot = formatUptime((Date.now() - botStartTime) / 1000);
         const time = moment().tz(config.timezone).format('HH:mm:ss | DD/MM/YYYY');
 
         const hostInfo = `*◇ HOSTING STATUS ◇*\n\n` +
                          `*Hosting Provider:* ${platform}\n` +
                          `*Time:* ${time}\n` +
-                         `*System Uptime:* ${uptimeSys}\n` +
                          `*Bot Uptime:* ${uptimeBot}\n` +
-                         `*RAM Used:* ${usedMem} / ${totalMem} GB\n` +
-                         `*Free RAM:* ${freeMem} GB`;
+                         `*RAM Used:* ${usedMem} GB\n` +
+                         `*Total RAM:* ${totalMem} GB`;
 
         try {
             await king.sendMessage(fromJid, {
