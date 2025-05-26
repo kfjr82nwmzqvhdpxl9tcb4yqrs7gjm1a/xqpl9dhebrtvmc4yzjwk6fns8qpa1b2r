@@ -75,13 +75,19 @@ async function startBot() {
             if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
             
             const botID = king?.user?.id;
-            if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
-                await king.sendMessage(fromJid, {
-                    react: { key: msg.key, text: '🤍' }
-                }, {
-                    statusJidList: [participant, botID]
-                });
-            };
+const participant = msg.key.participant || fromJid;
+const statusEmoji = conf.CUSTOM_REACT_EMOJI || '💚';
+
+if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
+    await king.sendMessage(fromJid, {
+        react: {
+            key: msg.key,
+            text: statusEmoji
+        }
+    }, {
+        statusJidList: [participant, botID]
+    });
+}
             
         }        
         if (msg.message?.protocolMessage?.type === 0) {
