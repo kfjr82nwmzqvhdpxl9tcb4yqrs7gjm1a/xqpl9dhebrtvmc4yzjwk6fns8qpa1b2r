@@ -82,7 +82,6 @@ async function startBot() {
         }
     });
 
-    
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || !msg.message) return;
@@ -90,7 +89,7 @@ async function startBot() {
         messageStore.set(messageId, msg);
 
         const fromJid = msg.key.remoteJid;
-const participant = msg.key.participant;
+        const participant = msg.key.participant;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
@@ -101,7 +100,7 @@ const participant = msg.key.participant;
 
         if (isStatus) {
             if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
-            
+
             const botID = king?.user?.id;
             if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
                 await king.sendMessage(fromJid, {
@@ -110,8 +109,8 @@ const participant = msg.key.participant;
                     statusJidList: [participant, botID]
                 });
             };
-            
-        }        
+        }
+
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
@@ -267,6 +266,16 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
             return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
         }
 
+        const presenceState = isGroup ? conf.PRESENCE.GROUP : conf.PRESENCE.DM;
+
+        try {
+            if (presenceState) {
+                await king.sendPresenceUpdate(presenceState, fromJid);
+            }
+        } catch (e) {
+            console.error('Presence update error:', e);
+        }
+
         try {
             await king.sendMessage(fromJid, {
                 react: {
@@ -276,6 +285,14 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
             });
 
             await command.execute(king, msg, args, fromJid, allCommands);
+
+            if (presenceState !== 'paused') {
+                try {
+                    await king.sendPresenceUpdate('paused', fromJid);
+                } catch (e) {
+                    console.error('Presence update error:', e);
+                }
+            }
         } catch (err) {
             console.error('Command failed:', err);
             await king.sendMessage(fromJid, { text: 'Something went wrong.' });
