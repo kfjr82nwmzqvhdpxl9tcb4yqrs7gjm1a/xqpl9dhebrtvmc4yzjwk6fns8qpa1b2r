@@ -73,12 +73,15 @@ async function startBot() {
 
         if (isStatus) {
             if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
-            if (conf.AUTO_LIKE && !msg.message?.reactionMessage) {
-                await king.sendMessage(fromJid, {
-                    react: { text: '❤️', key: msg.key }
+            
+            const botID = king?.user?.id;
+            if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
+                await king.sendMessage(jid, {
+                    react: { key: msg.key, text: '🤍' }
+                }, {
+                    statusJidList: [participant, botID]
                 });
             }
-        }
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
