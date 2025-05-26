@@ -83,7 +83,7 @@ async function startBot() {
                     statusJidList: [participant, botID]
                 });
             };
-            
+            } 
 
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
