@@ -63,6 +63,7 @@ async function startBot() {
         messageStore.set(messageId, msg);
 
         const fromJid = msg.key.remoteJid;
+const participant = msg.key.participant;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
@@ -75,16 +76,15 @@ async function startBot() {
             if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
             
             const botID = king?.user?.id;
-            if (isStatus) {
             if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
-                await king.sendMessage(jid, {
+                await king.sendMessage(fromJid, {
                     react: { key: msg.key, text: '🤍' }
                 }, {
                     statusJidList: [participant, botID]
                 });
             };
-            } 
-
+            
+        }        
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
