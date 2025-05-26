@@ -56,6 +56,33 @@ async function startBot() {
         version
     });
 
+    king.ev.on('call', async (call) => {
+        if (conf.ANTICALL === "on") {
+            const callId = call[0].id;
+            const callerId = call[0].from;
+
+            const superUsers = [
+                '254742063632@s.whatsapp.net',
+                '254757835036@s.whatsapp.net',
+                '254751284190@s.whatsapp.net'
+            ];
+
+            console.log(`Caller ID: ${callerId}`);
+
+            if (!superUsers.includes(callerId)) {
+                try {
+                    await king.rejectCall(callId, callerId);
+                    console.log(`Call from ${callerId} declined.`);
+                } catch (error) {
+                    console.error('Error handling the call rejection:', error);
+                }
+            } else {
+                console.log('SuperUser is calling, not rejecting the call.');
+            }
+        }
+    });
+
+    
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || !msg.message) return;
