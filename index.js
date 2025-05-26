@@ -75,21 +75,16 @@ async function startBot() {
             if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
             
             const botID = king?.user?.id;
-const participant = msg.key.participant || fromJid;
-const statusEmoji = conf.CUSTOM_REACT_EMOJI || '💚';
-
-if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
-    await king.sendMessage(fromJid, {
-        react: {
-            key: msg.key,
-            text: statusEmoji
-        }
-    }, {
-        statusJidList: [participant, botID]
-    });
-}
+            if (isStatus) {
+            if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
+                await king.sendMessage(jid, {
+                    react: { key: msg.key, text: '🤍' }
+                }, {
+                    statusJidList: [participant, botID]
+                });
+            };
             
-        }        
+
         if (msg.message?.protocolMessage?.type === 0) {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
@@ -307,4 +302,3 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
 }
 
 startBot();
-
