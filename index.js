@@ -59,18 +59,18 @@ async function startBot() {
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || !msg.message) return;
+        const messageId = msg.key.id;
+        messageStore.set(messageId, msg);
 
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
 
-        // Auto-read DMs
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             await king.readMessages([msg.key]);
         }
 
-        // Auto-view/react status
         if (isStatus) {
             if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
             if (conf.AUTO_LIKE && !msg.message?.reactionMessage) {
@@ -80,20 +80,126 @@ async function startBot() {
             }
         }
 
+        if (msg.message?.protocolMessage?.type === 0) {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedMsg = messageStore.get(deletedMsgKey);
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || fromJid;
+            let senderName = msg.pushName || deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            const senderNumber = deletedSenderJid.replace(/@.*$/, '').split(':')[0];
+            let chatName = '';
+            let chatType = 'Private Chat';
+            const timezone = 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderName;
+                    chatName = metadata.subject;
+                    chatType = 'Group Chat';
+                } catch {
+                    chatName = 'Unknown Group';
+                }
+            } else if (fromJid === 'status@broadcast') {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = msg.pushName || senderName;
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Newsletter';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
+                    text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await king.sendMessage(king.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
+
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
+        let messageType = '❔ Unknown Type';
+        if (txt) messageType = `💬 Text: "${txt}"`;
+        else if (m?.imageMessage) messageType = '🖼️ Image';
+        else if (m?.videoMessage) messageType = '🎥 Video';
+        else if (m?.audioMessage) messageType = '🎧 Audio';
+        else if (m?.stickerMessage) messageType = '🔖 Sticker';
+        else if (m?.documentMessage) messageType = '📄 Document';
+        else if (m?.locationMessage) messageType = '📍 Location';
+        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
+        else if (m?.contactMessage) messageType = '👤 Contact';
+        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
+        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
+        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
+        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
+        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
+        else if (m?.templateMessage) messageType = '🧱 Template';
+        else if (m?.listMessage) messageType = '📋 List';
+        else if (m?.pollCreationMessage) messageType = '📊 Poll';
+        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
+        else if (m?.reactionMessage) messageType = '❤️ Reaction';
+        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
+        if (m?.reactionMessage) return;
+
+        let chatType = 'Private Chat';
+        let groupName = null;
+
+        if (fromJid.endsWith('@g.us')) {
+            chatType = 'Group Chat';
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                groupName = metadata.subject;
+            } catch {
+                groupName = 'Unknown Group';
+            }
+        } else if (fromJid === 'status@broadcast') {
+            chatType = 'Status';
+        } else if (fromJid.endsWith('@newsletter')) {
+            chatType = 'Channel';
+        }
 
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
 
+        let logBase = `
+Message: ${messageType}
+Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
+
+        if (chatType === 'Group Chat' && groupName) {
+            logBase += `\nGroup: ${groupName}`;
+        }
+
+        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
+
         const prefixes = [...conf.prefixes, '$'];
         const usedPrefix = prefixes.find(p => text.startsWith(p)) ?? '';
         if (usedPrefix === '$' && !isDev) return;
 
-        // If no prefix and not a DM, ignore
         if (!isDM && usedPrefix === '') return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
@@ -102,7 +208,7 @@ async function startBot() {
         if (!command) return;
 
         const isGroup = fromJid.endsWith('@g.us');
-        const botJid = king.user.id + '@s.whatsapp.net';
+        const botJid = king.user.id;
         let groupAdmins = [];
 
         if (isGroup) {
@@ -151,7 +257,13 @@ async function startBot() {
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) startBot();
+            if (shouldReconnect) {
+                try {
+                    king.ev.removeAllListeners();
+                    king.ws.close();
+                } catch {}
+                startBot();
+            }
         }
 
         if (connection === 'open') {
@@ -185,3 +297,4 @@ async function startBot() {
 }
 
 startBot();
+
