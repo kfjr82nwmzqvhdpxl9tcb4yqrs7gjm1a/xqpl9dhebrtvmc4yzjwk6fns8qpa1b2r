@@ -1,5 +1,16 @@
 require('dotenv').config();
 
+function mapPresence(val) {
+    switch ((val || '').toLowerCase()) {
+        case 'typing': return 'composing';
+        case 'online': return 'available';
+        case 'recording': return 'recording';
+        case 'paused': return 'paused';
+        case '': return null;
+        default: return null;
+    }
+}
+
 module.exports = {
     prefixes: process.env.PREFIX
         ? process.env.PREFIX.split(',').map(p => p.trim())
@@ -13,7 +24,7 @@ module.exports = {
     sessionBase64: process.env.SESSION || '',
     timezone: 'Africa/Nairobi',
     PRESENCE: {
-        DM: process.env.PRESENCE_DM || 'composing',
-        GROUP: process.env.PRESENCE_GROUP || 'paused'
+        DM: mapPresence(process.env.PRESENCE_DM),
+        GROUP: mapPresence(process.env.PRESENCE_GROUP)
     }
 };
