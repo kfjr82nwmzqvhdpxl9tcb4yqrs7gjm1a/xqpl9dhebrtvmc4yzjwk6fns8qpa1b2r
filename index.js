@@ -247,6 +247,7 @@ The following message was deleted:`,
         }
 
         if (connection === 'open') {
+            global.KING_ID = king.user.id;
             const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
             const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
             const totalCmds = commands.size;
