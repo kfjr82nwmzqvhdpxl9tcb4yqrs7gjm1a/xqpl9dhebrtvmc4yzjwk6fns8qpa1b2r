@@ -50,8 +50,8 @@ function mapPresence(val) {
 }
 
 const PRESENCE = {
-    DM: mapPresence(process.env.PRESENCE_DM),
-    GROUP: mapPresence(process.env.PRESENCE_GROUP)
+    DM: conf.PRESENCE_DM,
+    GROUP: conf.PRESENCE_GROUP
 };
 
 function normalizeJid(jid) {
