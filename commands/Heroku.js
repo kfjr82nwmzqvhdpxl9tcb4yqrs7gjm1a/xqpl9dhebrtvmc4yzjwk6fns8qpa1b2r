@@ -74,7 +74,7 @@ module.exports = {
     }
   },
 
-  setVarCommand: {
+  {
     name: 'setvar',
     description: 'Updates or sets a Heroku config variable.',
     category: 'HEROKU',
