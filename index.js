@@ -21,18 +21,13 @@ require('./flash.js');
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
+const messageStore = new Map();
+const DEV_NUMBERS = conf.owners;
+
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
-
-const messageStore = new Set();
-const DEV_NUMBERS = conf.owners;
-
-const PRESENCE = {
-    DM: conf.PRESENCE_DM || 'available',
-    GROUP: conf.PRESENCE_GROUP || 'available'
-};
 
 function isGroupJid(jid) {
     return jid.endsWith('@g.us') || jid.endsWith('@lid');
@@ -54,49 +49,83 @@ async function startBot() {
         version
     });
 
-    king.ev.on('call', async (call) => {
-        if (conf.ANTICALL === "on") {
-            const callId = call[0].id;
-            const callerId = call[0].from;
-            const superUsers = ['254742063632@s.whatsapp.net', '254757835036@s.whatsapp.net'];
-            if (!superUsers.includes(callerId)) {
-                try {
-                    await king.sendCallResult(callId, { type: 'reject' });
-                    console.log(`Call from ${callerId} declined.`);
-                } catch (e) {
-                    console.error('Call reject failed:', e);
+    // --- ANTIDELETE ---
+    king.ev.on('messages.upsert', async ({ messages }) => {
+        const msg = messages[0];
+        if (!msg || !msg.message) return;
+        messageStore.set(msg.key.id, msg);
+    });
+
+    king.ev.on('messages.update', async updates => {
+        for (const update of updates) {
+            if (update.messageStubType === 0 && update.update.message === null) {
+                const deletedMsgKey = update.key.id;
+                const deletedMsg = messageStore.get(deletedMsgKey);
+                const fromJid = update.key.remoteJid;
+                const deletedSenderJid = update.key.participant || update.key.remoteJid;
+                const senderNumber = deletedSenderJid.replace(/@.*$/, '').split(':')[0];
+                const senderName = deletedMsg?.pushName || senderNumber;
+                const chatName = isGroupJid(fromJid) ? 'Group Chat' : 'Private Chat';
+
+                const date = moment().tz('Africa/Nairobi').format('DD/MM/YYYY');
+                const time = moment().tz('Africa/Nairobi').format('hh:mm:ss A');
+
+                if (deletedMsg && deletedSenderJid !== king.user.id) {
+                    await king.sendMessage(king.user.id, {
+                        text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                        mentions: [deletedSenderJid]
+                    });
+
+                    await king.sendMessage(king.user.id, { forward: deletedMsg });
                 }
             }
         }
     });
 
+    // --- MESSAGE LOGGING & COMMAND HANDLER ---
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
-        if (!msg || !msg.message || messageStore.has(msg.key.id)) return;
-        messageStore.add(msg.key.id);
+        if (!msg || !msg.message) return;
 
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
-        const isDM = fromJid.endsWith('@s.whatsapp.net');
-        const isStatus = fromJid === 'status@broadcast';
-
-        const isGroup = isGroupJid(fromJid);
-        if (PRESENCE[isGroup ? 'GROUP' : 'DM']) {
-            king.sendPresenceUpdate(PRESENCE[isGroup ? 'GROUP' : 'DM'], fromJid).catch(() => {});
-        }
-
-        if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
-            king.readMessages([msg.key]).catch(() => {});
-        }
-
-        if (isStatus && conf.AUTO_VIEW_STATUS) {
-            king.readMessages([msg.key]).catch(() => {});
-        }
-
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
+
+        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const isGroup = isGroupJid(fromJid);
+
+        let messageType = '❔ Unknown';
+        if (txt) messageType = `💬 Text: "${txt}"`;
+        else if (m?.imageMessage) messageType = '🖼️ Image';
+        else if (m?.videoMessage) messageType = '🎥 Video';
+        else if (m?.audioMessage) messageType = '🎧 Audio';
+        else if (m?.stickerMessage) messageType = '🔖 Sticker';
+        else if (m?.documentMessage) messageType = '📄 Document';
+
+        const chatType = isGroup ? 'Group Chat' : 'Private Chat';
+        let groupName = '';
+        if (isGroup) {
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                groupName = metadata.subject;
+            } catch {
+                groupName = 'Unknown Group';
+            }
+        }
+
+        console.log(`\n===== ${chatType.toUpperCase()} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
 
         const prefixes = [...conf.prefixes, '$'];
         const usedPrefix = prefixes.find(p => text.startsWith(p)) ?? '';
@@ -107,10 +136,7 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
-
         if (usedPrefix === '$' && !isDev) return;
 
         let groupAdmins = [];
@@ -146,34 +172,42 @@ async function startBot() {
     king.ev.on('creds.update', saveState);
 
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
-        if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) {
-                try {
-                    king.ev.removeAllListeners();
-                    king.ws.close();
-                } catch {}
-                startBot();
-            }
+    if (connection === 'close') {
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        if (shouldReconnect) {
+            try {
+                king.ev.removeAllListeners();
+                king.ws.close();
+            } catch {}
+            startBot();
         }
+    }
 
-        if (connection === 'open') {
-            const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-            const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-            const totalCmds = commands.size;
+    if (connection === 'open') {
+        const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
+        const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
+        const totalCmds = commands.size;
 
-            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
+        const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
 
 *✅ Using Version 2.5!*
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-            await king.sendMessage(king.user.id, { text: connInfo }).catch(() => {});
-            console.log(`Bot connected as ${king.user.id}`);
-        }
-    });
-}
+        await king.sendMessage(king.user.id, {
+            text: connInfo,
+            contextInfo: {
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363238139244263@newsletter',
+                    newsletterName: 'FLASH-MD',
+                    serverMessageId: -1
+                }
+            }
+        }).catch(() => {});
 
-startBot();
-
+        console.log(`Bot connected as ${king.user.id}`);
+    }
+});
