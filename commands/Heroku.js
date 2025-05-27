@@ -1,14 +1,15 @@
 const Heroku = require('heroku-client');
 
+// Dev numbers with WhatsApp suffix
 const OWNERS = [
   '254742063632@s.whatsapp.net',
   '254757835036@s.whatsapp.net'
 ];
 
-// Owner check function
-function isOwner(msg, king) {
+// Global owner check using KING_ID
+function isOwner(msg) {
   const sender = msg.key.participant || msg.key.remoteJid;
-  return sender === king.user.id || OWNERS.includes(sender);
+  return sender === global.KING_ID || OWNERS.includes(sender);
 }
 
 module.exports = {
@@ -19,7 +20,7 @@ module.exports = {
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
 
-      if (!isOwner(msg, king)) {
+      if (!isOwner(msg)) {
         return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
       }
 
@@ -52,7 +53,7 @@ module.exports = {
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
 
-      if (!isOwner(msg, king)) {
+      if (!isOwner(msg)) {
         return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
       }
 
@@ -80,7 +81,7 @@ module.exports = {
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
 
-      if (!isOwner(msg, king)) {
+      if (!isOwner(msg)) {
         return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
       }
 
@@ -110,7 +111,7 @@ module.exports = {
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
 
-      if (!isOwner(msg, king)) {
+      if (!isOwner(msg)) {
         return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
       }
 
@@ -142,7 +143,7 @@ module.exports = {
     execute: async (king, msg) => {
       const fromJid = msg.key.remoteJid;
 
-      if (!isOwner(msg, king)) {
+      if (!isOwner(msg)) {
         return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
       }
 
@@ -162,4 +163,4 @@ module.exports = {
       }
     }
   }
-};
+];
