@@ -282,9 +282,11 @@ king.awaitForMessage = async (options = {}) => {
     if (typeof options.sender !== 'string') return reject(new Error('Sender must be a string'));
     if (typeof options.chatJid !== 'string') return reject(new Error('ChatJid must be a string'));
 
-    const timeout = options.timeout || 30000;
+    const timeout = options.timeout || 60000;
     const filter = options.filter || (() => true);
     let timer;
+
+    const normalize = (jid) => jid?.replace(/:.*@/, '@');
 
     const listener = (data) => {
       const { messages, type } = data;
@@ -303,7 +305,12 @@ king.awaitForMessage = async (options = {}) => {
         console.log('[awaitForMessage] Incoming message from:', senderId);
         console.log('[awaitForMessage] Message content:', message.message);
 
-        if (senderId === options.sender && chatId === options.chatJid && filter(message)) {
+        // Updated match logic with normalization
+        if (
+          normalize(senderId) === normalize(options.sender) &&
+          normalize(chatId) === normalize(options.chatJid) &&
+          filter(message)
+        ) {
           console.log('[awaitForMessage] Matched message!');
           king.ev.off('messages.upsert', listener);
           clearTimeout(timer);
@@ -321,8 +328,7 @@ king.awaitForMessage = async (options = {}) => {
     }, timeout);
   });
 };
-      
- 
+    
 } 
 // ✅ Finally
 startBot();
