@@ -319,6 +319,6 @@ king.awaitForMessage = async (options = {}) => {
         }, timeout);
     });
 };
-
+} 
 // ✅ Finally
 startBot();
