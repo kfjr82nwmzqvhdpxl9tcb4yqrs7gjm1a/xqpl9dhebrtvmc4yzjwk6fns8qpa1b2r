@@ -246,7 +246,7 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
         const botJid = king.user.id;
         let groupAdmins = [];
 
-        if (isGroup) {
+        if (isGroupJid(fromJid)) {
             try {
                 const groupMetadata = await king.groupMetadata(fromJid);
                 groupAdmins = groupMetadata.participants
