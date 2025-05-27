@@ -20,6 +20,7 @@ module.exports = {
 
     MODE: process.env.MODE || 'private',
     ANTICALL: process.env.ANTICALL || 'on',
+ADM: process.env.ANTIDELETE || 'on',
 
     AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS === 'on',
     AUTO_LIKE: process.env.AUTO_LIKE === 'on',
