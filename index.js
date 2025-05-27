@@ -86,7 +86,7 @@ async function startBot() {
             } else if (fromJid.endsWith('status@broadcast')) {
                 chatName = 'Status Update';
                 chatType = 'Status';
-                senderName = 'System';
+                senderName = senderNumber; 
                 mentions = [];
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
