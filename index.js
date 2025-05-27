@@ -40,6 +40,10 @@ function normalizeJid(jid) {
     return jid?.split('@')[0]?.split(':')[0] || jid;
 }
 
+function isGroupJid(jid) {
+    return jid.endsWith('@g.us') || jid.endsWith('@lid');
+}
+
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -124,7 +128,7 @@ async function startBot() {
             const time = moment().tz(timezone).format('hh:mm:ss A');
             let mentions = [deletedSenderJid];
 
-            if (fromJid.endsWith('@g.us')) {
+            if (isGroupJid(fromJid)) {
                 try {
                     const metadata = await king.groupMetadata(fromJid);
                     const participant = metadata.participants.find(p => p.id === deletedSenderJid);
@@ -199,7 +203,7 @@ The following message was deleted:`,
         let chatType = 'Private Chat';
         let groupName = null;
 
-        if (fromJid.endsWith('@g.us')) {
+        if (isGroupJid(fromJid)) {
             chatType = 'Group Chat';
             try {
                 const metadata = await king.groupMetadata(fromJid);
@@ -238,7 +242,7 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        const isGroup = fromJid.endsWith('@g.us');
+        const isGroup = isGroupJid(fromJid);
         const botJid = king.user.id;
         let groupAdmins = [];
 
