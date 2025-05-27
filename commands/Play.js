@@ -49,7 +49,19 @@ module.exports = [
         };
 
         const sentMsg = await king.sendMessage(fromJid, infoMessage, { quoted: msg });
+        const sender = msg.key.participant || msg.key.remoteJid;
+const chatJid = msg.key.remoteJid;
 
+const userResponse = await king.awaitForMessage({
+  sender,
+  chatJid,
+  timeout: 30000,
+  filter: (m) => {
+    const text = m?.message?.conversation || m?.message?.extendedTextMessage?.text || '';
+    return ['1', '2', '3'].includes(text.trim());
+  }
+}); 
+/*
         const userResponse = await king.awaitForMessage({
           chatJid: fromJid,
           sender,
@@ -58,7 +70,7 @@ module.exports = [
             const txt = message.message?.conversation || message.message?.extendedTextMessage?.text;
             return txt && ['1', '2'].includes(txt.trim());
           }
-        });
+        });*/
 
         const replyText = userResponse.message?.conversation || userResponse.message?.extendedTextMessage?.text;
         const choice = replyText.trim();
