@@ -1,3 +1,102 @@
+/*const axios = require('axios');
+const yts = require('yt-search');
+
+const BASE_URL = 'https://noobs-api.top';
+
+module.exports = [
+  {
+    name: 'play',
+    aliases: ['music', 'ytmp3', 'song'],
+    description: 'Search and download MP3 music from YouTube.',
+    category: 'Search',
+    execute: async (king, msg, args, fromJid) => {
+      const query = args.join(' ');
+      const sender = msg.key.participant || msg.key.remoteJid;
+
+      if (!query) {
+        return await king.sendMessage(fromJid, {
+          text: 'Please provide a song name or keyword.'
+        }, { quoted: msg });
+      }
+
+      try {
+        const search = await yts(query);
+        const video = search.videos[0];
+        if (!video) {
+          return king.sendMessage(fromJid, {
+            text: 'No results found for your query.'
+          }, { quoted: msg });
+        }
+
+        const infoMessage = {
+          image: { url: video.thumbnail },
+          caption:
+            `*FLASH-MD SONG PLAYER*\n\n` +
+            `╭───────────────◆\n` +
+            `│⿻ *Title:* ${video.title}\n` +
+            `│⿻ *Duration:* ${video.timestamp}\n` +
+            `│⿻ *Views:* ${video.views.toLocaleString()}\n` +
+            `│⿻ *Uploaded:* ${video.ago}\n` +
+            `│⿻ *Channel:* ${video.author.name}\n` +
+            `╰────────────────◆\n\n` +
+            `🔗 ${video.url}\n\n` +
+            `Reply with:\n1 - Play as Audio\n2 - Send as Document`
+        };
+
+        const sentMsg = await king.sendMessage(fromJid, infoMessage, { quoted: msg });
+
+        const userResponse = await king.awaitForMessage({
+          chatJid: fromJid,
+          sender,
+          timeout: 30000,
+          filter: (message) => {
+            const txt = message.message?.conversation || message.message?.extendedTextMessage?.text;
+            return txt && ['1', '2'].includes(txt.trim());
+          }
+        });
+
+        const replyText = userResponse.message?.conversation || userResponse.message?.extendedTextMessage?.text;
+        const choice = replyText.trim();
+
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=https://youtube.com/watch?v=${video.videoId}&format=mp3`;
+        const response = await axios.get(apiURL);
+        const data = response.data;
+
+        if (!data.downloadLink) {
+          return await king.sendMessage(fromJid, {
+            text: 'Failed to retrieve the MP3 download link.'
+          }, { quoted: msg });
+        }
+
+        const fileName = `${video.title}.mp3`;
+        if (choice === '1') {
+          await king.sendMessage(fromJid, {
+            audio: { url: data.downloadLink },
+            mimetype: 'audio/mpeg',
+            fileName
+          }, { quoted: msg });
+        } else if (choice === '2') {
+          await king.sendMessage(fromJid, {
+            document: { url: data.downloadLink },
+            mimetype: 'audio/mpeg',
+            fileName
+          }, { quoted: msg });
+        } else {
+          await king.sendMessage(fromJid, {
+            text: 'Invalid option. Please reply with "1" or "2".'
+          }, { quoted: msg });
+        }
+
+      } catch (err) {
+        console.error('Play Command Error:', err);
+        await king.sendMessage(fromJid, {
+          text: 'An error occurred while processing your request.'
+        }, { quoted: msg });
+      }
+    }
+  }, 
+*/
+
 const axios = require('axios');
 const yts = require('yt-search');
 
@@ -96,7 +195,7 @@ module.exports = [
     }
   }, 
 
-
+  
 /*const axios = require('axios');
 const yts = require('yt-search');
 
