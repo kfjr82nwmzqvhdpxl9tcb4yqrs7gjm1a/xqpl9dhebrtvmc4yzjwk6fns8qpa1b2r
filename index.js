@@ -138,9 +138,7 @@ async function startBot() {
 
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
-            if (PRESENCE[isGroup ? 'GROUP' : 'DM'] !== 'paused') {
-                king.sendPresenceUpdate('paused', fromJid).catch(() => {});
-            }
+            // Removed forced 'paused' presence update to let Baileys handle presence timing naturally
         } catch (err) {
             console.error('Command error:', err);
             king.sendMessage(fromJid, { text: 'Something went wrong.' }).catch(() => {});
