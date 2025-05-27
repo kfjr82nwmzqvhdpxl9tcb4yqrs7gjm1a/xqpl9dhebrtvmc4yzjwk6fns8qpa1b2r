@@ -11,6 +11,7 @@
     "@whiskeysockets/baileys": "^6.7.17",
     "dotenv": "^16.3.1",
     "express": "^4.19.2",
+    "heroku-client": "^3.1.0",
     "moment-timezone": "^0.5.43",
     "performance-now": "^2.1.0",
     "pino": "^8.15.1",
