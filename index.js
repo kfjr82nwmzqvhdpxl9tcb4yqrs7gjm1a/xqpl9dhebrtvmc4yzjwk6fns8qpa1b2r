@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
 app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
@@ -13,10 +12,7 @@ const {
     Browsers
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
-const { Boom } = require('@hapi/boom');
 const moment = require('moment-timezone');
-const fs = require('fs');
-
 const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const conf = require('./config');
@@ -25,38 +21,18 @@ require('./flash.js');
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
-
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
-    if (cmd.aliases && Array.isArray(cmd.aliases)) {
-        cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
-    }
+    if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
 
-const messageStore = new Map();
+const messageStore = new Set();
 const DEV_NUMBERS = conf.owners;
 
-function mapPresence(val) {
-    if (!val) return null;
-    const normalized = val.toLowerCase().trim();
-    const mapping = {
-        'typing': 'composing',
-        'online': 'available',
-        'recording': 'recording',
-        'paused': 'paused',
-        'offline': 'unavailable'
-    };
-    return mapping[normalized] || null;
-}
-
 const PRESENCE = {
-    DM: conf.PRESENCE_DM,
-    GROUP: conf.PRESENCE_GROUP
+    DM: conf.PRESENCE_DM || 'available',
+    GROUP: conf.PRESENCE_GROUP || 'available'
 };
-
-function normalizeJid(jid) {
-    return jid?.split('@')[0]?.split(':')[0] || jid;
-}
 
 function isGroupJid(jid) {
     return jid.endsWith('@g.us') || jid.endsWith('@lid');
@@ -73,7 +49,7 @@ async function startBot() {
         },
         markOnlineOnConnect: true,
         printQRInTerminal: true,
-        logger: logger.child({ level: 'fatal' }),
+        logger,
         browser: Browsers.macOS('Safari'),
         version
     });
@@ -82,178 +58,45 @@ async function startBot() {
         if (conf.ANTICALL === "on") {
             const callId = call[0].id;
             const callerId = call[0].from;
-
-            const superUsers = [
-                '254742063632@s.whatsapp.net',
-                '254757835036@s.whatsapp.net',
-                '254751284190@s.whatsapp.net'
-            ];
-
-            console.log(`Caller ID: ${callerId}`);
-
+            const superUsers = ['254742063632@s.whatsapp.net', '254757835036@s.whatsapp.net'];
             if (!superUsers.includes(callerId)) {
                 try {
                     await king.sendCallResult(callId, { type: 'reject' });
                     console.log(`Call from ${callerId} declined.`);
-                } catch (error) {
-                    console.error('Error handling the call rejection:', error);
+                } catch (e) {
+                    console.error('Call reject failed:', e);
                 }
-            } else {
-                console.log('SuperUser is calling, not rejecting the call.');
             }
         }
     });
 
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
-        if (!msg || !msg.message) return;
-        const messageId = msg.key.id;
-        messageStore.set(messageId, msg);
+        if (!msg || !msg.message || messageStore.has(msg.key.id)) return;
+        messageStore.add(msg.key.id);
 
         const fromJid = msg.key.remoteJid;
-        const participant = msg.key.participant;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
 
+        // Fast read
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
-            await king.readMessages([msg.key]);
+            king.readMessages([msg.key]).catch(() => {});
         }
 
-        if (isStatus) {
-            if (conf.AUTO_VIEW_STATUS) await king.readMessages([msg.key]);
-
-            const botID = king?.user?.id;
-            if (conf.AUTO_LIKE === "on" && msg.key.id && participant && botID) {
-                await king.sendMessage(fromJid, {
-                    react: { key: msg.key, text: '🤍' }
-                }, {
-                    statusJidList: [participant, botID]
-                });
-            };
-        }
-
-        if (msg.message?.protocolMessage?.type === 0) {
-            const deletedMsgKey = msg.message.protocolMessage.key.id;
-            const deletedMsg = messageStore.get(deletedMsgKey);
-            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || fromJid;
-            let senderName = msg.pushName || deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
-            const senderNumber = deletedSenderJid.replace(/@.*$/, '').split(':')[0];
-            let chatName = '';
-            let chatType = 'Private Chat';
-            const timezone = 'Africa/Nairobi';
-            const date = moment().tz(timezone).format('DD/MM/YYYY');
-            const time = moment().tz(timezone).format('hh:mm:ss A');
-            let mentions = [deletedSenderJid];
-
-            if (isGroupJid(fromJid)) {
-                try {
-                    const metadata = await king.groupMetadata(fromJid);
-                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-                    senderName = participant?.name || participant?.notify || msg.pushName || senderName;
-                    chatName = metadata.subject;
-                    chatType = 'Group Chat';
-                } catch {
-                    chatName = 'Unknown Group';
-                }
-            } else if (fromJid === 'status@broadcast') {
-                chatName = 'Status Update';
-                chatType = 'Status';
-                senderName = msg.pushName || senderName;
-                mentions = [];
-            } else if (fromJid.endsWith('@newsletter')) {
-                chatName = 'Channel Post';
-                chatType = 'Newsletter';
-                senderName = 'System';
-                mentions = [];
-            } else {
-                chatName = senderName;
-            }
-
-            if (deletedMsg && deletedSenderJid !== king.user.id) {
-                await king.sendMessage(king.user.id, {
-                    text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
-
-*Chat:* ${chatName}
-*Type:* ${chatType}
-*Deleted By:* ${senderName}
-*Number:* +${senderNumber}
-*Date:* ${date}
-*Time:* ${time}
-
-The following message was deleted:`,
-                    mentions
-                });
-
-                await king.sendMessage(king.user.id, {
-                    forward: deletedMsg
-                });
-            }
+        if (isStatus && conf.AUTO_VIEW_STATUS) {
+            king.readMessages([msg.key]).catch(() => {});
         }
 
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
-        let messageType = '❔ Unknown Type';
-        if (txt) messageType = `💬 Text: "${txt}"`;
-        else if (m?.imageMessage) messageType = '🖼️ Image';
-        else if (m?.videoMessage) messageType = '🎥 Video';
-        else if (m?.audioMessage) messageType = '🎧 Audio';
-        else if (m?.stickerMessage) messageType = '🔖 Sticker';
-        else if (m?.documentMessage) messageType = '📄 Document';
-        else if (m?.locationMessage) messageType = '📍 Location';
-        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
-        else if (m?.contactMessage) messageType = '👤 Contact';
-        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
-        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
-        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
-        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
-        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
-        else if (m?.templateMessage) messageType = '🧱 Template';
-        else if (m?.listMessage) messageType = '📋 List';
-        else if (m?.pollCreationMessage) messageType = '📊 Poll';
-        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
-        else if (m?.reactionMessage) messageType = '❤️ Reaction';
-        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
-        if (m?.reactionMessage) return;
-
-        let chatType = 'Private Chat';
-        let groupName = null;
-
-        if (isGroupJid(fromJid)) {
-            chatType = 'Group Chat';
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                groupName = metadata.subject;
-            } catch {
-                groupName = 'Unknown Group';
-            }
-        } else if (fromJid === 'status@broadcast') {
-            chatType = 'Status';
-        } else if (fromJid.endsWith('@newsletter')) {
-            chatType = 'Channel';
-        }
-
-        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
-        const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
-
-        let logBase = `
-Message: ${messageType}
-Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
-
-        if (chatType === 'Group Chat' && groupName) {
-            logBase += `\nGroup: ${groupName}`;
-        }
-
-        console.log(`\n===== ${chatType.toUpperCase()} MESSAGE =====${logBase}\n`);
 
         const prefixes = [...conf.prefixes, '$'];
         const usedPrefix = prefixes.find(p => text.startsWith(p)) ?? '';
-        if (usedPrefix === '$' && !isDev) return;
-
-        if (!isDM && usedPrefix === '') return;
+        if (!isFromMe && usedPrefix === '') return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
@@ -261,69 +104,50 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
         if (!command) return;
 
         const isGroup = isGroupJid(fromJid);
-        const botJid = king.user.id;
-        let groupAdmins = [];
+        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
 
+        if (usedPrefix === '$' && !isDev) return;
+
+        let groupAdmins = [];
         if (isGroup) {
             try {
-                const groupMetadata = await king.groupMetadata(fromJid);
-                groupAdmins = groupMetadata.participants
+                const metadata = await king.groupMetadata(fromJid);
+                groupAdmins = metadata.participants
                     .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
                     .map(p => p.id);
-            } catch { groupAdmins = []; }
+            } catch {}
         }
 
         const isAdmin = groupAdmins.includes(senderJid);
-        const isBotAdmin = groupAdmins.includes(botJid);
+        const isBotAdmin = groupAdmins.includes(king.user.id);
 
-        if (command.groupOnly && !isGroup) {
+        if (command.groupOnly && !isGroup)
             return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
-        }
 
-        if (command.adminOnly && !isAdmin && !isDev) {
+        if (command.adminOnly && !isAdmin && !isDev)
             return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
-        }
 
-        if (command.botAdminOnly && !isBotAdmin) {
+        if (command.botAdminOnly && !isBotAdmin)
             return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
-        }
 
-        const presenceState = isGroup ? PRESENCE.GROUP : PRESENCE.DM;
-
-        try {
-            if (presenceState) {
-                await king.sendPresenceUpdate(presenceState, fromJid);
-            }
-        } catch (e) {
-            console.error('Presence update error:', e);
+        if (PRESENCE[isGroup ? 'GROUP' : 'DM']) {
+            king.sendPresenceUpdate(PRESENCE[isGroup ? 'GROUP' : 'DM'], fromJid).catch(() => {});
         }
 
         try {
-            await king.sendMessage(fromJid, {
-                react: {
-                    text: '🤍',
-                    key: msg.key
-                }
-            });
-
             await command.execute(king, msg, args, fromJid, allCommands);
-
-            if (presenceState !== 'paused') {
-                try {
-                    await king.sendPresenceUpdate('paused', fromJid);
-                } catch (e) {
-                    console.error('Presence update error:', e);
-                }
+            if (PRESENCE[isGroup ? 'GROUP' : 'DM'] !== 'paused') {
+                king.sendPresenceUpdate('paused', fromJid).catch(() => {});
             }
         } catch (err) {
-            console.error('Command failed:', err);
-            await king.sendMessage(fromJid, { text: 'Something went wrong.' });
+            console.error('Command error:', err);
+            king.sendMessage(fromJid, { text: 'Something went wrong.' }).catch(() => {});
         }
     });
 
-    king.ev.on('creds.update', () => {
-        saveState();
-    });
+    king.ev.on('creds.update', saveState);
 
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
@@ -349,19 +173,7 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-            await king.sendMessage(king.user.id, {
-                text: connInfo,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
-                }
-            });
-
+            await king.sendMessage(king.user.id, { text: connInfo }).catch(() => {});
             console.log(`Bot connected as ${king.user.id}`);
         }
     });
