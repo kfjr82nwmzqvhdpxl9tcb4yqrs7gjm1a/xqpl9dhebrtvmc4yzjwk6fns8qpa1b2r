@@ -13,7 +13,7 @@ function isOwner(msg) {
 }
 
 module.exports = {
-  addVarCommand: {
+  
     name: 'addvar',
     description: 'Adds a new Heroku config variable.',
     category: 'HEROKU',
@@ -46,7 +46,7 @@ module.exports = {
     }
   },
 
-  delVarCommand: {
+  {
     name: 'delvar',
     description: 'Deletes a Heroku config variable.',
     category: 'HEROKU',
@@ -104,7 +104,7 @@ module.exports = {
     }
   },
 
-  getVarCommand: {
+  {
     name: 'getvar',
     description: 'Fetches a specific Heroku config variable.',
     category: 'HEROKU',
