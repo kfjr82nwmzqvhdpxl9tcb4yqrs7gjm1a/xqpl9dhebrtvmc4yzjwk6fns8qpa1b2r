@@ -136,7 +136,7 @@ module.exports = {
     }
   },
 
-  allVarCommand: {
+  {
     name: 'allvar',
     description: 'Lists all Heroku environment variables.',
     category: 'HEROKU',
