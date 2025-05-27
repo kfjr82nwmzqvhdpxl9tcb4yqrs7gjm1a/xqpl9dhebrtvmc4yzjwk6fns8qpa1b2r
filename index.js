@@ -36,6 +36,24 @@ allCommands.forEach(cmd => {
 const messageStore = new Map();
 const DEV_NUMBERS = conf.owners;
 
+function mapPresence(val) {
+    if (!val) return null;
+    const normalized = val.toLowerCase().trim();
+    const mapping = {
+        'typing': 'composing',
+        'online': 'available',
+        'recording': 'recording',
+        'paused': 'paused',
+        'offline': 'unavailable'
+    };
+    return mapping[normalized] || null;
+}
+
+const PRESENCE = {
+    DM: mapPresence(process.env.PRESENCE_DM),
+    GROUP: mapPresence(process.env.PRESENCE_GROUP)
+};
+
 function normalizeJid(jid) {
     return jid?.split('@')[0]?.split(':')[0] || jid;
 }
@@ -75,7 +93,7 @@ async function startBot() {
 
             if (!superUsers.includes(callerId)) {
                 try {
-                    await king.rejectCall(callId, callerId);
+                    await king.sendCallResult(callId, { type: 'reject' });
                     console.log(`Call from ${callerId} declined.`);
                 } catch (error) {
                     console.error('Error handling the call rejection:', error);
@@ -270,7 +288,7 @@ Sender: ${msg.pushName || senderNumber} (${senderNumber})`;
             return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
         }
 
-        const presenceState = isGroup ? conf.PRESENCE.GROUP : conf.PRESENCE.DM;
+        const presenceState = isGroup ? PRESENCE.GROUP : PRESENCE.DM;
 
         try {
             if (presenceState) {
