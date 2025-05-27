@@ -276,49 +276,54 @@ king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
     }
 });
 
-// ✅ Place this OUTSIDE the connection update listener
 king.awaitForMessage = async (options = {}) => {
-    return new Promise((resolve, reject) => {
-        if (typeof options !== 'object') return reject(new Error('Options must be an object'));
-        if (typeof options.sender !== 'string') return reject(new Error('Sender must be a string'));
-        if (typeof options.chatJid !== 'string') return reject(new Error('ChatJid must be a string'));
-        if (options.timeout && typeof options.timeout !== 'number') return reject(new Error('Timeout must be a number'));
-        if (options.filter && typeof options.filter !== 'function') return reject(new Error('Filter must be a function'));
+  return new Promise((resolve, reject) => {
+    if (typeof options !== 'object') return reject(new Error('Options must be an object'));
+    if (typeof options.sender !== 'string') return reject(new Error('Sender must be a string'));
+    if (typeof options.chatJid !== 'string') return reject(new Error('ChatJid must be a string'));
+    if (options.timeout && typeof options.timeout !== 'number') return reject(new Error('Timeout must be a number'));
+    if (options.filter && typeof options.filter !== 'function') return reject(new Error('Filter must be a function'));
 
-        const timeout = options.timeout || 30000;
-        const filter = options.filter || (() => true);
-        let timer;
+    const timeout = options.timeout || undefined;
+    const filter = options.filter || (() => true);
+    let interval;
 
-        const listener = (data) => {
-            const { messages, type } = data;
-            if (type !== 'notify') return;
+    const listener = (data) => {
+      const { messages, type } = data;
+      if (type !== 'notify') return;
 
-            for (const message of messages) {
-                const fromMe = message.key.fromMe;
-                const chatId = message.key.remoteJid;
-                const isGroup = chatId.endsWith('@g.us');
-                const isStatus = chatId === 'status@broadcast';
-                const sender = fromMe
-                    ? king.user.id.replace(/:.*@/, '@')
-                    : (isGroup || isStatus)
-                        ? message.key.participant?.replace(/:.*@/, '@')
-                        : chatId;
+      for (const message of messages) {
+        const fromMe = message.key.fromMe;
+        const chatId = message.key.remoteJid;
+        const isGroup = chatId.endsWith('@g.us');
+        const isStatus = chatId === 'status@broadcast';
+        const isNewsletter = chatId.endsWith('@newsletter');
 
-                if (sender === options.sender && chatId === options.chatJid && filter(message)) {
-                    king.ev.off('messages.upsert', listener);
-                    clearTimeout(timer);
-                    return resolve(message);
-                }
-            }
-        };
+        const sender = fromMe
+          ? king.user.id.replace(/:.*@/, '@')
+          : (isGroup || isStatus || isNewsletter)
+            ? message.key.participant?.replace(/:.*@/, '@')
+            : chatId;
 
-        king.ev.on('messages.upsert', listener);
-        timer = setTimeout(() => {
-            king.ev.off('messages.upsert', listener);
-            reject(new Error('Timeout waiting for message.'));
-        }, timeout);
-    });
+        if (sender === options.sender && chatId === options.chatJid && filter(message)) {
+          king.ev.off('messages.upsert', listener);
+          clearTimeout(interval);
+          return resolve(message);
+        }
+      }
+    };
+
+    king.ev.on('messages.upsert', listener);
+    if (timeout) {
+      interval = setTimeout(() => {
+        king.ev.off('messages.upsert', listener);
+        reject(new Error('Timeout waiting for message.'));
+      }, timeout);
+    }
+  });
 };
+        
+ 
 } 
 // ✅ Finally
 startBot();
