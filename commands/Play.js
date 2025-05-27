@@ -65,7 +65,8 @@ module.exports = [
 
         console.log('[PLAY] User replied with:', choice);
 
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=https://youtube.com/watch?v=${video.videoId}&format=mp3`;
+        // Fixed: Use only videoId in the API link
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${video.videoId}&format=mp3`;
         console.log('[PLAY] Fetching from API:', apiURL);
 
         let response;
@@ -118,7 +119,11 @@ module.exports = [
       }
     }
   },
-  {
+];
+
+
+
+{
     name: 'video',
     aliases: ['ytmp4'],
     description: 'Search and download MP4 video from YouTube.',
