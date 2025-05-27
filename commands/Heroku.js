@@ -1,0 +1,165 @@
+const Heroku = require('heroku-client');
+
+const OWNERS = [
+  '254742063632@s.whatsapp.net',
+  '254757835036@s.whatsapp.net'
+];
+
+// Owner check function
+function isOwner(msg, king) {
+  const sender = msg.key.participant || msg.key.remoteJid;
+  return sender === king.user.id || OWNERS.includes(sender);
+}
+
+module.exports = {
+  addVarCommand: {
+    name: 'addvar',
+    description: 'Adds a new Heroku config variable.',
+    category: 'HEROKU',
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
+
+      if (!isOwner(msg, king)) {
+        return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+      }
+
+      const input = args.join(" ");
+      if (!input.includes("=")) {
+        return king.sendMessage(fromJid, { text: "Invalid format. Usage: addvar VAR_NAME=VALUE" }, { quoted: msg });
+      }
+
+      const [varName, varValue] = input.split("=").map(s => s.trim());
+      if (!/^[A-Z_]+$/.test(varName)) {
+        return king.sendMessage(fromJid, { text: "Variable name must be uppercase." }, { quoted: msg });
+      }
+
+      try {
+        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
+        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        await heroku.patch(baseURI + "/config-vars", { body: { [varName]: varValue } });
+        await king.sendMessage(fromJid, { text: `Variable *${varName}* added! Restarting...` }, { quoted: msg });
+        process.exit(0);
+      } catch (e) {
+        await king.sendMessage(fromJid, { text: 'Error: ' + e.message }, { quoted: msg });
+      }
+    }
+  },
+
+  delVarCommand: {
+    name: 'delvar',
+    description: 'Deletes a Heroku config variable.',
+    category: 'HEROKU',
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
+
+      if (!isOwner(msg, king)) {
+        return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+      }
+
+      const varName = args[0];
+      if (!varName || !/^[A-Z_]+$/.test(varName)) {
+        return king.sendMessage(fromJid, { text: "Provide an uppercase variable name." }, { quoted: msg });
+      }
+
+      try {
+        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
+        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        await heroku.patch(baseURI + "/config-vars", { body: { [varName]: null } });
+        await king.sendMessage(fromJid, { text: `Variable *${varName}* deleted. Restarting...` }, { quoted: msg });
+        process.exit(0);
+      } catch (e) {
+        await king.sendMessage(fromJid, { text: 'Error: ' + e.message }, { quoted: msg });
+      }
+    }
+  },
+
+  setVarCommand: {
+    name: 'setvar',
+    description: 'Updates or sets a Heroku config variable.',
+    category: 'HEROKU',
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
+
+      if (!isOwner(msg, king)) {
+        return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+      }
+
+      const input = args.join(" ");
+      if (!input.includes("=")) {
+        return king.sendMessage(fromJid, { text: "Usage: setvar VAR_NAME=VALUE" }, { quoted: msg });
+      }
+
+      const [varName, varValue] = input.split("=").map(s => s.trim());
+
+      try {
+        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
+        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        await heroku.patch(baseURI + "/config-vars", { body: { [varName]: varValue } });
+        await king.sendMessage(fromJid, { text: `Variable *${varName}* set. Restarting...` }, { quoted: msg });
+        process.exit(0);
+      } catch (e) {
+        await king.sendMessage(fromJid, { text: 'Error: ' + e.message }, { quoted: msg });
+      }
+    }
+  },
+
+  getVarCommand: {
+    name: 'getvar',
+    description: 'Fetches a specific Heroku config variable.',
+    category: 'HEROKU',
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
+
+      if (!isOwner(msg, king)) {
+        return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+      }
+
+      const varName = args[0];
+      if (!varName) {
+        return king.sendMessage(fromJid, { text: "Provide a variable name." }, { quoted: msg });
+      }
+
+      try {
+        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
+        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        const vars = await heroku.get(baseURI + "/config-vars");
+
+        if (vars[varName]) {
+          king.sendMessage(fromJid, { text: `*${varName}* = ${vars[varName]}` }, { quoted: msg });
+        } else {
+          king.sendMessage(fromJid, { text: `Variable *${varName}* not found.` }, { quoted: msg });
+        }
+      } catch (e) {
+        king.sendMessage(fromJid, { text: 'Error: ' + e.message }, { quoted: msg });
+      }
+    }
+  },
+
+  allVarCommand: {
+    name: 'allvar',
+    description: 'Lists all Heroku environment variables.',
+    category: 'HEROKU',
+    execute: async (king, msg) => {
+      const fromJid = msg.key.remoteJid;
+
+      if (!isOwner(msg, king)) {
+        return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
+      }
+
+      try {
+        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
+        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        const vars = await heroku.get(baseURI + "/config-vars");
+
+        let reply = '*HEROKU CONFIG VARS*\n\n';
+        for (const key in vars) {
+          reply += `*${key}* = ${vars[key]}\n`;
+        }
+
+        king.sendMessage(fromJid, { text: reply }, { quoted: msg });
+      } catch (e) {
+        king.sendMessage(fromJid, { text: 'Error: ' + e.message }, { quoted: msg });
+      }
+    }
+  }
+};
