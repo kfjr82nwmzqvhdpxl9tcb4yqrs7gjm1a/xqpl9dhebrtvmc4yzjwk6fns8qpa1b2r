@@ -80,7 +80,11 @@ async function startBot() {
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
 
-        // Fast read
+        const isGroup = isGroupJid(fromJid);
+        if (PRESENCE[isGroup ? 'GROUP' : 'DM']) {
+            king.sendPresenceUpdate(PRESENCE[isGroup ? 'GROUP' : 'DM'], fromJid).catch(() => {});
+        }
+
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
         }
@@ -103,7 +107,6 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        const isGroup = isGroupJid(fromJid);
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
@@ -132,13 +135,8 @@ async function startBot() {
         if (command.botAdminOnly && !isBotAdmin)
             return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
 
-        if (PRESENCE[isGroup ? 'GROUP' : 'DM']) {
-            king.sendPresenceUpdate(PRESENCE[isGroup ? 'GROUP' : 'DM'], fromJid).catch(() => {});
-        }
-
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
-            // Removed forced 'paused' presence update to let Baileys handle presence timing naturally
         } catch (err) {
             console.error('Command error:', err);
             king.sendMessage(fromJid, { text: 'Something went wrong.' }).catch(() => {});
@@ -178,3 +176,4 @@ async function startBot() {
 }
 
 startBot();
+
