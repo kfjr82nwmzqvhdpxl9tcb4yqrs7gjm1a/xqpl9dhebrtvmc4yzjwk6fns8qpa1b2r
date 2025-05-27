@@ -58,6 +58,68 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
+        if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedMsg = messageStore.get(deletedMsgKey);
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            let senderName = senderNumber;
+            let chatName = '';
+            let chatType = 'Personal';
+            const timezone = king?.config?.timezone || 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    chatName = metadata.subject;
+                    chatType = 'Group';
+                } catch {
+                    chatName = 'Unknown Group';
+                }
+            } else if (fromJid.endsWith('status@broadcast')) {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = 'System';
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Channel';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                senderName = msg.pushName || senderNumber;
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
+                    text:
+`*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await king.sendMessage(king.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
+
         messageStore.set(msg.key.id, msg);
 
         const fromJid = msg.key.remoteJid;
@@ -97,6 +159,20 @@ async function startBot() {
         else if (m?.audioMessage) messageType = '🎧 Audio';
         else if (m?.stickerMessage) messageType = '🔖 Sticker';
         else if (m?.documentMessage) messageType = '📄 Document';
+        else if (m?.locationMessage) messageType = '📍 Location';
+        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
+        else if (m?.contactMessage) messageType = '👤 Contact';
+        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
+        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
+        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
+        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
+        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
+        else if (m?.templateMessage) messageType = '🧱 Template';
+        else if (m?.listMessage) messageType = '📋 List';
+        else if (m?.pollCreationMessage) messageType = '📊 Poll';
+        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
+        else if (m?.reactionMessage) messageType = '❤️ Reaction';
+        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
 
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
@@ -156,39 +232,6 @@ async function startBot() {
         }
     });
 
-    king.ev.on('messages.update', async updates => {
-        for (const update of updates) {
-            if (update.messageStubType === 0 && update.update.message === null) {
-                const deletedMsgKey = update.key.id;
-                const deletedMsg = messageStore.get(deletedMsgKey);
-                const fromJid = update.key.remoteJid;
-                const deletedSenderJid = update.key.participant || update.key.remoteJid;
-                const senderNumber = deletedSenderJid.replace(/@.*$/, '').split(':')[0];
-                const senderName = deletedMsg?.pushName || senderNumber;
-                const chatName = isGroupJid(fromJid) ? 'Group Chat' : 'Private Chat';
-                const date = moment().tz('Africa/Nairobi').format('DD/MM/YYYY');
-                const time = moment().tz('Africa/Nairobi').format('hh:mm:ss A');
-
-                if (deletedMsg && deletedSenderJid !== king.user.id) {
-                    await king.sendMessage(king.user.id, {
-                        text: `*⚡ FLASH-MD ANTI_DELETE ⚡*
-
-*Chat:* ${chatName}
-*Deleted By:* ${senderName}
-*Number:* +${senderNumber}
-*Date:* ${date}
-*Time:* ${time}
-
-The following message was deleted:`,
-                        mentions: [deletedSenderJid]
-                    });
-
-                    await king.sendMessage(king.user.id, { forward: deletedMsg });
-                }
-            }
-        }
-    });
-
     king.ev.on('creds.update', saveState);
 
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
@@ -222,17 +265,15 @@ The following message was deleted:`,
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
                         newsletterJid: '120363238139244263@newsletter',
-                    newsletterName: 'FLASH-MD',
-                    serverMessageId: -1
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
                 }
-            }
-        }).catch(() => {});
+            }).catch(() => {});
 
-        console.log(`Bot connected as ${king.user.id}`);
-    }
-});
-
+            console.log(`Bot connected as ${king.user.id}`);
+        }
+    });
 }
 
 startBot();
-
