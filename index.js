@@ -73,7 +73,7 @@ async function startBot() {
             const time = moment().tz(timezone).format('hh:mm:ss A');
             let mentions = [deletedSenderJid];
 
-            if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+            if (fromJid.endsWith('@g.us')) {
                 try {
                     const metadata = await king.groupMetadata(fromJid);
                     const participant = metadata.participants.find(p => p.id === deletedSenderJid);
@@ -83,10 +83,10 @@ async function startBot() {
                 } catch {
                     chatName = 'Unknown Group';
                 }
-            } else if (fromJid === 'status@broadcast') {
+            } else if (fromJid.endsWith('status@broadcast')) {
                 chatName = 'Status Update';
                 chatType = 'Status';
-                senderName = senderNumber;
+                senderName = senderName; 
                 mentions = [];
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
@@ -174,7 +174,6 @@ The following message was deleted:`,
         else if (m?.reactionMessage) messageType = '❤️ Reaction';
         else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
 
-        const caption = m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
@@ -191,26 +190,14 @@ The following message was deleted:`,
             }
         }
 
-        let chatLabel = 'Private';
-        if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) chatLabel = 'Group';
-        else if (fromJid === 'status@broadcast') chatLabel = 'Status';
-        else if (fromJid.endsWith('@newsletter')) chatLabel = 'Channel';
-
-        console.log(
-            `\n===== ${chatLabel.toUpperCase()} MESSAGE =====\n` +
-            `From: ${msg.pushName || senderNumber} (+${senderNumber})\n` +
-            `Type: ${messageType}\n` +
-            `${caption ? `Caption: ${caption}\n` : ''}` +
-            `${groupName ? `Group: ${groupName}\n` : ''}` +
-            `Chat ID: ${fromJid}\n`
-        );
+        console.log(`\n===== ${chatType.toUpperCase()} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
 
         const prefixes = [...conf.prefixes, '$'];
         const usedPrefix = prefixes.find(p => text.startsWith(p)) ?? '';
         if (!isFromMe && usedPrefix === '') return;
         if (usedPrefix === '$' && !isDev) return;
 
-               const args = text.slice(usedPrefix.length).trim().split(/ +/);
+        const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
