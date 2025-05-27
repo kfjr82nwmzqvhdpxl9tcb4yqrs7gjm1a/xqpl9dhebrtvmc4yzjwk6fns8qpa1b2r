@@ -234,46 +234,91 @@ The following message was deleted:`,
 
     king.ev.on('creds.update', saveState);
 
-    king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
-        if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) {
-                try {
-                    king.ev.removeAllListeners();
-                    king.ws.close();
-                } catch {}
-                startBot();
-            }
+    // This should remain inside startBot or connection update
+king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
+    if (connection === 'close') {
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        if (shouldReconnect) {
+            try {
+                king.ev.removeAllListeners();
+                king.ws.close();
+            } catch {}
+            startBot();
         }
+    }
 
-        if (connection === 'open') {
-            const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-            const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-            const totalCmds = commands.size;
+    if (connection === 'open') {
+        const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
+        const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
+        const totalCmds = commands.size;
 
-            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
+        const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
 
 *✅ Using Version 2.5!*
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-            await king.sendMessage(king.user.id, {
-                text: connInfo,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
+        await king.sendMessage(king.user.id, {
+            text: connInfo,
+            contextInfo: {
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363238139244263@newsletter',
+                    newsletterName: 'FLASH-MD',
+                    serverMessageId: -1
                 }
-            }).catch(() => {});
+            }
+        }).catch(() => {});
 
-            console.log(`Bot connected as ${king.user.id}`);
-        }
+        console.log(`Bot connected as ${king.user.id}`);
+    }
+});
+
+// ✅ Place this OUTSIDE the connection update listener
+king.awaitForMessage = async (options = {}) => {
+    return new Promise((resolve, reject) => {
+        if (typeof options !== 'object') return reject(new Error('Options must be an object'));
+        if (typeof options.sender !== 'string') return reject(new Error('Sender must be a string'));
+        if (typeof options.chatJid !== 'string') return reject(new Error('ChatJid must be a string'));
+        if (options.timeout && typeof options.timeout !== 'number') return reject(new Error('Timeout must be a number'));
+        if (options.filter && typeof options.filter !== 'function') return reject(new Error('Filter must be a function'));
+
+        const timeout = options.timeout || 30000;
+        const filter = options.filter || (() => true);
+        let timer;
+
+        const listener = (data) => {
+            const { messages, type } = data;
+            if (type !== 'notify') return;
+
+            for (const message of messages) {
+                const fromMe = message.key.fromMe;
+                const chatId = message.key.remoteJid;
+                const isGroup = chatId.endsWith('@g.us');
+                const isStatus = chatId === 'status@broadcast';
+                const sender = fromMe
+                    ? king.user.id.replace(/:.*@/, '@')
+                    : (isGroup || isStatus)
+                        ? message.key.participant?.replace(/:.*@/, '@')
+                        : chatId;
+
+                if (sender === options.sender && chatId === options.chatJid && filter(message)) {
+                    king.ev.off('messages.upsert', listener);
+                    clearTimeout(timer);
+                    return resolve(message);
+                }
+            }
+        };
+
+        king.ev.on('messages.upsert', listener);
+        timer = setTimeout(() => {
+            king.ev.off('messages.upsert', listener);
+            reject(new Error('Timeout waiting for message.'));
+        }, timeout);
     });
-}
+};
 
+// ✅ Finally
 startBot();
