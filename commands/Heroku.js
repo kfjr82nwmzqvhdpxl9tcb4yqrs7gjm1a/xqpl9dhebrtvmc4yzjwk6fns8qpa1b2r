@@ -12,7 +12,8 @@ function isOwner(msg) {
   return sender === global.KING_ID || OWNERS.includes(sender);
 }
 
-module.exports = {
+module.exports = [
+  {
   
     name: 'addvar',
     description: 'Adds a new Heroku config variable.',
