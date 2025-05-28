@@ -6,15 +6,29 @@ const OWNERS = [
   '254757835036@s.whatsapp.net'
 ];
 
-// Global owner check using KING_ID
+// Check if sender is a global owner
 function isOwner(msg) {
   const sender = msg.key.participant || msg.key.remoteJid;
   return sender === global.KING_ID || OWNERS.includes(sender);
 }
 
+// Check if ENV vars are set
+function getHerokuClient() {
+  const apiKey = process.env.HEROKU_API_KEY;
+  const appName = process.env.HEROKU_APP_NAME;
+
+  if (!apiKey || !appName) {
+    throw new Error('Missing HEROKU_API_KEY or HEROKU_APP_NAME in environment variables.');
+  }
+
+  return {
+    heroku: new Heroku({ token: apiKey }),
+    baseURI: `/apps/${appName}`
+  };
+}
+
 module.exports = [
   {
-  
     name: 'addvar',
     description: 'Adds a new Heroku config variable.',
     category: 'HEROKU',
@@ -36,8 +50,7 @@ module.exports = [
       }
 
       try {
-        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
-        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        const { heroku, baseURI } = getHerokuClient();
         await heroku.patch(baseURI + "/config-vars", { body: { [varName]: varValue } });
         await king.sendMessage(fromJid, { text: `Variable *${varName}* added! Restarting...` }, { quoted: msg });
         process.exit(0);
@@ -64,8 +77,7 @@ module.exports = [
       }
 
       try {
-        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
-        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        const { heroku, baseURI } = getHerokuClient();
         await heroku.patch(baseURI + "/config-vars", { body: { [varName]: null } });
         await king.sendMessage(fromJid, { text: `Variable *${varName}* deleted. Restarting...` }, { quoted: msg });
         process.exit(0);
@@ -94,8 +106,7 @@ module.exports = [
       const [varName, varValue] = input.split("=").map(s => s.trim());
 
       try {
-        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
-        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        const { heroku, baseURI } = getHerokuClient();
         await heroku.patch(baseURI + "/config-vars", { body: { [varName]: varValue } });
         await king.sendMessage(fromJid, { text: `Variable *${varName}* set. Restarting...` }, { quoted: msg });
         process.exit(0);
@@ -122,8 +133,7 @@ module.exports = [
       }
 
       try {
-        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
-        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        const { heroku, baseURI } = getHerokuClient();
         const vars = await heroku.get(baseURI + "/config-vars");
 
         if (vars[varName]) {
@@ -149,8 +159,7 @@ module.exports = [
       }
 
       try {
-        const heroku = new Heroku({ token: process.env.HEROKU_API_KEY });
-        const baseURI = `/apps/${process.env.HEROKU_APP_NAME}`;
+        const { heroku, baseURI } = getHerokuClient();
         const vars = await heroku.get(baseURI + "/config-vars");
 
         let reply = '*HEROKU CONFIG VARS*\n\n';
