@@ -74,17 +74,17 @@ async function startBot() {
             const time = moment().tz(timezone).format('hh:mm:ss A');
             let mentions = [deletedSenderJid];
 
-            if (fromJid.endsWith('@g.us') || (fromJid.endsWith('@lid')) {
-                try {
-                    const metadata = await king.groupMetadata(fromJid);
-                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
-                    chatName = metadata.subject;
-                    chatType = 'Group';
-                } catch {
-                    chatName = 'Unknown Group';
-                }
-            } else if (fromJid.endsWith('status@broadcast')) {
+            if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+    try {
+        const metadata = await king.groupMetadata(fromJid);
+        const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+        senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+        chatName = metadata.subject;
+        chatType = 'Group';
+    } catch {
+        chatName = 'Unknown Group';
+    } 
+      } else if (fromJid.endsWith('status@broadcast')) {
                 chatName = 'Status Update';
                 chatType = 'Status';
                 senderName = msg.pushName; 
