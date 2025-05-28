@@ -22,7 +22,6 @@ const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 const messageStore = new Map();
-const DEV_NUMBERS = conf.owners;
 
 const PRESENCE = {
     DM: conf.PRESENCE_DM || 'available',
@@ -176,7 +175,6 @@ The following message was deleted:`,
 
         const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
-        const isDev = DEV_NUMBERS.includes(senderNumber) || senderJid === king.user.id;
 
         let chatType = 'Private Chat';
         let groupName = '';
@@ -192,10 +190,9 @@ The following message was deleted:`,
 
         console.log(`\n===== ${chatType.toUpperCase()} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
 
-        const prefixes = [...conf.prefixes, '$'];
+        const prefixes = [...conf.prefixes];
         const usedPrefix = prefixes.find(p => text.startsWith(p)) ?? '';
         if (!isFromMe && usedPrefix === '') return;
-        if (usedPrefix === '$' && !isDev) return;
 
         const args = text.slice(usedPrefix.length).trim().split(/ +/);
         const cmdName = args.shift().toLowerCase();
@@ -218,7 +215,7 @@ The following message was deleted:`,
         if (command.groupOnly && !isGroup)
             return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
 
-        if (command.adminOnly && !isAdmin && !isDev)
+        if (command.adminOnly && !isAdmin)
             return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
 
         if (command.botAdminOnly && !isBotAdmin)
