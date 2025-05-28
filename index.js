@@ -74,7 +74,7 @@ async function startBot() {
             const time = moment().tz(timezone).format('hh:mm:ss A');
             let mentions = [deletedSenderJid];
 
-            if (fromJid.endsWith('@g.us')) {
+            if (fromJid.endsWith('@g.us') || (fromJid.endsWith('@lid')) {
                 try {
                     const metadata = await king.groupMetadata(fromJid);
                     const participant = metadata.participants.find(p => p.id === deletedSenderJid);
