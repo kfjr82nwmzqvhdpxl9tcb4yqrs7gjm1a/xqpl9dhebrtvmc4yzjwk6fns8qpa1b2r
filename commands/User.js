@@ -25,11 +25,6 @@ module.exports = [
     category: 'USER',
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
-
-      if (!isOwner(msg)) {
-        return king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
-      }
-
       let targetJid;
 
       if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
@@ -42,8 +37,14 @@ module.exports = [
         return king.sendMessage(fromJid, { text: "Please mention or provide a number to block." }, { quoted: msg });
       }
 
+      // ✅ FIRST: prevent blocking developers
       if (restrictedJIDs.includes(targetJid)) {
         return king.sendMessage(fromJid, { text: "I'm sorry, I cannot block my developer!!" }, { quoted: msg });
+      }
+
+      // 🔐 THEN check if sender is allowed
+      if (!isOwner(msg)) {
+        return king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
       }
 
       try {
@@ -61,11 +62,6 @@ module.exports = [
     category: 'USER',
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
-
-      if (!isOwner(msg)) {
-        return king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
-      }
-
       let targetJid;
 
       if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
@@ -78,8 +74,14 @@ module.exports = [
         return king.sendMessage(fromJid, { text: "Please mention or provide a number to unblock." }, { quoted: msg });
       }
 
+      // ✅ FIRST: prevent unblocking protected developers
       if (restrictedJIDs.includes(targetJid)) {
         return king.sendMessage(fromJid, { text: "You cannot unblock the developer using this command." }, { quoted: msg });
+      }
+
+      // 🔐 THEN check if sender is allowed
+      if (!isOwner(msg)) {
+        return king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
       }
 
       try {
