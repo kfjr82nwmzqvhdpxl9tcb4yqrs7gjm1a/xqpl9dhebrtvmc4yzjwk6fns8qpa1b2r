@@ -57,6 +57,68 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
+        if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedMsg = messageStore.get(deletedMsgKey);
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            let senderName = senderNumber;
+            let chatName = '';
+            let chatType = 'Personal';
+            const timezone = king?.config?.timezone || 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    chatName = metadata.subject;
+                    chatType = 'Group';
+                } catch {
+                    chatName = 'Unknown Group';
+                }
+            } else if (fromJid.endsWith('status@broadcast')) {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = msg.pushName; 
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Channel';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                senderName = msg.pushName || senderNumber;
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
+                    text:
+`*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await king.sendMessage(king.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
+
         messageStore.set(msg.key.id, msg);
 
         const fromJid = msg.key.remoteJid;
@@ -89,24 +151,63 @@ async function startBot() {
         const text = txt || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
-        const prefixes = [...conf.prefixes];
-        const prefixlessAllowed = prefixes.length === 0;
+        let messageType = '❔ Unknown';
+        if (txt) messageType = `💬 Text: "${txt}"`;
+        else if (m?.imageMessage) messageType = '🖼️ Image';
+        else if (m?.videoMessage) messageType = '🎥 Video';
+        else if (m?.audioMessage) messageType = '🎧 Audio';
+        else if (m?.stickerMessage) messageType = '🔖 Sticker';
+        else if (m?.documentMessage) messageType = '📄 Document';
+        else if (m?.locationMessage) messageType = '📍 Location';
+        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
+        else if (m?.contactMessage) messageType = '👤 Contact';
+        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
+        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
+        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
+        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
+        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
+        else if (m?.templateMessage) messageType = '🧱 Template';
+        else if (m?.listMessage) messageType = '📋 List';
+        else if (m?.pollCreationMessage) messageType = '📊 Poll';
+        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
+        else if (m?.reactionMessage) messageType = '❤️ Reaction';
+        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
 
-        const startsWithValidPrefix = prefixes.find(p => text.startsWith(p));
-        const hasAnyPrefix = /^[^\s\w]/.test(text);
+        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
 
-        if (!prefixlessAllowed) {
-            if (!startsWithValidPrefix) return;
-        } else {
-            if (hasAnyPrefix) return;
+        let chatType = 'Private Chat';
+        let groupName = '';
+        if (isGroup) {
+            chatType = 'Group Chat';
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                groupName = metadata.subject;
+            } catch {
+                groupName = 'Unknown Group';
+            }
         }
 
-        const usedPrefix = startsWithValidPrefix || '';
-        const args = text.slice(usedPrefix.length).trim().split(/ +/);
-        const cmdName = args.shift()?.toLowerCase();
-        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-        if (!command) return;
+        console.log(`\n===== ${chatType.toUpperCase()} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
+const prefixes = [...conf.prefixes];
+const prefixlessAllowed = prefixes.length === 0;
 
+const startsWithValidPrefix = prefixes.find(p => text.startsWith(p));
+const hasAnyPrefix = /^[^\s\w]/.test(text); // e.g., starts with !, $, @, etc.
+
+// ✅ Enforce prefix policy
+if (!prefixlessAllowed) {
+    if (!startsWithValidPrefix) return; // Message must start with a valid prefix
+} else {
+    if (hasAnyPrefix) return; // Prefixless mode: disallow any message starting with a symbol
+}
+
+const usedPrefix = startsWithValidPrefix || '';
+const args = text.slice(usedPrefix.length).trim().split(/ +/);
+const cmdName = args.shift()?.toLowerCase();
+const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+if (!command) return;
+        
         let groupAdmins = [];
         if (isGroup) {
             try {
@@ -117,7 +218,6 @@ async function startBot() {
             } catch {}
         }
 
-        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
         const isAdmin = groupAdmins.includes(senderJid);
         const isBotAdmin = groupAdmins.includes(king.user.id);
 
@@ -183,4 +283,4 @@ async function startBot() {
     });
 }
 
-startBot();
+startBot(); 
