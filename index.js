@@ -189,16 +189,25 @@ The following message was deleted:`,
         }
 
         console.log(`\n===== ${chatType.toUpperCase()} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
+const prefixes = [...conf.prefixes];
+const prefixlessAllowed = prefixes.length === 0;
 
-        const prefixes = [...conf.prefixes];
-        const usedPrefix = prefixes.find(p => text.startsWith(p)) ?? '';
-        if (!isFromMe && usedPrefix === '') return;
+const startsWithValidPrefix = prefixes.find(p => text.startsWith(p));
+const hasAnyPrefix = /^[^\s\w]/.test(text); // e.g., starts with !, $, @, etc.
 
-        const args = text.slice(usedPrefix.length).trim().split(/ +/);
-        const cmdName = args.shift().toLowerCase();
-        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-        if (!command) return;
+// ✅ Enforce prefix policy
+if (!prefixlessAllowed) {
+    if (!startsWithValidPrefix) return; // Message must start with a valid prefix
+} else {
+    if (hasAnyPrefix) return; // Prefixless mode: disallow any message starting with a symbol
+}
 
+const usedPrefix = startsWithValidPrefix || '';
+const args = text.slice(usedPrefix.length).trim().split(/ +/);
+const cmdName = args.shift()?.toLowerCase();
+const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+if (!command) return;
+        
         let groupAdmins = [];
         if (isGroup) {
             try {
