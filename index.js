@@ -217,12 +217,14 @@ The following message was deleted:`,
 
         const args = cmdText.trim().split(/ +/);
         const cmdName = args.shift()?.toLowerCase();
-        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-        if (!command) return;
+const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+if (!command) return;
 
 const isSelf = senderJid === king.user.id;
+const isAllowed = isDev || isSelf;
 
-if (conf.MODE === 'private' && !isDev && !isSelf) return;
+if (conf.MODE === 'private' && !isAllowed) return;
+
 
         let groupAdmins = [];
         if (isGroup) {
