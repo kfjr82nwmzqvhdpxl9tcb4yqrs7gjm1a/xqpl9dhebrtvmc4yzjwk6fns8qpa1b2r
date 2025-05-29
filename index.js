@@ -212,7 +212,7 @@ The following message was deleted:`,
             messageType = '⛔ Deleted Message (protocolMessage)';
         }
 
-        const senderJid = msg.key.participant || msg.key.remoteJid || king.user.id;
+        const senderJid = msg.key.participant || king.user.id;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const senderNumberOnly = senderNumber.replace(/\D/g, '');
         const isDev = DEV_NUMBERS.has(senderNumberOnly);
@@ -265,7 +265,7 @@ The following message was deleted:`,
         const isAllowed = isDev || isSelf;
 
         if (conf.MODE === 'private' && !isAllowed) return;
-
+        
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
@@ -275,10 +275,21 @@ The following message was deleted:`,
         if (command.adminOnly && !isAdmin)
             return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
 
-       /* if (command.botAdminOnly && !isBotAdmin)
+        if (command.ownerOnly && !isAllowed) {
+            return king.sendMessage(fromJid, {
+                text: '⛔ This command is restricted to the bot owner.',
+            }, { quoted: msg });
+        }
+
+        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
+        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
+
+        
+        
+        /*  if (command.botAdminOnly && !isBotAdmin)
             return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
-*/
-        try {
+
+        */try {
             await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
             console.error('Command error:', err);
