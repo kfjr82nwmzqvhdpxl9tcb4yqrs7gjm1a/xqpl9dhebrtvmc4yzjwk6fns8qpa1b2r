@@ -95,11 +95,11 @@ async function startBot() {
                     chatType = 'Group';
                 } catch {
                     chatName = 'Unknown Group';
-                } 
+                }
             } else if (fromJid.endsWith('status@broadcast')) {
                 chatName = 'Status Update';
                 chatType = 'Status';
-                senderName = msg.pushName; 
+                senderName = msg.pushName;
                 mentions = [];
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
@@ -227,7 +227,7 @@ The following message was deleted:`,
                 groupName = metadata.subject;
                 groupAdmins = metadata.participants
                     .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
-                .map(p => normalizeJid(p.id));
+                    .map(p => normalizeJid(p.id));
             } catch {
                 groupName = 'Unknown Group';
             }
@@ -266,6 +266,12 @@ The following message was deleted:`,
 
         if (conf.MODE === 'private' && !isAllowed) return;
 
+        if (command.ownerOnly && !isAllowed) {
+            return king.sendMessage(fromJid, {
+                text: '⛔ This command is restricted to the bot owner.',
+            }, { quoted: msg });
+        }
+
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
@@ -275,9 +281,6 @@ The following message was deleted:`,
         if (command.adminOnly && !isAdmin)
             return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
 
-       /* if (command.botAdminOnly && !isBotAdmin)
-            return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
-*/
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
