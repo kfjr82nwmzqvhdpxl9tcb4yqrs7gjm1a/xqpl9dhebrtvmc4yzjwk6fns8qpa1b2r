@@ -43,6 +43,14 @@ function normalizeJid(jid) {
     return jid.split(':')[0];
 }
 
+function getChatCategory(jid) {
+    if (jid === 'status@broadcast') return '🟡 Status Update';
+    if (jid.endsWith('@newsletter')) return '📢 Channel Post';
+    if (jid.endsWith('@s.whatsapp.net')) return '💬 Private Chat';
+    if (jid.endsWith('@g.us') || jid.endsWith('@lid')) return '👥 Group Chat';
+    return '❔ Unknown Chat Type';
+}
+
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -155,53 +163,77 @@ The following message was deleted:`,
         const m = msg.message;
         const txt = m?.conversation || m?.extendedTextMessage?.text || '';
         const text = txt || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
-        if (!text) return;
+        if (!text && !m?.imageMessage && !m?.videoMessage) return;
 
         let messageType = '❔ Unknown';
-        if (txt) messageType = `💬 Text: "${txt}"`;
-        else if (m?.imageMessage) messageType = '🖼️ Image';
-        else if (m?.videoMessage) messageType = '🎥 Video';
-        else if (m?.audioMessage) messageType = '🎧 Audio';
-        else if (m?.stickerMessage) messageType = '🔖 Sticker';
-        else if (m?.documentMessage) messageType = '📄 Document';
-        else if (m?.locationMessage) messageType = '📍 Location';
-        else if (m?.liveLocationMessage) messageType = '📡 Live Location';
-        else if (m?.contactMessage) messageType = '👤 Contact';
-        else if (m?.contactsArrayMessage) messageType = '👥 Contact List';
-        else if (m?.buttonsMessage) messageType = '🧩 Buttons';
-        else if (m?.imageMessage?.viewOnce) messageType = '⚠️ View Once Image';
-        else if (m?.videoMessage?.viewOnce) messageType = '⚠️ View Once Video';
-        else if (m?.viewOnceMessage) messageType = '⚠️ View Once (Other)';
-        else if (m?.templateMessage) messageType = '🧱 Template';
-        else if (m?.listMessage) messageType = '📋 List';
-        else if (m?.pollCreationMessage) messageType = '📊 Poll';
-        else if (m?.pollUpdateMessage) messageType = '📊 Poll Update';
-        else if (m?.reactionMessage) messageType = '❤️ Reaction';
-        else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
+        let caption = '';
+
+        if (txt) {
+            messageType = `💬 Text: "${txt}"`;
+        } else if (m?.imageMessage) {
+            caption = m.imageMessage.caption || '';
+            messageType = '🖼️ Image' + (caption ? ` | Caption: "${caption}"` : '');
+        } else if (m?.videoMessage) {
+            caption = m.videoMessage.caption || '';
+            messageType = '🎥 Video' + (caption ? ` | Caption: "${caption}"` : '');
+        } else if (m?.audioMessage) {
+            messageType = '🎧 Audio';
+        } else if (m?.stickerMessage) {
+            messageType = '🔖 Sticker';
+        } else if (m?.documentMessage) {
+            messageType = '📄 Document';
+        } else if (m?.locationMessage) {
+            messageType = '📍 Location';
+        } else if (m?.liveLocationMessage) {
+            messageType = '📡 Live Location';
+        } else if (m?.contactMessage) {
+            messageType = '👤 Contact';
+        } else if (m?.contactsArrayMessage) {
+            messageType = '👥 Contact List';
+        } else if (m?.buttonsMessage) {
+            messageType = '🧩 Buttons';
+        } else if (m?.imageMessage?.viewOnce) {
+            messageType = '⚠️ View Once Image';
+        } else if (m?.videoMessage?.viewOnce) {
+            messageType = '⚠️ View Once Video';
+        } else if (m?.viewOnceMessage) {
+            messageType = '⚠️ View Once (Other)';
+        } else if (m?.templateMessage) {
+            messageType = '🧱 Template';
+        } else if (m?.listMessage) {
+            messageType = '📋 List';
+        } else if (m?.pollCreationMessage) {
+            messageType = '📊 Poll';
+        } else if (m?.pollUpdateMessage) {
+            messageType = '📊 Poll Update';
+        } else if (m?.reactionMessage) {
+            messageType = '❤️ Reaction';
+        } else if (m?.protocolMessage) {
+            messageType = '⛔ Deleted Message (protocolMessage)';
+        }
 
         const senderJid = msg.key.participant || msg.key.remoteJid || king.user.id;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const senderNumberOnly = senderNumber.replace(/\D/g, '');
         const isDev = DEV_NUMBERS.has(senderNumberOnly);
 
-        let chatType = 'Private Chat';
+        let chatType = getChatCategory(fromJid);
         let groupName = '';
         let groupAdmins = [];
 
         if (isGroup) {
-            chatType = 'Group Chat';
             try {
                 const metadata = await king.groupMetadata(fromJid);
                 groupName = metadata.subject;
                 groupAdmins = metadata.participants
                     .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
-                    .map(p => normalizeJid(p.id));
+                .map(p => normalizeJid(p.id));
             } catch {
                 groupName = 'Unknown Group';
             }
         }
 
-        console.log(`\n===== ${chatType.toUpperCase()} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
+        console.log(`\n===== ${chatType} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
 
         let usedPrefix = '';
         let cmdText = text;
