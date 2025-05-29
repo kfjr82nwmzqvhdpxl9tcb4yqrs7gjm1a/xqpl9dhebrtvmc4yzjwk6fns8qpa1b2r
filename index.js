@@ -69,7 +69,7 @@ async function startBot() {
 
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
-        if (!msg || !msg.message) return;
+        if (!msg || !msg.message || msg.key.fromMe) return;
 
         if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
@@ -217,6 +217,11 @@ The following message was deleted:`,
         const senderNumberOnly = senderNumber.replace(/\D/g, '');
         const isDev = DEV_NUMBERS.has(senderNumberOnly);
 
+        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+        const isAllowed = isDev || isSelf;
+
+        if (conf.MODE === 'private' && !isAllowed) return;
+
         let chatType = getChatCategory(fromJid);
         let groupName = '';
         let groupAdmins = [];
@@ -227,7 +232,7 @@ The following message was deleted:`,
                 groupName = metadata.subject;
                 groupAdmins = metadata.participants
                     .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
-                .map(p => normalizeJid(p.id));
+                    .map(p => normalizeJid(p.id));
             } catch {
                 groupName = 'Unknown Group';
             }
@@ -260,11 +265,6 @@ The following message was deleted:`,
         const cmdName = args.shift()?.toLowerCase();
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
-
-        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
-        const isAllowed = isDev || isSelf;
-
-        if (conf.MODE === 'private' && !isAllowed) return;
 
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
