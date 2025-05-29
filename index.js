@@ -39,6 +39,10 @@ function isGroupJid(jid) {
     return jid.endsWith('@g.us') || jid.endsWith('@lid');
 }
 
+function normalizeJid(jid) {
+    return jid.split(':')[0];
+}
+
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -75,16 +79,16 @@ async function startBot() {
             let mentions = [deletedSenderJid];
 
             if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
-    try {
-        const metadata = await king.groupMetadata(fromJid);
-        const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-        senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
-        chatName = metadata.subject;
-        chatType = 'Group';
-    } catch {
-        chatName = 'Unknown Group';
-    } 
-      } else if (fromJid.endsWith('status@broadcast')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    chatName = metadata.subject;
+                    chatType = 'Group';
+                } catch {
+                    chatName = 'Unknown Group';
+                } 
+            } else if (fromJid.endsWith('status@broadcast')) {
                 chatName = 'Status Update';
                 chatType = 'Status';
                 senderName = msg.pushName; 
@@ -175,18 +179,23 @@ The following message was deleted:`,
         else if (m?.reactionMessage) messageType = '❤️ Reaction';
         else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
 
-        const senderJid = isFromMe ? king.user.id : msg.key.participant || msg.key.remoteJid;
+        const senderJid = msg.key.participant || msg.key.remoteJid || king.user.id;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const senderNumberOnly = senderNumber.replace(/\D/g, '');
         const isDev = DEV_NUMBERS.has(senderNumberOnly);
 
         let chatType = 'Private Chat';
         let groupName = '';
+        let groupAdmins = [];
+
         if (isGroup) {
             chatType = 'Group Chat';
             try {
                 const metadata = await king.groupMetadata(fromJid);
                 groupName = metadata.subject;
+                groupAdmins = metadata.participants
+                    .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
+                    .map(p => normalizeJid(p.id));
             } catch {
                 groupName = 'Unknown Group';
             }
@@ -217,27 +226,16 @@ The following message was deleted:`,
 
         const args = cmdText.trim().split(/ +/);
         const cmdName = args.shift()?.toLowerCase();
-const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-if (!command) return;
+        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+        if (!command) return;
 
-const isSelf = senderJid === king.user.id;
-const isAllowed = isDev || isSelf;
+        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+        const isAllowed = isDev || isSelf;
 
-if (conf.MODE === 'private' && !isAllowed) return;
+        if (conf.MODE === 'private' && !isAllowed) return;
 
-
-        let groupAdmins = [];
-        if (isGroup) {
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                groupAdmins = metadata.participants
-                    .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
-                    .map(p => p.id);
-            } catch {}
-        }
-
-        const isAdmin = groupAdmins.includes(senderJid);
-        const isBotAdmin = groupAdmins.includes(king.user.id);
+        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
+        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
         if (command.groupOnly && !isGroup)
             return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
