@@ -281,10 +281,6 @@ The following message was deleted:`,
             }, { quoted: msg });
         }
 
-        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-
-        
         
         /*  if (command.botAdminOnly && !isBotAdmin)
             return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
