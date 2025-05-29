@@ -212,7 +212,7 @@ The following message was deleted:`,
             messageType = '⛔ Deleted Message (protocolMessage)';
         }
 
-        const senderJid = msg.key.participant || king.user.id;
+        const senderJid = msg.key.participant;
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const senderNumberOnly = senderNumber.replace(/\D/g, '');
         const isDev = DEV_NUMBERS.has(senderNumberOnly);
