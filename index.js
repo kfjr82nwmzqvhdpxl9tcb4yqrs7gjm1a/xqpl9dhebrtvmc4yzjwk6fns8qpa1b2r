@@ -275,9 +275,9 @@ The following message was deleted:`,
         if (command.adminOnly && !isAdmin)
             return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
 
-        if (command.botAdminOnly && !isBotAdmin)
+       /* if (command.botAdminOnly && !isBotAdmin)
             return king.sendMessage(fromJid, { text: '⚠️ I need to be an admin to do that.' }, { quoted: msg });
-
+*/
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
