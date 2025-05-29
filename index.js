@@ -179,8 +179,9 @@ The following message was deleted:`,
         else if (m?.reactionMessage) messageType = '❤️ Reaction';
         else if (m?.protocolMessage) messageType = '⛔ Deleted Message (protocolMessage)';
 
-        const senderJid = msg.key.participant || msg.key.remoteJid || king.user.id;
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const senderJid = isGroup ? msg.key.participant : msg.key.remoteJid;
+        const normalizedSenderJid = normalizeJid(senderJid || '');
+        const senderNumber = normalizedSenderJid.replace(/@.*$/, '');
         const senderNumberOnly = senderNumber.replace(/\D/g, '');
         const isDev = DEV_NUMBERS.has(senderNumberOnly);
 
@@ -234,7 +235,7 @@ The following message was deleted:`,
 
         if (conf.MODE === 'private' && !isAllowed) return;
 
-        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
+        const isAdmin = groupAdmins.includes(normalizedSenderJid);
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
         if (command.groupOnly && !isGroup)
