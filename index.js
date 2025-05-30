@@ -181,14 +181,28 @@ The following message was deleted:`,
         }
 
         messageStore.set(msg.key.id, msg);
-
+  const isDM = fromJid.endsWith('@s.whatsapp.net');
+        const isStatus = fromJid === 'status@broadcast';
         const fromJid = msg.key.remoteJid;
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
 
         // ... Message type parsing remains unchanged
+if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
+            king.readMessages([msg.key]).catch(() => {});
+        }
 
+        if (isStatus && conf.AUTO_VIEW_STATUS) {
+            king.readMessages([msg.key]).catch(() => {});
+            if (conf.AUTO_LIKE === "on" && msg.key.participant) {
+                await king.sendMessage(fromJid, {
+                    react: { key: msg.key, text: '🤍' }
+                }, {
+                    statusJidList: [msg.key.participant, king.user.id]
+                });
+            }
+        }
         const m = msg.message;
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
