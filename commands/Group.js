@@ -537,5 +537,6 @@ module.exports = [
         await king.sendMessage(fromJid, { text: '❌ Failed to create group.' }, { quoted: msg });
       }
     }
-  }, 
+  }
+ ];
     
