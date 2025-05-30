@@ -28,7 +28,7 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-const DEV_JIDS = new Set(['254742063632@s.whatsapp.net', '254757835036@s.whatsapp.net']);
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
@@ -213,11 +213,9 @@ The following message was deleted:`,
         }
 
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-        const isDev = DEV_JIDS.has(normalizeJid(senderJid));
-        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
-        const isAllowed = isDev || isSelf;
-
-        if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) return;
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const senderNumberOnly = senderNumber.replace(/\D/g, '');
+        const isDev = DEV_NUMBERS.has(senderNumberOnly);
 
         let chatType = getChatCategory(fromJid);
         let groupName = '';
@@ -235,7 +233,7 @@ The following message was deleted:`,
             }
         }
 
-        console.log(`\n===== ${chatType} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderJid.replace(/@.*/, '')}${groupName ? `\nGroup: ${groupName}` : ''}\n`);
+        console.log(`\n===== ${chatType} =====\nMessage: ${messageType}\nSender: ${msg.pushName || senderNumber} (${senderNumber})${groupName ? `\nGroup: ${groupName}` : ''}\n`);
 
         let usedPrefix = '';
         let cmdText = text;
@@ -262,6 +260,11 @@ The following message was deleted:`,
         const cmdName = args.shift()?.toLowerCase();
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
+
+        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+        const isAllowed = isDev || isSelf;
+
+        if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) return;
 
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
@@ -299,14 +302,12 @@ The following message was deleted:`,
             const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
             const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
             const totalCmds = commands.size;
-            const modeInfo = (conf.MODE || 'public').toUpperCase();
 
             const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
 
 *✅ Using Version 2.5!*
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
-*🔐 Mode:* ${modeInfo}
 *🗓️ Date:* ${date}`;
 
             await king.sendMessage(king.user.id, {
@@ -328,4 +329,3 @@ The following message was deleted:`,
 }
 
 startBot();
-            
