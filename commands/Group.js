@@ -1,4 +1,3 @@
-const DEVS = ['254742063632', '254757835036'];
 
 module.exports = [
 {
@@ -71,97 +70,79 @@ module.exports = [
         }
     }, 
     {
-        name: 'add',
-        aliases: [],
-        description: 'Adds a user to the group.',
-        category: 'Group',
-        groupOnly: true,
+  name: 'add',
+  aliases: [],
+  description: 'Adds a user to the group.',
+  category: 'Group',
+  groupOnly: true,
+  adminOnly: true,
+  execute: async (king, msg, args) => {
+    const fromJid = msg.key.remoteJid;
 
-        execute: async (king, msg, args) => {
-            const fromJid = msg.key.remoteJid;
+    if (!fromJid.endsWith('@g.us')) {
+      return king.sendMessage(fromJid, {
+        text: '❌ This command only works in groups.'
+      }, { quoted: msg });
+    }
 
-            if (!fromJid.endsWith('@g.us')) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ This command only works in groups.'
-                }, { quoted: msg });
-            }
-            const senderJid = msg.key.participant || msg.key.remoteJid;
-            const senderNum = senderJid.replace(/@.*$/, '').split(':')[0];
+    const senderJid = msg.key.participant || msg.key.remoteJid;
+    const senderNum = senderJid.replace(/@.*$/, '').split(':')[0];
 
-            if (!DEVS.includes(senderNum)) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ Only the developer can use this command.'
-                }, { quoted: msg });
-            }
+    if (!DEVS.includes(senderNum)) {
+      return king.sendMessage(fromJid, {
+        text: '❌ Only the developer can use this command.'
+      }, { quoted: msg });
+    }
 
-            if (!args[0]) {
-                return king.sendMessage(fromJid, {
-                    text: '⚠️ Provide a number to add.'
-                }, { quoted: msg });
-            }
+    if (!args[0]) {
+      return king.sendMessage(fromJid, {
+        text: '⚠️ Provide a number to add.'
+      }, { quoted: msg });
+    }
 
-            const num = args[0].replace(/\D/g, '');
-            const userJid = `${num}@s.whatsapp.net`;
+    const num = args[0].replace(/\D/g, '');
+    const userJid = `${num}@s.whatsapp.net`;
 
-            try {
-                await king.groupParticipantsUpdate(jid, [userJid], 'add');
-                await king.sendMessage(jid, {
-                    text: `✅ ${num} added to the group.`
-                }, { quoted: msg });
-            } catch {
-                await king.sendMessage(jid, {
-                    text: '❌ Failed to add user. They may have privacy restrictions.'
-                }, { quoted: msg });
-            }
-        }
+    try {
+      await king.groupParticipantsUpdate(fromJid, [userJid], 'add');
+      await king.sendMessage(fromJid, {
+        text: `✅ ${num} added to the group.`
+      }, { quoted: msg });
+    } catch {
+      await king.sendMessage(fromJid, {
+        text: '❌ Failed to add user. They may have privacy restrictions.'
+      }, { quoted: msg });
+    }
+  }
     }, 
 
-{
-        name: 'kickall',
-        aliases: [],
-        description: 'Remove all non-admin members from the group.',
-        category: 'Group',
-        groupOnly: true,
 
-        execute: async (king, msg) => {
-            const fromJid = msg.key.remoteJid;
+   {
+  name: 'kickall',
+  aliases: [],
+  description: 'Remove all non-admin members from the group.',
+  category: 'Group',
+  groupOnly: true,
+  adminOnly: true,
+  execute: async (king, msg) => {
+    const fromJid = msg.key.remoteJid;
+    const metadata = await king.groupMetadata(fromJid);
+    const toKick = metadata.participants
+      .filter(p => !p.admin)
+      .map(p => p.id);
 
-            if (!fromJid.endsWith('@g.us')) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ This command only works in groups.'
-                }, { quoted: msg });
-            }
-            const metadata = await king.groupMetadata(jid);
-            const sender = msg.key.participant || msg.key.remoteJid;
+    await king.sendMessage(fromJid, {
+      text: '⚠️ Removing all non-admins in 5 seconds...'
+    }, { quoted: msg });
 
-            const isOwner = metadata.owner === sender;
-            if (!isOwner) {
-                return king.sendMessage(jid, {
-                    text: '❌ Only the group owner can use this command.'
-                }, { quoted: msg });
-            }
+    await new Promise(r => setTimeout(r, 5000));
 
-            await king.sendMessage(jid, {
-                text: '⚠️ Removing all non-admins in 5 seconds...'
-            }, { quoted: msg });
-            await new Promise(r => setTimeout(r, 5000));
-
-            const toKick = metadata.participants
-                .filter(p => !p.admin)
-                .map(p => p.id);
-
-            try {
-                for (const id of toKick) {
-                    await king.groupParticipantsUpdate(jid, [id], 'remove');
-                    await new Promise(r => setTimeout(r, 500));
-                }
-            } catch {
-                await king.sendMessage(jid, {
-                    text: '❌ Failed to remove some users. Check admin permissions.'
-                }, { quoted: msg });
-            }
-        }
-    }, 
+    for (const id of toKick) {
+      await king.groupParticipantsUpdate(fromJid, [id], 'remove');
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+   },       
     
     
 {
@@ -204,129 +185,90 @@ module.exports = [
             }
         }
     },
-    {
-        name: 'demote',
-        aliases: [],
-        description: 'Demotes a tagged admin to a regular member.',
-        category: 'Group',
-        groupOnly: true,
-        adminOnly: true,
-        botAdminOnly: true,
-
-        execute: async (king, msg) => {
-            const fromJid = msg.key.remoteJid;
-
-            if (!fromJid.endsWith('@g.us')) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ This command only works in groups.'
-                }, { quoted: msg });
-            }
-            const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
-            const target = quoted || mentioned;
-
-            if (!target) {
-                return king.sendMessage(fromJid, {
-                    text: '⚠️ Tag or reply to the admin you want to demote.'
-                }, { quoted: msg });
-            }
-
-            try {
-                await king.groupParticipantsUpdate(fromJid, [target], 'demote');
-                await king.sendMessage(fromJid, {
-                    text: `🛑 @${target.split('@')[0]} has been demoted from admin.`,
-                    mentions: [target]
-                }, { quoted: msg });
-            } catch {
-                await king.sendMessage(fromJid, {
-                    text: '❌ Failed to demote user.'
-                }, { quoted: msg });
-            }
-        }
-    }, 
     
-{
-        name: 'approve',
-        aliases: ['approve-all', 'accept'],
-        description: 'Approve all pending join requests.',
-        category: 'Group',
-        groupOnly: true,
-        adminOnly: true,
-        botAdminOnly: true,
-        reaction: '☑️',
+      {
+  name: 'demote',
+  aliases: [],
+  description: 'Demotes a tagged admin to a regular member.',
+  category: 'Group',
+  groupOnly: true,
+  adminOnly: true,
+  botAdminOnly: true,
 
-        execute: async (king, msg) => {
-            const fromJid = msg.key.remoteJid;
+  execute: async (king, msg) => {
+    const fromJid = msg.key.remoteJid;
+    const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
+    const target = quoted || mentioned;
 
-            if (!fromJid.endsWith('@g.us')) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ This command only works in groups.'
-                }, { quoted: msg });
-            }
-
-            try {
-                const responseList = await king.groupRequestParticipantsList(fromJid);
-                if (responseList.length === 0) {
-                    return king.sendMessage(fromJid, {
-                        text: '📭 No join requests to approve.'
-                    }, { quoted: msg });
-                }
-
-                for (const p of responseList) {
-                    await king.groupRequestParticipantsUpdate(fromJid, [p.jid], 'approve');
-                }
-
-                await king.sendMessage(fromJid, {
-                    text: '✅ All join requests have been approved.'
-                }, { quoted: msg });
-            } catch {
-                await king.sendMessage(fromJid, {
-                    text: '❌ Failed to approve requests.'
-                }, { quoted: msg });
-            }
-        }
-    },
+    await king.groupParticipantsUpdate(fromJid, [target], 'demote');
+    await king.sendMessage(fromJid, {
+      text: `🛑 @${target.split('@')[0]} has been demoted from admin.`,
+      mentions: [target]
+    }, { quoted: msg });
+  } 
+      }
+      },    
     {
-        name: 'reject',
-        aliases: ['rejectall', 'rej', 'reject-all'],
-        description: 'Reject all pending join requests.',
-        category: 'Group',
-        groupOnly: true,
-        adminOnly: true,
-        botAdminOnly: true,
-        reaction: '👻',
+  name: 'approve',
+  aliases: ['approve-all', 'accept'],
+  description: 'Approve all pending join requests.',
+  category: 'Group',
+  groupOnly: true,
+  adminOnly: true,
+  botAdminOnly: true,
+  reaction: '☑️',
 
-        execute: async (king, msg) => {
-            const fromJid = msg.key.remoteJid;
+  execute: async (king, msg) => {
+    const fromJid = msg.key.remoteJid;
 
-            if (!fromJid.endsWith('@g.us')) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ This command only works in groups.'
-                }, { quoted: msg });
-            }
+    const responseList = await king.groupRequestParticipantsList(fromJid);
+    if (responseList.length === 0) {
+      return king.sendMessage(fromJid, {
+        text: '📭 No join requests to approve.'
+      }, { quoted: msg });
+    }
 
-            try {
-                const responseList = await king.groupRequestParticipantsList(fromJid);
-                if (responseList.length === 0) {
-                    return king.sendMessage(fromJid, {
-                        text: '📭 No join requests to reject.'
-                    }, { quoted: msg });
-                }
+    for (const p of responseList) {
+      await king.groupRequestParticipantsUpdate(fromJid, [p.jid], 'approve');
+    }
 
-                for (const p of responseList) {
-                    await king.groupRequestParticipantsUpdate(fromJid, [p.jid], 'reject');
-                }
-
-                await king.sendMessage(fromJid, {
-                    text: '🚫 All join requests have been rejected.'
-                }, { quoted: msg });
-            } catch {
-                await king.sendMessage(fromJid, {
-                    text: '❌ Failed to reject requests.'
-                }, { quoted: msg });
-            }
-        }
+    await king.sendMessage(fromJid, {
+      text: '✅ All join requests have been approved.'
+    }, { quoted: msg });
+  }
+    } 
     }, 
+   {
+  name: 'reject',
+  aliases: ['rejectall', 'rej', 'reject-all'],
+  description: 'Reject all pending join requests.',
+  category: 'Group',
+  groupOnly: true,
+  adminOnly: true,
+  botAdminOnly: true,
+  reaction: '👻',
+
+  execute: async (king, msg) => {
+    const fromJid = msg.key.remoteJid;
+
+    const responseList = await king.groupRequestParticipantsList(fromJid);
+    if (responseList.length === 0) {
+      return king.sendMessage(fromJid, {
+        text: '📭 No join requests to reject.'
+      }, { quoted: msg });
+    }
+
+    for (const p of responseList) {
+      await king.groupRequestParticipantsUpdate(fromJid, [p.jid], 'reject');
+    }
+
+    await king.sendMessage(fromJid, {
+      text: '🚫 All join requests have been rejected.'
+    }, { quoted: msg });
+  }
+   } 
+}, 
     
 {
         name: 'disap7',
@@ -543,42 +485,31 @@ module.exports = [
             }
         }
     }, 
+{
+  name: 'left',
+  aliases: ['leave'],
+  description: 'Force the bot to leave the group.',
+  category: 'Group',
+  groupOnly: true,
+  adminOnly: false,
+  botAdminOnly: false,
 
-    {
-        name: 'left',
-        aliases: ['leave'],
-        description: 'Force the bot to leave the group.',
-        category: 'Group',
-        groupOnly: true,
+  execute: async (king, msg) => {
+    const fromJid = msg.key.remoteJid;
+    const senderJid = msg.key.participant || msg.key.remoteJid;
+    const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
 
-        execute: async (king, msg, args) => {
-            const fromJid = msg.key.remoteJid;
+    if (!DEVS.includes(senderNumber)) return;
 
-            if (!fromJid.endsWith('@g.us')) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ This command only works in groups.'
-                }, { quoted: msg });
-            }
-
-            const senderJid = msg.key.participant || msg.key.remoteJid;
-            const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
-
-            const isDev = DEVS.includes(senderNumber);
-            if (!isDev) {
-                return king.sendMessage(fromJid, {
-                    text: '❌ This command is reserved for the bot developer.'
-                }, { quoted: msg });
-            }
-
-            try {
-                await king.groupLeave(fromJid);
-            } catch {
-                await king.sendMessage(fromJid, {
-                    text: '❌ Failed to leave the group.'
-                }, { quoted: msg });
-            }
-        }
-    },
+    try {
+      await king.groupLeave(fromJid);
+    } catch {
+      await king.sendMessage(fromJid, {
+        text: '❌ Failed to leave the group.'
+      }, { quoted: msg });
+    }
+  }
+}, 
 
     {
         name: 'desc',
