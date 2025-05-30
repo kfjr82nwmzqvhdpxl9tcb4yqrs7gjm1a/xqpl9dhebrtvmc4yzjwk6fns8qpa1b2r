@@ -181,9 +181,9 @@ The following message was deleted:`,
         }
 
         messageStore.set(msg.key.id, msg);
+        const fromJid = msg.key.remoteJid;
   const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
-        const fromJid = msg.key.remoteJid;
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
