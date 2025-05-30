@@ -22,19 +22,14 @@ const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 const messageStore = new Map();
-const MESSAGE_LIMIT = 1000;
 
 const PRESENCE = {
     DM: conf.PRESENCE_DM || 'available',
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-const DEV_NUMBERS = new Set(['254742063632', '254757835036']); // Replace with your own numbers
-
-// Validate config.prefixes
-if (!Array.isArray(conf.prefixes)) {
-    throw new Error("Invalid config: prefixes must be an array.");
-}
+// 🔰 Replace sudoUsers with Dev Numbers
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']); // Add your own here
 
 // Load commands
 allCommands.forEach(cmd => {
@@ -74,6 +69,7 @@ async function startBot() {
         version
     });
 
+    // 🔐 Set KING_ID globally
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -81,10 +77,8 @@ async function startBot() {
                 try {
                     king.ev.removeAllListeners();
                     king.ws.close();
-                } catch (err) {
-                    console.error("Error during reconnect cleanup:", err);
-                }
-                setTimeout(() => startBot(), 5000);
+                } catch {}
+                startBot();
             }
         }
 
@@ -106,9 +100,14 @@ async function startBot() {
                 text: connInfo,
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: true
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
                 }
-            }).catch(err => console.error("Failed to send connection message:", err));
+            }).catch(() => {});
 
             console.log(`Bot connected as ${king.user.id}`);
         }
@@ -118,23 +117,20 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
-        const isFromMe = msg.key.fromMe;
-        const fromJid = msg.key.remoteJid;
-        const senderJid = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
-
-        // Anti-delete
+        
         if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
-            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || fromJid;
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
 
-            const timezone = king?.config?.timezone || 'Africa/Nairobi';
-            const date = moment().tz(timezone).format('DD/MM/YYYY');
-            const time = moment().tz(timezone).format('hh:mm:ss A');
+            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
             let senderName = senderNumber;
             let chatName = '';
             let chatType = 'Personal';
+            const timezone = king?.config?.timezone || 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
             let mentions = [deletedSenderJid];
 
             if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
@@ -144,14 +140,13 @@ async function startBot() {
                     senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
                     chatName = metadata.subject;
                     chatType = 'Group';
-                } catch (err) {
-                    console.error("Group metadata fetch error:", err);
+                } catch {
                     chatName = 'Unknown Group';
-                }
-            } else if (fromJid === 'status@broadcast') {
+                } 
+            } else if (fromJid.endsWith('status@broadcast')) {
                 chatName = 'Status Update';
                 chatType = 'Status';
-                senderName = msg.pushName;
+                senderName = msg.pushName; 
                 mentions = [];
             } else if (fromJid.endsWith('@newsletter')) {
                 chatName = 'Channel Post';
@@ -185,18 +180,17 @@ The following message was deleted:`,
             }
         }
 
-        // Store message with size limit
-        if (messageStore.size >= MESSAGE_LIMIT) {
-            const oldestKey = messageStore.keys().next().value;
-            messageStore.delete(oldestKey);
-        }
         messageStore.set(msg.key.id, msg);
-
-        const isDM = fromJid.endsWith('@s.whatsapp.net');
+        const fromJid = msg.key.remoteJid;
+        const isFromMe = msg.key.fromMe;
+  const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
+        const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
 
-        if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
+        // ... Message type parsing remains unchanged
+if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
         }
 
@@ -210,7 +204,6 @@ The following message was deleted:`,
                 });
             }
         }
-
         const m = msg.message;
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
@@ -228,6 +221,7 @@ The following message was deleted:`,
         const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
         const isAllowed = isDev || isSelf;
 
+        // 🛑 Private-only check
         if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) return;
 
         let isGroup = isGroupJid(fromJid);
@@ -239,15 +233,13 @@ The following message was deleted:`,
                 groupAdmins = metadata.participants
                     .filter(p => p.admin)
                     .map(p => normalizeJid(p.id));
-            } catch (err) {
-                console.error("Error fetching group admins:", err);
-            }
+            } catch {}
         }
 
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        // Group/admin-only checks
+        // Admin-only & group-only checks
         if (command.groupOnly && !isGroup)
             return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
 
@@ -257,8 +249,8 @@ The following message was deleted:`,
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
-            console.error('Command execution error:', err);
-            await king.sendMessage(fromJid, { text: '❌ Something went wrong while executing the command.' }).catch(() => {});
+            console.error('Command error:', err);
+            king.sendMessage(fromJid, { text: 'Something went wrong.' }).catch(() => {});
         }
     });
 
