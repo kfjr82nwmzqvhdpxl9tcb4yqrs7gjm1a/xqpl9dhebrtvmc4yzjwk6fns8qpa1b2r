@@ -14,6 +14,8 @@ const {
 const pino = require('pino');
 const moment = require('moment-timezone');
 const { loadSessionFromBase64 } = require('./auth');
+const groupEventHandler = require('./group');
+groupEventHandler(king);
 const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
