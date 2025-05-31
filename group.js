@@ -14,35 +14,27 @@ module.exports = function groupEventHandler(king) {
         const time = moment().tz(tz).format('hh:mm A, DD MMM YYYY');
 
         for (const participant of participants) {
-            const contact = await king.onWhatsApp(participant).then(([res]) => res?.notify || participant).catch(() => participant);
-
-            switch(action) {
-                case 'add':
-                case 'invite':
-                case 'remove':
-                case 'promote':
-                case 'demote':
-                    break;
-            }
+            const contactInfo = await king.onWhatsApp(participant).then(([res]) => res).catch(() => null);
+            const mentionName = contactInfo?.notify || participant.split('@')[0];
 
             if (action === 'add' || action === 'invite') {
                 await king.sendMessage(id, {
-                    text: `👋 Welcome @${participant.split('@')[0]} to *${groupName}*!\n\n🕓 Joined at ${time}`,
+                    text: `👋 Welcome @${mentionName} to *${groupName}*!\n\n🕓 Joined at ${time}`,
                     mentions: [participant]
                 });
             } else if (action === 'remove') {
                 await king.sendMessage(id, {
-                    text: `😢 @${participant.split('@')[0]} has left *${groupName}*.\n\n🕓 Left at ${time}`,
+                    text: `😢 @${mentionName} has left *${groupName}*.\n\n🕓 Left at ${time}`,
                     mentions: [participant]
                 });
             } else if (action === 'promote') {
                 await king.sendMessage(id, {
-                    text: `📢 Congrats @${participant.split('@')[0]}! You have been promoted to admin in *${groupName}*.`,
+                    text: `📢 Congrats @${mentionName}! You have been promoted to admin in *${groupName}*.`,
                     mentions: [participant]
                 });
             } else if (action === 'demote') {
                 await king.sendMessage(id, {
-                    text: `⚠️ @${participant.split('@')[0]} was demoted from admin in *${groupName}*.`,
+                    text: `⚠️ @${mentionName} was demoted from admin in *${groupName}*.`,
                     mentions: [participant]
                 });
             }
