@@ -13,9 +13,17 @@ module.exports = function groupEventHandler(king) {
         const tz = 'Africa/Nairobi';
         const time = moment().tz(tz).format('hh:mm A, DD MMM YYYY');
 
+        console.log('=== GROUP PARTICIPANTS UPDATE ===');
+        console.log('Group JID:', id);
+        console.log('Group Name:', groupName);
+        console.log('Participants:', participants);
+        console.log('Action:', action);
+
         for (const participant of participants) {
+            console.log('Participant JID:', participant);
             const contactInfo = await king.onWhatsApp(participant).then(([res]) => res).catch(() => null);
             const mentionName = contactInfo?.notify || participant.split('@')[0];
+            console.log('Resolved mentionName:', mentionName);
 
             await king.sendMessage(id, {
                 text:
