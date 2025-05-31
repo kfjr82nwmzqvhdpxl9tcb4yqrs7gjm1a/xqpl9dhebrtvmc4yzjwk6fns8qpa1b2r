@@ -17,10 +17,16 @@ module.exports = function groupEventHandler(king) {
             let mentionName = participant.split('@')[0];
 
             const contactInfo = await king.onWhatsApp(participant).then(([res]) => res).catch(() => null);
+
             if (contactInfo?.notify) {
                 mentionName = contactInfo.notify;
-            } else if (participant.endsWith('@lid')) {
-                mentionName = `User${mentionName}`;
+            } else {
+                const participantInfo = metadata?.participants.find(p => p.id === participant);
+                if (participantInfo) {
+                    mentionName = participantInfo.id.split('@')[0];
+                } else if (participant.endsWith('@lid')) {
+                    mentionName = `User${mentionName}`;
+                }
             }
 
             await king.sendMessage(id, {
