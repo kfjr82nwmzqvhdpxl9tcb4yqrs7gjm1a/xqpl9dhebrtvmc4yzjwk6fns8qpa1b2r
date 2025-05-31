@@ -185,6 +185,51 @@ The following message was deleted:`,
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
 
+        const m = msg.message;
+        const pushName = msg.pushName || 'Unknown';
+        const senderFormatted = `${pushName} (+${senderNumber})`;
+        const chatType = getChatCategory(fromJid);
+
+        let contentSummary = '';
+        if (m?.conversation) {
+            contentSummary = m.conversation;
+        } else if (m?.extendedTextMessage?.text) {
+            contentSummary = m.extendedTextMessage.text;
+        } else if (m?.imageMessage) {
+            const caption = m.imageMessage.caption || '';
+            contentSummary = `📷 Image ${caption ? `| Caption: ${caption}` : ''}`;
+        } else if (m?.videoMessage) {
+            const caption = m.videoMessage.caption || '';
+            contentSummary = `🎥 Video ${caption ? `| Caption: ${caption}` : ''}`;
+        } else if (m?.audioMessage) {
+            contentSummary = `🎵 Audio`;
+        } else if (m?.stickerMessage) {
+            contentSummary = `🖼️ Sticker`;
+        } else if (m?.documentMessage) {
+            contentSummary = `📄 Document`;
+        } else {
+            contentSummary = '[Unsupported message type]';
+        }
+
+        let chatName = '';
+        if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                chatName = metadata.subject;
+            } catch {
+                chatName = 'Unknown Group';
+            }
+        } else if (fromJid.endsWith('@newsletter')) {
+            chatName = msg.pushName || 'Unknown Channel';
+        } else {
+            chatName = 'Private Chat';
+        }
+
+        console.log(`\n=== ${chatType.toUpperCase()} ===`);
+        console.log(`Chat name: ${chatName}`);
+        console.log(`Message sender: ${senderFormatted}`);
+        console.log(`Text here: ${contentSummary}\n`);
+
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
         }
@@ -200,7 +245,6 @@ The following message was deleted:`,
             }
         }
 
-        const m = msg.message;
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
