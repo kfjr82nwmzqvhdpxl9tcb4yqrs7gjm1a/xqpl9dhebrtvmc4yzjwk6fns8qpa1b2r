@@ -14,8 +14,6 @@ const {
 const pino = require('pino');
 const moment = require('moment-timezone');
 const { loadSessionFromBase64 } = require('./auth');
-const groupEventHandler = require('./group');
-groupEventHandler(king);
 const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
@@ -68,7 +66,8 @@ async function startBot() {
         browser: Browsers.macOS('Safari'),
         version
     });
-
+const groupEventHandler = require('./group');
+groupEventHandler(king);
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
