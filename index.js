@@ -66,8 +66,8 @@ async function startBot() {
         browser: Browsers.macOS('Safari'),
         version
     });
-const groupEventHandler = require('./group');
-groupEventHandler(king);
+/*const groupEventHandler = require('./group');
+groupEventHandler(king);*/
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
