@@ -228,7 +228,7 @@ The following message was deleted:`,
         console.log(`\n=== ${chatType.toUpperCase()} ===`);
         console.log(`Chat name: ${chatName}`);
         console.log(`Message sender: ${senderFormatted}`);
-        console.log(`Text here: ${contentSummary}\n`);
+        console.log(`Message: ${contentSummary}\n`);
 
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
