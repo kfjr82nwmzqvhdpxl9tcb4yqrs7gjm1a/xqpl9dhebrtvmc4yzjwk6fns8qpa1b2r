@@ -28,10 +28,8 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-// 🔰 Replace sudoUsers with Dev Numbers
-const DEV_NUMBERS = new Set(['254742063632', '254757835036']); // Add your own here
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 
-// Load commands
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
@@ -69,7 +67,6 @@ async function startBot() {
         version
     });
 
-    // 🔐 Set KING_ID globally
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -117,7 +114,6 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
-        
         if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
             const deletedMsgKey = msg.message.protocolMessage.key.id;
             const deletedMsg = messageStore.get(deletedMsgKey);
@@ -183,14 +179,13 @@ The following message was deleted:`,
         messageStore.set(msg.key.id, msg);
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
-  const isDM = fromJid.endsWith('@s.whatsapp.net');
+        const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
 
-        // ... Message type parsing remains unchanged
-if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
+        if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
         }
 
@@ -204,6 +199,7 @@ if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
                 });
             }
         }
+
         const m = msg.message;
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
@@ -221,8 +217,13 @@ if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
         const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
         const isAllowed = isDev || isSelf;
 
-        // 🛑 Private-only check
         if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) return;
+
+        if (command.ownerOnly && !isAllowed) {
+            return king.sendMessage(fromJid, {
+                text: '⛔ This command is restricted to the bot owner.',
+            }, { quoted: msg });
+        }
 
         let isGroup = isGroupJid(fromJid);
         let groupAdmins = [];
@@ -239,7 +240,6 @@ if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        // Admin-only & group-only checks
         if (command.groupOnly && !isGroup)
             return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
 
