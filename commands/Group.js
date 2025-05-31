@@ -478,13 +478,14 @@ module.exports = [
     description: 'Force the bot to leave the group.',
     category: 'Group',
     groupOnly: true,
+    ownerOnly: true, 
 
     execute: async (king, msg) => {
       const fromJid = msg.key.remoteJid;
       const senderJid = msg.key.participant || msg.key.remoteJid;
       const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
 
-      if (!DEVS.includes(senderNumber)) return;
+      
 
       try {
         await king.groupLeave(fromJid);
@@ -498,7 +499,7 @@ module.exports = [
     name: 'create',
     aliases: ['newgroup', 'newgc'],
     description: 'Create a new group with users.',
-    category: 'Group',
+    category: 'General',
 
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
