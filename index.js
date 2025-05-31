@@ -258,6 +258,10 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
+        await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+        }).catch(() => {});
+
         const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
         const isAllowed = isDev || isSelf;
 
