@@ -17,27 +17,15 @@ module.exports = function groupEventHandler(king) {
             const contactInfo = await king.onWhatsApp(participant).then(([res]) => res).catch(() => null);
             const mentionName = contactInfo?.notify || participant.split('@')[0];
 
-            if (action === 'add' || action === 'invite') {
-                await king.sendMessage(id, {
-                    text: `👋 Welcome @${mentionName} to *${groupName}*!\n\n🕓 Joined at ${time}`,
-                    mentions: [participant]
-                });
-            } else if (action === 'remove') {
-                await king.sendMessage(id, {
-                    text: `😢 @${mentionName} has left *${groupName}*.\n\n🕓 Left at ${time}`,
-                    mentions: [participant]
-                });
-            } else if (action === 'promote') {
-                await king.sendMessage(id, {
-                    text: `📢 Congrats @${mentionName}! You have been promoted to admin in *${groupName}*.`,
-                    mentions: [participant]
-                });
-            } else if (action === 'demote') {
-                await king.sendMessage(id, {
-                    text: `⚠️ @${mentionName} was demoted from admin in *${groupName}*.`,
-                    mentions: [participant]
-                });
-            }
+            await king.sendMessage(id, {
+                text:
+                    action === 'add' || action === 'invite' ? `👋 Welcome @${mentionName} to *${groupName}*!\n\n🕓 Joined at ${time}` :
+                    action === 'remove' ? `😢 @${mentionName} has left *${groupName}*.\n\n🕓 Left at ${time}` :
+                    action === 'promote' ? `📢 Congrats @${mentionName}! You have been promoted to admin in *${groupName}*.` :
+                    action === 'demote' ? `⚠️ @${mentionName} was demoted from admin in *${groupName}*.` :
+                    '',
+                mentions: [participant]
+            });
         }
     });
 
