@@ -14,13 +14,14 @@ module.exports = function groupEventHandler(king) {
         const time = moment().tz(tz).format('hh:mm A, DD MMM YYYY');
 
         for (const participant of participants) {
-            if (participant.endsWith('@lid')) {
-                // skip or handle differently because it is not a standard WhatsApp JID
-                continue;
-            }
+            let mentionName = participant.split('@')[0];
 
             const contactInfo = await king.onWhatsApp(participant).then(([res]) => res).catch(() => null);
-            const mentionName = contactInfo?.notify || participant.split('@')[0];
+            if (contactInfo?.notify) {
+                mentionName = contactInfo.notify;
+            } else if (participant.endsWith('@lid')) {
+                mentionName = `User${mentionName}`;
+            }
 
             await king.sendMessage(id, {
                 text:
