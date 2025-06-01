@@ -229,6 +229,7 @@ The following message was deleted:`,
             chatName = msg.pushName || 'Unknown Channel';
         } else {
             chatName = 'Private Chat';
+        } 
             console.log(`\n=== ${chatType.toUpperCase()} ===`);
         console.log(`Chat name: ${chatName}`);
         console.log(`Message sender: ${senderFormatted}`);
