@@ -40,7 +40,7 @@ function isGroupJid(jid) {
 }
 
 function normalizeJid(jid) {
-    return jid.split(':')[0];
+    return jid.split('@')[0].split(':')[0];
 }
 
 function getChatCategory(jid) {
@@ -66,8 +66,7 @@ async function startBot() {
         browser: Browsers.macOS('Safari'),
         version
     });
-/*const groupEventHandler = require('./group');
-groupEventHandler(king);*/
+
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -213,20 +212,24 @@ The following message was deleted:`,
         }
 
         let chatName = '';
+        let groupAdmins = [];
+
         if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
             try {
                 const metadata = await king.groupMetadata(fromJid);
                 chatName = metadata.subject;
-            } catch {
+                groupAdmins = metadata.participants
+                    .filter(p => p.admin)
+                    .map(p => normalizeJid(p.id));
+            } catch (err) {
+                console.warn('⚠️ Failed to fetch group metadata:', err);
                 chatName = 'Unknown Group';
             }
         } else if (fromJid.endsWith('@newsletter')) {
             chatName = msg.pushName || 'Unknown Channel';
         } else {
             chatName = 'Private Chat';
-        }
-
-        console.log(`\n=== ${chatType.toUpperCase()} ===`);
+            console.log(`\n=== ${chatType.toUpperCase()} ===`);
         console.log(`Chat name: ${chatName}`);
         console.log(`Message sender: ${senderFormatted}`);
         console.log(`Message: ${contentSummary}\n`);
@@ -265,41 +268,38 @@ The following message was deleted:`,
 
         const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
         const isAllowed = isDev || isSelf;
+        const isGroup = isGroupJid(fromJid);
+        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
+        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
+        // DEV override for private mode
         if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) return;
 
+        // DEV override for ownerOnly
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to the bot owner.',
             }, { quoted: msg });
         }
 
-        let isGroup = isGroupJid(fromJid);
-        let groupAdmins = [];
-
-        if (isGroup) {
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                groupAdmins = metadata.participants
-                    .filter(p => p.admin)
-                    .map(p => normalizeJid(p.id));
-            } catch {}
+        if (command.groupOnly && !isGroup) {
+            return king.sendMessage(fromJid, {
+                text: '❌ This command only works in groups.'
+            }, { quoted: msg });
         }
 
-        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-
-        if (command.groupOnly && !isGroup)
-            return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
-
-        if (command.adminOnly && !isAdmin)
-            return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
+        // 🔧 FIX: Allow devs to bypass adminOnly restrictions
+        if (command.adminOnly && !isAdmin && !isDev) {
+            return king.sendMessage(fromJid, {
+                text: '⛔ This command is restricted to group admins.'
+            }, { quoted: msg });
+        }
 
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
             console.error('Command error:', err);
-            king.sendMessage(fromJid, { text: 'Something went wrong.' }).catch(() => {});
+            king.sendMessage(fromJid, { text: '⚠️ Something went wrong while executing the command.' }).catch(() => {});
         }
     });
 
