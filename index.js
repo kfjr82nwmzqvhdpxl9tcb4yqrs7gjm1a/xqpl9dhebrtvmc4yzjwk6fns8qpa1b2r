@@ -161,7 +161,7 @@ async function startBot() {
         console.log(`Message sender: ${pushName} (+${senderNumber})`);
         console.log(`Message: ${contentSummary}\n`);
 
-        // Read DM or status (if enabled)
+        
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
         }
@@ -177,11 +177,11 @@ async function startBot() {
             }
         }
 
-        // Extract command text
+        
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
-        // Validate prefix
+        
         const prefixes = [...conf.prefixes];
         const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
         if (!usedPrefix) return;
@@ -194,13 +194,12 @@ async function startBot() {
 
         const botMode = (conf.MODE || 'public').toLowerCase();
 
-        // ENFORCE PRIVATE MODE: Reject all commands & reactions from non-devs
         if (botMode === 'private' && !isAllowed) {
             console.log(`Ignoring command from non-dev user (${senderNumber}) in private mode.`);
             return;
         }
 
-        // ✅ SAFE TO PROCESS
+        
         await king.sendMessage(fromJid, {
             react: { key: msg.key, text: '🤍' }
         }).catch(() => {});
