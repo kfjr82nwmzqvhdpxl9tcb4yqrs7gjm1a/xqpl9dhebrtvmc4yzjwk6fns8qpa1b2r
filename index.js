@@ -37,13 +37,9 @@ allCommands.forEach(cmd => {
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
 
-// Dynamically set `private` flag on commands based on MODE
+// Dynamically set `private` flag on commands based on MODE once for all commands
 allCommands.forEach(cmd => {
-    if (conf.MODE.toLowerCase() === 'private') {
-        cmd.private = true;
-    } else {
-        cmd.private = false;
-    }
+    cmd.private = conf.MODE.toLowerCase() === 'private';
 });
 
 function isGroupJid(jid) {
@@ -225,30 +221,35 @@ async function startBot() {
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
+        // Check for private mode command restriction
         if (command.private && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '🔒 This command is only available to bot owners/developers in PRIVATE MODE.',
             }, { quoted: msg });
         }
 
+        // Check if command is owner only
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to the bot owner.',
             }, { quoted: msg });
         }
 
+        // Check if command requires group context
         if (command.groupOnly && !isGroup) {
             return king.sendMessage(fromJid, {
                 text: '❌ This command only works in groups.'
             }, { quoted: msg });
         }
 
+        // Check if command requires admin privileges
         if (command.adminOnly && !isAdmin && !isDev) {
             return king.sendMessage(fromJid, {
                 text: '❌ You need to be a group admin to use this command.'
             }, { quoted: msg });
         }
 
+        // Execute the command
         try {
             await command.execute(king, msg, args, {
                 isGroup,
