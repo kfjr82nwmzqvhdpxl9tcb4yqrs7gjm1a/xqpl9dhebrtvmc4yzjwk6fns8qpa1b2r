@@ -192,11 +192,9 @@ async function startBot() {
             }
         }
 
-        // Get message text
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
-        // Check for valid prefix
         const prefixes = [...conf.prefixes];
         const usedPrefix = prefixes.find(p => text.startsWith(p));
         if (!usedPrefix) return;
@@ -207,7 +205,6 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        // Check if allowed in current mode
         const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
         const isAllowed = isDev || isSelf;
         const botMode = (conf.MODE || 'public').toLowerCase();
@@ -218,13 +215,11 @@ async function startBot() {
         console.log('Is Self:', isSelf);
         console.log('Is Allowed:', isAllowed);
 
-        // STRICT PRIVATE MODE ENFORCEMENT: silently ignore commands from non-dev/non-self users
+        // ENFORCE STRICT PRIVATE MODE — do not react, reply or process
         if (botMode === 'private' && !isAllowed) {
-            // No response, no reaction, just ignore
             return;
         }
 
-        // ✅ Safe to react and process command
         await king.sendMessage(fromJid, {
             react: { key: msg.key, text: '🤍' }
         }).catch(() => {});
@@ -235,27 +230,29 @@ async function startBot() {
 
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
-                text: '⛔ This command is restricted to the bot owner.',
-            }, { quoted: msg });
+                text: '⛔ This command is restricted to the bot owner.'
+            }, { quoted: msg }).catch(() => {});
         }
 
         if (command.groupOnly && !isGroup) {
             return king.sendMessage(fromJid, {
                 text: '❌ This command only works in groups.'
-            }, { quoted: msg });
+            }, { quoted: msg }).catch(() => {});
         }
 
         if (command.adminOnly && !isAdmin && !isDev) {
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to group admins.'
-            }, { quoted: msg });
+            }, { quoted: msg }).catch(() => {});
         }
 
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
         } catch (err) {
             console.error('Command error:', err);
-            king.sendMessage(fromJid, { text: '⚠️ Something went wrong while executing the command.' }).catch(() => {});
+            king.sendMessage(fromJid, {
+                text: '⚠️ Something went wrong while executing the command.'
+            }).catch(() => {});
         }
     });
 
