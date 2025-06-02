@@ -220,6 +220,7 @@ async function startBot() {
 
         // ⛔ Early return in private mode if not allowed
         if (botMode === 'private' && !isAllowed) {
+            // Reply politely and DO NOT react or execute command
             return king.sendMessage(fromJid, {
                 text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
             }, { quoted: msg });
