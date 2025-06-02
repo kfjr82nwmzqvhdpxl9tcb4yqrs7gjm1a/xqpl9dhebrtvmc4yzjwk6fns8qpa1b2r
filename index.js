@@ -218,12 +218,10 @@ async function startBot() {
         console.log('Is Self:', isSelf);
         console.log('Is Allowed:', isAllowed);
 
-        // ⛔ Early return in private mode if not allowed
+        // STRICT PRIVATE MODE ENFORCEMENT: silently ignore commands from non-dev/non-self users
         if (botMode === 'private' && !isAllowed) {
-            // Reply politely and DO NOT react or execute command
-            return king.sendMessage(fromJid, {
-                text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
-            }, { quoted: msg });
+            // No response, no reaction, just ignore
+            return;
         }
 
         // ✅ Safe to react and process command
