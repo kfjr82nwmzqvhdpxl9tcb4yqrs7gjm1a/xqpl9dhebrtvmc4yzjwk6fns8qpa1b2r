@@ -51,12 +51,6 @@ function getChatCategory(jid) {
     return '❔ Unknown Chat Type';
 }
 
-function isPrivateModeRestricted(userJid, botId) {
-    if ((conf.MODE || '').toLowerCase() !== 'private') return false;
-    const jid = normalizeJid(userJid);
-    return !DEV_NUMBERS.has(jid) && jid !== normalizeJid(botId);
-}
-
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -134,68 +128,6 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
-        if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
-            const deletedMsgKey = msg.message.protocolMessage.key.id;
-            const deletedMsg = messageStore.get(deletedMsgKey);
-            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
-            const fromJid = msg.key.remoteJid;
-
-            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
-            let senderName = senderNumber;
-            let chatName = '';
-            let chatType = 'Personal';
-            const timezone = king?.config?.timezone || 'Africa/Nairobi';
-            const date = moment().tz(timezone).format('DD/MM/YYYY');
-            const time = moment().tz(timezone).format('hh:mm:ss A');
-            let mentions = [deletedSenderJid];
-
-            if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
-                try {
-                    const metadata = await king.groupMetadata(fromJid);
-                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
-                    chatName = metadata.subject;
-                    chatType = 'Group';
-                } catch {
-                    chatName = 'Unknown Group';
-                } 
-            } else if (fromJid.endsWith('status@broadcast')) {
-                chatName = 'Status Update';
-                chatType = 'Status';
-                senderName = msg.pushName; 
-                mentions = [];
-            } else if (fromJid.endsWith('@newsletter')) {
-                chatName = 'Channel Post';
-                chatType = 'Channel';
-                senderName = 'System';
-                mentions = [];
-            } else {
-                senderName = msg.pushName || senderNumber;
-                chatName = senderName;
-            }
-
-            if (deletedMsg && deletedSenderJid !== king.user.id) {
-                await king.sendMessage(king.user.id, {
-                    text:
-`*⚡ FLASH-MD ANTI_DELETE ⚡*
-
-*Chat:* ${chatName}
-*Type:* ${chatType}
-*Deleted By:* ${senderName}
-*Number:* +${senderNumber}
-*Date:* ${date}
-*Time:* ${time}
-
-The following message was deleted:`,
-                    mentions
-                });
-
-                await king.sendMessage(king.user.id, {
-                    forward: deletedMsg
-                });
-            }
-        }
-
         messageStore.set(msg.key.id, msg);
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
@@ -204,10 +136,8 @@ The following message was deleted:`,
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
-
         const m = msg.message;
         const pushName = msg.pushName || 'Unknown';
-        const senderFormatted = `${pushName} (+${senderNumber})`;
         const chatType = getChatCategory(fromJid);
 
         let contentSummary = '';
@@ -219,15 +149,8 @@ The following message was deleted:`,
         else if (m?.stickerMessage) contentSummary = `🖼️ Sticker`;
         else if (m?.documentMessage) contentSummary = `📄 Document`;
         else if (m?.contactMessage) contentSummary = `👤 Contact: ${m.contactMessage.displayName || 'Unknown'}`;
-        else if (m?.contactsArrayMessage) contentSummary = `👥 Multiple Contacts`;
-        else if (m?.locationMessage) contentSummary = `📍 Location`;
-        else if (m?.liveLocationMessage) contentSummary = `📡 Live Location`;
         else if (m?.pollCreationMessage) contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
         else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
-        else if (m?.groupInviteMessage) contentSummary = `📨 Group Invite`;
-        else if (m?.protocolMessage?.type === 0) contentSummary = `🗑️ Message Deleted`;
-        else if (m?.ephemeralMessage?.message) contentSummary = `[⏱️ Ephemeral] ${JSON.stringify(m.ephemeralMessage.message)}`;
-        else if (m?.viewOnceMessage?.message) contentSummary = `[👁️ View Once] ${JSON.stringify(m.viewOnceMessage.message)}`;
         else contentSummary = '[📦 Unknown or Unsupported Message Type]';
 
         let chatName = '';
@@ -240,7 +163,7 @@ The following message was deleted:`,
                 groupAdmins = metadata.participants
                     .filter(p => p.admin)
                     .map(p => normalizeJid(p.id));
-            } catch (err) {
+            } catch {
                 chatName = 'Unknown Group';
             }
         } else if (fromJid.endsWith('@newsletter')) {
@@ -251,7 +174,7 @@ The following message was deleted:`,
 
         console.log(`\n=== ${chatType.toUpperCase()} ===`);
         console.log(`Chat name: ${chatName}`);
-        console.log(`Message sender: ${senderFormatted}`);
+        console.log(`Message sender: ${pushName} (+${senderNumber})`);
         console.log(`Message: ${contentSummary}\n`);
 
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
@@ -288,7 +211,7 @@ The following message was deleted:`,
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        if (isPrivateModeRestricted(senderJid, king.user.id)) {
+        if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
             }, { quoted: msg });
