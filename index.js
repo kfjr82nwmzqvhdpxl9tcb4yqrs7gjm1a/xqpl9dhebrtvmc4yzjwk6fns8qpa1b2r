@@ -2,9 +2,6 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
-app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
-
 const {
     default: makeWASocket,
     DisconnectReason,
@@ -19,6 +16,15 @@ const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
 
+// Helper function to normalize numbers (remove any non-digit chars)
+function normalizeNumber(number) {
+    return number.replace(/\D/g, '');
+}
+
+// Define your dev numbers directly here (without @s.whatsapp.net)
+const DEV_NUMBERS_LIST = ['254742063632', '254757835036'];
+const DEV_NUMBERS = new Set(DEV_NUMBERS_LIST.map(normalizeNumber));
+
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
@@ -29,20 +35,19 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-// Normalize dev numbers to a consistent format (just digits, no symbols)
-const normalizeNumber = (num) => num.replace(/\D/g, '');
-
-const DEV_NUMBERS = new Set(conf.DEV_NUMBERS.map(normalizeNumber));
-
 // Map commands by name and aliases
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
 
-// Set `private` flag on all commands based on MODE once
+// Dynamically set `private` flag on commands based on MODE once here
 allCommands.forEach(cmd => {
-    cmd.private = conf.MODE.toLowerCase() === 'private';
+    if (conf.MODE.toLowerCase() === 'private') {
+        cmd.private = true;
+    } else {
+        cmd.private = false;
+    }
 });
 
 function isGroupJid(jid) {
@@ -60,6 +65,9 @@ function getChatCategory(jid) {
     if (jid.endsWith('@g.us') || jid.endsWith('@lid')) return '👥 Group Chat';
     return '❔ Unknown Chat Type';
 }
+
+app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
+app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
@@ -83,11 +91,7 @@ async function startBot() {
         if (conf.ANTICALL === "on") {
             const callId = call[0].id;
             const callerId = call[0].from;
-            const superUsers = [
-                '254742063632@s.whatsapp.net',
-                '254757835036@s.whatsapp.net',
-                '254751284190@s.whatsapp.net'
-            ];
+            const superUsers = DEV_NUMBERS_LIST.map(num => `${num}@s.whatsapp.net`);
             if (!superUsers.includes(callerId)) {
                 try {
                     await king.sendCallResult(callId, { type: 'reject' });
@@ -147,14 +151,12 @@ async function startBot() {
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-        const senderNumberRaw = senderJid.replace(/@.*$/, '').split(':')[0];
-        const senderNumber = normalizeNumber(senderNumberRaw);
+        const senderNumber = normalizeNumber(senderJid.replace(/@.*$/, '').split(':')[0]);
         const isDev = DEV_NUMBERS.has(senderNumber);
         const m = msg.message;
         const pushName = msg.pushName || 'Unknown';
         const chatType = getChatCategory(fromJid);
 
-        // Prepare message summary for logs
         let contentSummary = '';
         if (m?.conversation) contentSummary = m.conversation;
         else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
@@ -168,11 +170,10 @@ async function startBot() {
         else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
         else contentSummary = '[📦 Unknown or Unsupported Message Type]';
 
-        // Get group metadata if group message
         let chatName = '';
         let groupAdmins = [];
 
-        if (isGroupJid(fromJid)) {
+        if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
             try {
                 const metadata = await king.groupMetadata(fromJid);
                 chatName = metadata.subject;
@@ -190,7 +191,7 @@ async function startBot() {
 
         console.log(`\n=== ${chatType.toUpperCase()} ===`);
         console.log(`Chat name: ${chatName}`);
-        console.log(`Message sender: ${pushName} (+${senderNumberRaw})`);
+        console.log(`Message sender: ${pushName} (+${senderNumber})`);
         console.log(`Message: ${contentSummary}\n`);
 
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
@@ -226,15 +227,6 @@ async function startBot() {
         const isGroup = isGroupJid(fromJid);
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-
-        // Debug log for permissions
-        console.log('--- Permission Check ---');
-        console.log('Command:', command.name);
-        console.log('Private flag:', command.private);
-        console.log('Sender number:', senderNumber);
-        console.log('Is developer:', isDev);
-        console.log('Is bot itself:', isSelf);
-        console.log('Is allowed:', isAllowed);
 
         if (command.private && !isAllowed) {
             return king.sendMessage(fromJid, {
