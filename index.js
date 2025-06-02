@@ -66,7 +66,31 @@ async function startBot() {
         browser: Browsers.macOS('Safari'),
         version
     });
+king.ev.on('call', async (call) => {
+        if (conf.ANTICALL === "on") {
+            const callId = call[0].id;
+            const callerId = call[0].from;
 
+            const superUsers = [
+                '254742063632@s.whatsapp.net',
+                '254757835036@s.whatsapp.net',
+                '254751284190@s.whatsapp.net'
+            ];
+
+            console.log(`Caller ID: ${callerId}`);
+
+            if (!superUsers.includes(callerId)) {
+                try {
+                    await king.sendCallResult(callId, { type: 'reject' });
+                    console.log(`Call from ${callerId} declined.`);
+                } catch (error) {
+                    console.error('Error handling the call rejection:', error);
+                }
+            } else {
+                console.log('SuperUser is calling, not rejecting the call.');
+            }
+        }
+    });
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
