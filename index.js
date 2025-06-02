@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
 app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
@@ -11,7 +12,6 @@ const {
     makeCacheableSignalKeyStore,
     Browsers
 } = require('@whiskeysockets/baileys');
-
 const pino = require('pino');
 const moment = require('moment-timezone');
 const { loadSessionFromBase64 } = require('./auth');
@@ -31,11 +31,19 @@ const PRESENCE = {
 
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 
+// Map commands by name and aliases
 allCommands.forEach(cmd => {
-    // Dynamically assign private flag based on config.MODE
-    cmd.private = conf.MODE.toLowerCase() === 'private';
     commands.set(cmd.name, cmd);
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
+});
+
+// Dynamically set `private` flag on commands based on MODE
+allCommands.forEach(cmd => {
+    if (conf.MODE.toLowerCase() === 'private') {
+        cmd.private = true;
+    } else {
+        cmd.private = false;
+    }
 });
 
 function isGroupJid(jid) {
@@ -70,6 +78,25 @@ async function startBot() {
         version
     });
 
+    console.log(`\n🚦 Bot MODE is set to: ${conf.MODE.toUpperCase()}\n`);
+
+    king.ev.on('call', async (call) => {
+        if (conf.ANTICALL === "on") {
+            const callId = call[0].id;
+            const callerId = call[0].from;
+            const superUsers = [
+                '254742063632@s.whatsapp.net',
+                '254757835036@s.whatsapp.net',
+                '254751284190@s.whatsapp.net'
+            ];
+            if (!superUsers.includes(callerId)) {
+                try {
+                    await king.sendCallResult(callId, { type: 'reject' });
+                } catch {}
+            }
+        }
+    });
+
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -88,7 +115,13 @@ async function startBot() {
             const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
             const totalCmds = commands.size;
 
-            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*\n\n✅ Using Version 2.5!\n📌 Commands: ${totalCmds}\n⚙️ ${prefixInfo}\n🗓️ Date: ${date}`;
+            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
+
+*✅ Using Version 2.5!*
+*📌 Commands:* ${totalCmds}
+*⚙️ ${prefixInfo}*
+*🗓️ Date:* ${date}
+*🚦 MODE:* ${conf.MODE.toUpperCase()}`;
 
             await king.sendMessage(king.user.id, {
                 text: connInfo,
@@ -113,14 +146,65 @@ async function startBot() {
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
+        const isStatus = fromJid === 'status@broadcast';
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
-        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
-        const isAllowed = isDev || isSelf;
         const m = msg.message;
         const pushName = msg.pushName || 'Unknown';
         const chatType = getChatCategory(fromJid);
+
+        let contentSummary = '';
+        if (m?.conversation) contentSummary = m.conversation;
+        else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
+        else if (m?.imageMessage) contentSummary = `📷 Image${m.imageMessage.caption ? ` | Caption: ${m.imageMessage.caption}` : ''}`;
+        else if (m?.videoMessage) contentSummary = `🎥 Video${m.videoMessage.caption ? ` | Caption: ${m.videoMessage.caption}` : ''}`;
+        else if (m?.audioMessage) contentSummary = `🎵 Audio`;
+        else if (m?.stickerMessage) contentSummary = `🖼️ Sticker`;
+        else if (m?.documentMessage) contentSummary = `📄 Document`;
+        else if (m?.contactMessage) contentSummary = `👤 Contact: ${m.contactMessage.displayName || 'Unknown'}`;
+        else if (m?.pollCreationMessage) contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
+        else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
+        else contentSummary = '[📦 Unknown or Unsupported Message Type]';
+
+        let chatName = '';
+        let groupAdmins = [];
+
+        if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                chatName = metadata.subject;
+                groupAdmins = metadata.participants
+                    .filter(p => p.admin)
+                    .map(p => normalizeJid(p.id));
+            } catch {
+                chatName = 'Unknown Group';
+            }
+        } else if (fromJid.endsWith('@newsletter')) {
+            chatName = msg.pushName || 'Unknown Channel';
+        } else {
+            chatName = 'Private Chat';
+        }
+
+        console.log(`\n=== ${chatType.toUpperCase()} ===`);
+        console.log(`Chat name: ${chatName}`);
+        console.log(`Message sender: ${pushName} (+${senderNumber})`);
+        console.log(`Message: ${contentSummary}\n`);
+
+        if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
+            king.readMessages([msg.key]).catch(() => {});
+        }
+
+        if (isStatus && conf.AUTO_VIEW_STATUS) {
+            king.readMessages([msg.key]).catch(() => {});
+            if (conf.AUTO_LIKE === "on" && msg.key.participant) {
+                await king.sendMessage(fromJid, {
+                    react: { key: msg.key, text: '🤍' }
+                }, {
+                    statusJidList: [msg.key.participant, king.user.id]
+                });
+            }
+        }
 
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
@@ -135,25 +219,17 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        // BLOCK private commands for non-allowed users
-        if (command.private && !isAllowed) {
-            return king.sendMessage(fromJid, {
-                text: '🔐 This command is only available to the bot owner(s) in PRIVATE MODE.',
-            }, { quoted: msg });
-        }
-
+        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+        const isAllowed = isDev || isSelf;
         const isGroup = isGroupJid(fromJid);
-        let groupAdmins = [];
-
-        if (isGroup) {
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                groupAdmins = metadata.participants.filter(p => p.admin).map(p => normalizeJid(p.id));
-            } catch {}
-        }
-
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
+
+        if (command.private && !isAllowed) {
+            return king.sendMessage(fromJid, {
+                text: '🔒 This command is only available to bot owners/developers in PRIVATE MODE.',
+            }, { quoted: msg });
+        }
 
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
@@ -169,23 +245,32 @@ async function startBot() {
 
         if (command.adminOnly && !isAdmin && !isDev) {
             return king.sendMessage(fromJid, {
-                text: '⛔ This command is restricted to group admins.'
+                text: '❌ You need to be a group admin to use this command.'
             }, { quoted: msg });
         }
 
-        await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-        }).catch(() => {});
-
         try {
-            await command.execute(king, msg, args, fromJid, allCommands);
-        } catch (err) {
-            console.error('Command error:', err);
-            king.sendMessage(fromJid, { text: '⚠️ Something went wrong while executing the command.' }).catch(() => {});
+            await command.execute(king, msg, args, {
+                isGroup,
+                isAdmin,
+                isBotAdmin,
+                isOwner: isDev,
+                prefix: usedPrefix,
+                senderNumber,
+                chatName,
+                groupAdmins,
+            });
+        } catch (error) {
+            console.error(`Error executing command ${command.name}:`, error);
+            king.sendMessage(fromJid, {
+                text: '⚠️ An error occurred while executing the command.'
+            }, { quoted: msg });
         }
     });
 
     king.ev.on('creds.update', saveState);
+
+    return king;
 }
 
 startBot();
