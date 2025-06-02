@@ -23,6 +23,7 @@ module.exports = [
     name: 'block',
     description: 'Blocks a user on WhatsApp.',
     category: 'USER',
+    ownerOnly: true,
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
       let targetJid;
@@ -37,21 +38,15 @@ module.exports = [
         return king.sendMessage(fromJid, { text: "Please mention or provide a number to block." }, { quoted: msg });
       }
 
-      // ✅ FIRST: prevent blocking developers
       if (restrictedJIDs.includes(targetJid)) {
         return king.sendMessage(fromJid, { text: "I'm sorry, I cannot block my developer!!" }, { quoted: msg });
       }
 
-      // 🔐 THEN check if sender is allowed
-      if (!isOwner(msg)) {
-        return king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
-      }
-
       try {
         await king.updateBlockStatus(targetJid, "block");
-        await king.sendMessage(fromJid, { text: `Blocked ${targetJid} successfully.` }, { quoted: msg });
+        await king.sendMessage(fromJid, { text: `✅ Blocked ${targetJid} successfully.` }, { quoted: msg });
       } catch (error) {
-        await king.sendMessage(fromJid, { text: "An error occurred while blocking the user." }, { quoted: msg });
+        await king.sendMessage(fromJid, { text: "❌ Error occurred while blocking the user." }, { quoted: msg });
       }
     }
   },
@@ -60,6 +55,7 @@ module.exports = [
     name: 'unblock',
     description: 'Unblocks a user on WhatsApp.',
     category: 'USER',
+    ownerOnly: true,
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
       let targetJid;
@@ -74,22 +70,17 @@ module.exports = [
         return king.sendMessage(fromJid, { text: "Please mention or provide a number to unblock." }, { quoted: msg });
       }
 
-      // ✅ FIRST: prevent unblocking protected developers
       if (restrictedJIDs.includes(targetJid)) {
         return king.sendMessage(fromJid, { text: "You cannot unblock the developer using this command." }, { quoted: msg });
       }
 
-      // 🔐 THEN check if sender is allowed
-      if (!isOwner(msg)) {
-        return king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
-      }
-
       try {
         await king.updateBlockStatus(targetJid, "unblock");
-        await king.sendMessage(fromJid, { text: `Unblocked ${targetJid} successfully.` }, { quoted: msg });
+        await king.sendMessage(fromJid, { text: `✅ Unblocked ${targetJid} successfully.` }, { quoted: msg });
       } catch (error) {
-        await king.sendMessage(fromJid, { text: "An error occurred while unblocking the user." }, { quoted: msg });
+        await king.sendMessage(fromJid, { text: "❌ Error occurred while unblocking the user." }, { quoted: msg });
       }
     }
   }
 ];
+
