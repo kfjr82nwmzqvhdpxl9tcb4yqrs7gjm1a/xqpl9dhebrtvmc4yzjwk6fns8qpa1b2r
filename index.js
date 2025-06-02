@@ -11,6 +11,7 @@ const {
     makeCacheableSignalKeyStore,
     Browsers
 } = require('@whiskeysockets/baileys');
+
 const pino = require('pino');
 const moment = require('moment-timezone');
 const { loadSessionFromBase64 } = require('./auth');
@@ -31,6 +32,8 @@ const PRESENCE = {
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 
 allCommands.forEach(cmd => {
+    // Dynamically assign private flag based on config.MODE
+    cmd.private = conf.MODE.toLowerCase() === 'private';
     commands.set(cmd.name, cmd);
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
@@ -67,23 +70,6 @@ async function startBot() {
         version
     });
 
-    king.ev.on('call', async (call) => {
-        if (conf.ANTICALL === "on") {
-            const callId = call[0].id;
-            const callerId = call[0].from;
-            const superUsers = [
-                '254742063632@s.whatsapp.net',
-                '254757835036@s.whatsapp.net',
-                '254751284190@s.whatsapp.net'
-            ];
-            if (!superUsers.includes(callerId)) {
-                try {
-                    await king.sendCallResult(callId, { type: 'reject' });
-                } catch {}
-            }
-        }
-    });
-
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -102,12 +88,7 @@ async function startBot() {
             const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
             const totalCmds = commands.size;
 
-            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
-
-*✅ Using Version 2.5!*
-*📌 Commands:* ${totalCmds}
-*⚙️ ${prefixInfo}*
-*🗓️ Date:* ${date}`;
+            const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*\n\n✅ Using Version 2.5!\n📌 Commands: ${totalCmds}\n⚙️ ${prefixInfo}\n🗓️ Date: ${date}`;
 
             await king.sendMessage(king.user.id, {
                 text: connInfo,
@@ -132,65 +113,14 @@ async function startBot() {
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
-        const isStatus = fromJid === 'status@broadcast';
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
         const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
+        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+        const isAllowed = isDev || isSelf;
         const m = msg.message;
         const pushName = msg.pushName || 'Unknown';
         const chatType = getChatCategory(fromJid);
-
-        let contentSummary = '';
-        if (m?.conversation) contentSummary = m.conversation;
-        else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
-        else if (m?.imageMessage) contentSummary = `📷 Image${m.imageMessage.caption ? ` | Caption: ${m.imageMessage.caption}` : ''}`;
-        else if (m?.videoMessage) contentSummary = `🎥 Video${m.videoMessage.caption ? ` | Caption: ${m.videoMessage.caption}` : ''}`;
-        else if (m?.audioMessage) contentSummary = `🎵 Audio`;
-        else if (m?.stickerMessage) contentSummary = `🖼️ Sticker`;
-        else if (m?.documentMessage) contentSummary = `📄 Document`;
-        else if (m?.contactMessage) contentSummary = `👤 Contact: ${m.contactMessage.displayName || 'Unknown'}`;
-        else if (m?.pollCreationMessage) contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
-        else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
-        else contentSummary = '[📦 Unknown or Unsupported Message Type]';
-
-        let chatName = '';
-        let groupAdmins = [];
-
-        if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                chatName = metadata.subject;
-                groupAdmins = metadata.participants
-                    .filter(p => p.admin)
-                    .map(p => normalizeJid(p.id));
-            } catch {
-                chatName = 'Unknown Group';
-            }
-        } else if (fromJid.endsWith('@newsletter')) {
-            chatName = msg.pushName || 'Unknown Channel';
-        } else {
-            chatName = 'Private Chat';
-        }
-
-        console.log(`\n=== ${chatType.toUpperCase()} ===`);
-        console.log(`Chat name: ${chatName}`);
-        console.log(`Message sender: ${pushName} (+${senderNumber})`);
-        console.log(`Message: ${contentSummary}\n`);
-
-        if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
-            king.readMessages([msg.key]).catch(() => {});
-        }
-
-        if (isStatus && conf.AUTO_VIEW_STATUS) {
-            king.readMessages([msg.key]).catch(() => {});
-            if (conf.AUTO_LIKE === "on" && msg.key.participant) {
-                await king.sendMessage(fromJid, {
-                    react: { key: msg.key, text: '🤍' }
-                }, {
-                    statusJidList: [msg.key.participant, king.user.id]
-                });
-            }
-        }
 
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
@@ -205,21 +135,25 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
-        const isAllowed = isDev || isSelf;
-        const isGroup = isGroupJid(fromJid);
-        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-
-        if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) {
+        // BLOCK private commands for non-allowed users
+        if (command.private && !isAllowed) {
             return king.sendMessage(fromJid, {
-                text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
+                text: '🔐 This command is only available to the bot owner(s) in PRIVATE MODE.',
             }, { quoted: msg });
         }
 
-        await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-        }).catch(() => {});
+        const isGroup = isGroupJid(fromJid);
+        let groupAdmins = [];
+
+        if (isGroup) {
+            try {
+                const metadata = await king.groupMetadata(fromJid);
+                groupAdmins = metadata.participants.filter(p => p.admin).map(p => normalizeJid(p.id));
+            } catch {}
+        }
+
+        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
+        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
@@ -238,6 +172,10 @@ async function startBot() {
                 text: '⛔ This command is restricted to group admins.'
             }, { quoted: msg });
         }
+
+        await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+        }).catch(() => {});
 
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
