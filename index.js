@@ -128,17 +128,20 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
-        messageStore.set(msg.key.id, msg);
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
-        const isStatus = fromJid === 'status@broadcast';
-        const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const senderJid = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+        const senderNumber = normalizeJid(senderJid);
         const isDev = DEV_NUMBERS.has(senderNumber);
+        const isSelf = senderNumber === normalizeJid(king.user.id);
+        const isAllowed = isDev || isSelf;
         const m = msg.message;
-        const pushName = msg.pushName || 'Unknown';
+
         const chatType = getChatCategory(fromJid);
+        const pushName = msg.pushName || 'Unknown';
+
+        messageStore.set(msg.key.id, msg);
 
         let contentSummary = '';
         if (m?.conversation) contentSummary = m.conversation;
@@ -153,35 +156,17 @@ async function startBot() {
         else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
         else contentSummary = '[📦 Unknown or Unsupported Message Type]';
 
-        let chatName = '';
-        let groupAdmins = [];
-
-        if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
-            try {
-                const metadata = await king.groupMetadata(fromJid);
-                chatName = metadata.subject;
-                groupAdmins = metadata.participants
-                    .filter(p => p.admin)
-                    .map(p => normalizeJid(p.id));
-            } catch {
-                chatName = 'Unknown Group';
-            }
-        } else if (fromJid.endsWith('@newsletter')) {
-            chatName = msg.pushName || 'Unknown Channel';
-        } else {
-            chatName = 'Private Chat';
-        }
-
         console.log(`\n=== ${chatType.toUpperCase()} ===`);
-        console.log(`Chat name: ${chatName}`);
+        console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
         console.log(`Message sender: ${pushName} (+${senderNumber})`);
         console.log(`Message: ${contentSummary}\n`);
 
+        // Read DM or status (if enabled)
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
         }
 
-        if (isStatus && conf.AUTO_VIEW_STATUS) {
+        if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
             king.readMessages([msg.key]).catch(() => {});
             if (conf.AUTO_LIKE === "on" && msg.key.participant) {
                 await king.sendMessage(fromJid, {
@@ -192,11 +177,13 @@ async function startBot() {
             }
         }
 
+        // Extract command text
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
+        // Validate prefix
         const prefixes = [...conf.prefixes];
-        const usedPrefix = prefixes.find(p => text.startsWith(p));
+        const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
         if (!usedPrefix) return;
 
         const cmdText = text.slice(usedPrefix.length).trim();
@@ -205,46 +192,18 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
-        const isAllowed = isDev || isSelf;
         const botMode = (conf.MODE || 'public').toLowerCase();
 
-        console.log('Mode:', botMode);
-        console.log('Sender:', senderNumber);
-        console.log('Is Dev:', isDev);
-        console.log('Is Self:', isSelf);
-        console.log('Is Allowed:', isAllowed);
-
-        // ENFORCE STRICT PRIVATE MODE — do not react, reply or process
+        // ENFORCE PRIVATE MODE: Reject all commands & reactions from non-devs
         if (botMode === 'private' && !isAllowed) {
+            console.log(`Ignoring command from non-dev user (${senderNumber}) in private mode.`);
             return;
         }
 
+        // ✅ SAFE TO PROCESS
         await king.sendMessage(fromJid, {
             react: { key: msg.key, text: '🤍' }
         }).catch(() => {});
-
-        const isGroup = isGroupJid(fromJid);
-        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-
-        if (command.ownerOnly && !isAllowed) {
-            return king.sendMessage(fromJid, {
-                text: '⛔ This command is restricted to the bot owner.'
-            }, { quoted: msg }).catch(() => {});
-        }
-
-        if (command.groupOnly && !isGroup) {
-            return king.sendMessage(fromJid, {
-                text: '❌ This command only works in groups.'
-            }, { quoted: msg }).catch(() => {});
-        }
-
-        if (command.adminOnly && !isAdmin && !isDev) {
-            return king.sendMessage(fromJid, {
-                text: '⛔ This command is restricted to group admins.'
-            }, { quoted: msg }).catch(() => {});
-        }
 
         try {
             await command.execute(king, msg, args, fromJid, allCommands);
