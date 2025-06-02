@@ -287,6 +287,12 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
+if ((conf.MODE || '').toLowerCase() === 'private') {
+    return king.sendMessage(fromJid, {
+        text: 'Am I in private mode ?'
+    }, { quoted: msg });
+}
+
         await king.sendMessage(fromJid, {
             react: { key: msg.key, text: '🤍' }
         }).catch(() => {});
@@ -297,8 +303,8 @@ The following message was deleted:`,
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        // DEV override for private mode
-        if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) return;
+        
+        
 
         // DEV override for ownerOnly
         if (command.ownerOnly && !isAllowed) {
