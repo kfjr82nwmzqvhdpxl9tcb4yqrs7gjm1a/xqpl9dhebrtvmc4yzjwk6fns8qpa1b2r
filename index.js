@@ -51,6 +51,12 @@ function getChatCategory(jid) {
     return '❔ Unknown Chat Type';
 }
 
+function isPrivateModeRestricted(userJid, botId) {
+    if ((conf.MODE || '').toLowerCase() !== 'private') return false;
+    const jid = normalizeJid(userJid);
+    return !DEV_NUMBERS.has(jid) && jid !== normalizeJid(botId);
+}
+
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -66,31 +72,24 @@ async function startBot() {
         browser: Browsers.macOS('Safari'),
         version
     });
-king.ev.on('call', async (call) => {
+
+    king.ev.on('call', async (call) => {
         if (conf.ANTICALL === "on") {
             const callId = call[0].id;
             const callerId = call[0].from;
-
             const superUsers = [
                 '254742063632@s.whatsapp.net',
                 '254757835036@s.whatsapp.net',
                 '254751284190@s.whatsapp.net'
             ];
-
-            console.log(`Caller ID: ${callerId}`);
-
             if (!superUsers.includes(callerId)) {
                 try {
                     await king.sendCallResult(callId, { type: 'reject' });
-                    console.log(`Call from ${callerId} declined.`);
-                } catch (error) {
-                    console.error('Error handling the call rejection:', error);
-                }
-            } else {
-                console.log('SuperUser is calling, not rejecting the call.');
+                } catch {}
             }
         }
     });
+
     king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -105,7 +104,6 @@ king.ev.on('call', async (call) => {
 
         if (connection === 'open') {
             global.KING_ID = king.user.id;
-
             const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
             const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
             const totalCmds = commands.size;
@@ -129,8 +127,6 @@ king.ev.on('call', async (call) => {
                     }
                 }
             }).catch(() => {});
-
-            console.log(`Bot connected as ${king.user.id}`);
         }
     });
 
@@ -215,25 +211,24 @@ The following message was deleted:`,
         const chatType = getChatCategory(fromJid);
 
         let contentSummary = '';
-        if (m?.conversation) {
-            contentSummary = m.conversation;
-        } else if (m?.extendedTextMessage?.text) {
-            contentSummary = m.extendedTextMessage.text;
-        } else if (m?.imageMessage) {
-            const caption = m.imageMessage.caption || '';
-            contentSummary = `📷 Image ${caption ? `| Caption: ${caption}` : ''}`;
-        } else if (m?.videoMessage) {
-            const caption = m.videoMessage.caption || '';
-            contentSummary = `🎥 Video ${caption ? `| Caption: ${caption}` : ''}`;
-        } else if (m?.audioMessage) {
-            contentSummary = `🎵 Audio`;
-        } else if (m?.stickerMessage) {
-            contentSummary = `🖼️ Sticker`;
-        } else if (m?.documentMessage) {
-            contentSummary = `📄 Document`;
-        } else {
-            contentSummary = '[Unsupported message type]';
-        }
+        if (m?.conversation) contentSummary = m.conversation;
+        else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
+        else if (m?.imageMessage) contentSummary = `📷 Image${m.imageMessage.caption ? ` | Caption: ${m.imageMessage.caption}` : ''}`;
+        else if (m?.videoMessage) contentSummary = `🎥 Video${m.videoMessage.caption ? ` | Caption: ${m.videoMessage.caption}` : ''}`;
+        else if (m?.audioMessage) contentSummary = `🎵 Audio`;
+        else if (m?.stickerMessage) contentSummary = `🖼️ Sticker`;
+        else if (m?.documentMessage) contentSummary = `📄 Document`;
+        else if (m?.contactMessage) contentSummary = `👤 Contact: ${m.contactMessage.displayName || 'Unknown'}`;
+        else if (m?.contactsArrayMessage) contentSummary = `👥 Multiple Contacts`;
+        else if (m?.locationMessage) contentSummary = `📍 Location`;
+        else if (m?.liveLocationMessage) contentSummary = `📡 Live Location`;
+        else if (m?.pollCreationMessage) contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
+        else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
+        else if (m?.groupInviteMessage) contentSummary = `📨 Group Invite`;
+        else if (m?.protocolMessage?.type === 0) contentSummary = `🗑️ Message Deleted`;
+        else if (m?.ephemeralMessage?.message) contentSummary = `[⏱️ Ephemeral] ${JSON.stringify(m.ephemeralMessage.message)}`;
+        else if (m?.viewOnceMessage?.message) contentSummary = `[👁️ View Once] ${JSON.stringify(m.viewOnceMessage.message)}`;
+        else contentSummary = '[📦 Unknown or Unsupported Message Type]';
 
         let chatName = '';
         let groupAdmins = [];
@@ -246,15 +241,15 @@ The following message was deleted:`,
                     .filter(p => p.admin)
                     .map(p => normalizeJid(p.id));
             } catch (err) {
-                console.warn('⚠️ Failed to fetch group metadata:', err);
                 chatName = 'Unknown Group';
             }
         } else if (fromJid.endsWith('@newsletter')) {
             chatName = msg.pushName || 'Unknown Channel';
         } else {
             chatName = 'Private Chat';
-        } 
-            console.log(`\n=== ${chatType.toUpperCase()} ===`);
+        }
+
+        console.log(`\n=== ${chatType.toUpperCase()} ===`);
         console.log(`Chat name: ${chatName}`);
         console.log(`Message sender: ${senderFormatted}`);
         console.log(`Message: ${contentSummary}\n`);
@@ -287,26 +282,22 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-if ((conf.MODE || '').toLowerCase() === 'private') {
-    return king.sendMessage(fromJid, {
-        text: 'Am I in private mode ?'
-    }, { quoted: msg });
-}
-
-        await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-        }).catch(() => {});
-
         const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
         const isAllowed = isDev || isSelf;
         const isGroup = isGroupJid(fromJid);
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        
-        
+        if (isPrivateModeRestricted(senderJid, king.user.id)) {
+            return king.sendMessage(fromJid, {
+                text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
+            }, { quoted: msg });
+        }
 
-        // DEV override for ownerOnly
+        await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+        }).catch(() => {});
+
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to the bot owner.',
@@ -319,7 +310,6 @@ if ((conf.MODE || '').toLowerCase() === 'private') {
             }, { quoted: msg });
         }
 
-        // 🔧 FIX: Allow devs to bypass adminOnly restrictions
         if (command.adminOnly && !isAdmin && !isDev) {
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to group admins.'
