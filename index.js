@@ -192,9 +192,11 @@ async function startBot() {
             }
         }
 
+        // Get message text
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
+        // Check for valid prefix
         const prefixes = [...conf.prefixes];
         const usedPrefix = prefixes.find(p => text.startsWith(p));
         if (!usedPrefix) return;
@@ -205,29 +207,32 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
+        // Check if allowed in current mode
         const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
         const isAllowed = isDev || isSelf;
-        const isGroup = isGroupJid(fromJid);
-        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
+        const botMode = (conf.MODE || 'public').toLowerCase();
 
-        // 👇 Debug logs for MODE issue
-        console.log('Mode:', conf.MODE);
+        console.log('Mode:', botMode);
         console.log('Sender:', senderNumber);
         console.log('Is Dev:', isDev);
         console.log('Is Self:', isSelf);
         console.log('Is Allowed:', isAllowed);
 
-        const botMode = (conf.MODE || 'public').toLowerCase();
+        // ⛔ Early return in private mode if not allowed
         if (botMode === 'private' && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
             }, { quoted: msg });
         }
 
+        // ✅ Safe to react and process command
         await king.sendMessage(fromJid, {
             react: { key: msg.key, text: '🤍' }
         }).catch(() => {});
+
+        const isGroup = isGroupJid(fromJid);
+        const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
+        const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
