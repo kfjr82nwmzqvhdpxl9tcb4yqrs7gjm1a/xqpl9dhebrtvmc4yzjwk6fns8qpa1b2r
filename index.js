@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
+app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
 const {
     default: makeWASocket,
@@ -16,15 +18,6 @@ const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
 
-// Helper function to normalize numbers (remove any non-digit chars)
-function normalizeNumber(number) {
-    return number.replace(/\D/g, '');
-}
-
-// Define your dev numbers directly here (without @s.whatsapp.net)
-const DEV_NUMBERS_LIST = ['254742063632', '254757835036'];
-const DEV_NUMBERS = new Set(DEV_NUMBERS_LIST.map(normalizeNumber));
-
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
@@ -35,19 +28,11 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-// Map commands by name and aliases
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
+
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
-});
-
-// Dynamically set `private` flag on commands based on MODE once here
-allCommands.forEach(cmd => {
-    if (conf.MODE.toLowerCase() === 'private') {
-        cmd.private = true;
-    } else {
-        cmd.private = false;
-    }
 });
 
 function isGroupJid(jid) {
@@ -66,9 +51,6 @@ function getChatCategory(jid) {
     return '❔ Unknown Chat Type';
 }
 
-app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
-app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
-
 async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
@@ -85,13 +67,15 @@ async function startBot() {
         version
     });
 
-    console.log(`\n🚦 Bot MODE is set to: ${conf.MODE.toUpperCase()}\n`);
-
     king.ev.on('call', async (call) => {
         if (conf.ANTICALL === "on") {
             const callId = call[0].id;
             const callerId = call[0].from;
-            const superUsers = DEV_NUMBERS_LIST.map(num => `${num}@s.whatsapp.net`);
+            const superUsers = [
+                '254742063632@s.whatsapp.net',
+                '254757835036@s.whatsapp.net',
+                '254751284190@s.whatsapp.net'
+            ];
             if (!superUsers.includes(callerId)) {
                 try {
                     await king.sendCallResult(callId, { type: 'reject' });
@@ -123,8 +107,7 @@ async function startBot() {
 *✅ Using Version 2.5!*
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
-*🗓️ Date:* ${date}
-*🚦 MODE:* ${conf.MODE.toUpperCase()}`;
+*🗓️ Date:* ${date}`;
 
             await king.sendMessage(king.user.id, {
                 text: connInfo,
@@ -151,7 +134,7 @@ async function startBot() {
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-        const senderNumber = normalizeNumber(senderJid.replace(/@.*$/, '').split(':')[0]);
+        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
         const isDev = DEV_NUMBERS.has(senderNumber);
         const m = msg.message;
         const pushName = msg.pushName || 'Unknown';
@@ -228,11 +211,15 @@ async function startBot() {
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        if (command.private && !isAllowed) {
+        if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) {
             return king.sendMessage(fromJid, {
-                text: '🔒 This command is only available to bot owners/developers in PRIVATE MODE.',
+                text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
             }, { quoted: msg });
         }
+
+        await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+        }).catch(() => {});
 
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
@@ -248,32 +235,19 @@ async function startBot() {
 
         if (command.adminOnly && !isAdmin && !isDev) {
             return king.sendMessage(fromJid, {
-                text: '❌ You need to be a group admin to use this command.'
+                text: '⛔ This command is restricted to group admins.'
             }, { quoted: msg });
         }
 
         try {
-            await command.execute(king, msg, args, {
-                isGroup,
-                isAdmin,
-                isBotAdmin,
-                isOwner: isDev,
-                prefix: usedPrefix,
-                senderNumber,
-                chatName,
-                groupAdmins,
-            });
-        } catch (error) {
-            console.error(`Error executing command ${command.name}:`, error);
-            king.sendMessage(fromJid, {
-                text: '⚠️ An error occurred while executing the command.'
-            }, { quoted: msg });
+            await command.execute(king, msg, args, fromJid, allCommands);
+        } catch (err) {
+            console.error('Command error:', err);
+            king.sendMessage(fromJid, { text: '⚠️ Something went wrong while executing the command.' }).catch(() => {});
         }
     });
 
     king.ev.on('creds.update', saveState);
-
-    return king;
 }
 
 startBot();
