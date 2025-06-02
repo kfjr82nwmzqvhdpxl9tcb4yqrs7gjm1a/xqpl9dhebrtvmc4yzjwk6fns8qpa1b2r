@@ -29,7 +29,10 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
+// Normalize dev numbers to a consistent format (just digits, no symbols)
+const normalizeNumber = (num) => num.replace(/\D/g, '');
+
+const DEV_NUMBERS = new Set(conf.DEV_NUMBERS.map(normalizeNumber));
 
 // Map commands by name and aliases
 allCommands.forEach(cmd => {
@@ -37,7 +40,7 @@ allCommands.forEach(cmd => {
     if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
 
-// Dynamically set `private` flag on commands based on MODE once for all commands
+// Set `private` flag on all commands based on MODE once
 allCommands.forEach(cmd => {
     cmd.private = conf.MODE.toLowerCase() === 'private';
 });
@@ -144,12 +147,14 @@ async function startBot() {
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const isStatus = fromJid === 'status@broadcast';
         const senderJid = msg.key.fromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-        const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
+        const senderNumberRaw = senderJid.replace(/@.*$/, '').split(':')[0];
+        const senderNumber = normalizeNumber(senderNumberRaw);
         const isDev = DEV_NUMBERS.has(senderNumber);
         const m = msg.message;
         const pushName = msg.pushName || 'Unknown';
         const chatType = getChatCategory(fromJid);
 
+        // Prepare message summary for logs
         let contentSummary = '';
         if (m?.conversation) contentSummary = m.conversation;
         else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
@@ -163,10 +168,11 @@ async function startBot() {
         else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
         else contentSummary = '[📦 Unknown or Unsupported Message Type]';
 
+        // Get group metadata if group message
         let chatName = '';
         let groupAdmins = [];
 
-        if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+        if (isGroupJid(fromJid)) {
             try {
                 const metadata = await king.groupMetadata(fromJid);
                 chatName = metadata.subject;
@@ -184,7 +190,7 @@ async function startBot() {
 
         console.log(`\n=== ${chatType.toUpperCase()} ===`);
         console.log(`Chat name: ${chatName}`);
-        console.log(`Message sender: ${pushName} (+${senderNumber})`);
+        console.log(`Message sender: ${pushName} (+${senderNumberRaw})`);
         console.log(`Message: ${contentSummary}\n`);
 
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
@@ -221,35 +227,39 @@ async function startBot() {
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        // Check for private mode command restriction
+        // Debug log for permissions
+        console.log('--- Permission Check ---');
+        console.log('Command:', command.name);
+        console.log('Private flag:', command.private);
+        console.log('Sender number:', senderNumber);
+        console.log('Is developer:', isDev);
+        console.log('Is bot itself:', isSelf);
+        console.log('Is allowed:', isAllowed);
+
         if (command.private && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '🔒 This command is only available to bot owners/developers in PRIVATE MODE.',
             }, { quoted: msg });
         }
 
-        // Check if command is owner only
         if (command.ownerOnly && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '⛔ This command is restricted to the bot owner.',
             }, { quoted: msg });
         }
 
-        // Check if command requires group context
         if (command.groupOnly && !isGroup) {
             return king.sendMessage(fromJid, {
                 text: '❌ This command only works in groups.'
             }, { quoted: msg });
         }
 
-        // Check if command requires admin privileges
         if (command.adminOnly && !isAdmin && !isDev) {
             return king.sendMessage(fromJid, {
                 text: '❌ You need to be a group admin to use this command.'
             }, { quoted: msg });
         }
 
-        // Execute the command
         try {
             await command.execute(king, msg, args, {
                 isGroup,
