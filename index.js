@@ -211,7 +211,15 @@ async function startBot() {
         const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
         const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 
-        if ((conf.MODE || '').toLowerCase() === 'private' && !isAllowed) {
+        // 👇 Debug logs for MODE issue
+        console.log('Mode:', conf.MODE);
+        console.log('Sender:', senderNumber);
+        console.log('Is Dev:', isDev);
+        console.log('Is Self:', isSelf);
+        console.log('Is Allowed:', isAllowed);
+
+        const botMode = (conf.MODE || 'public').toLowerCase();
+        if (botMode === 'private' && !isAllowed) {
             return king.sendMessage(fromJid, {
                 text: '🔒 Bot is in PRIVATE MODE. Only the owner/devs can use commands.',
             }, { quoted: msg });
