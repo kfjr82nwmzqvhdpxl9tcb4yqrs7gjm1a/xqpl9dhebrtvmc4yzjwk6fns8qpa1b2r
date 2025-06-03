@@ -19,6 +19,7 @@ module.exports = {
     NUMBER: process.env.YOUR_NUMBER || '254742063632',
 
     MODE: process.env.MODE || 'private',
+    ON: process.env.YOUR_NAME || 'FLASH-MD',
     ANTICALL: process.env.ANTICALL || 'on',
 ADM: process.env.ANTIDELETE || 'on',
 
@@ -33,5 +34,5 @@ HEROKU_APP_NAME: process.env.HEROKU_APP_NAME,
     PRESENCE_DM: mapPresence(process.env.PRESENCE_DM || 'typing'),
     PRESENCE_GROUP: mapPresence(process.env.PRESENCE_GROUP || 'recording'),
 
-    mapPresence // exporting in case you want to reuse
+    mapPresence 
 };
