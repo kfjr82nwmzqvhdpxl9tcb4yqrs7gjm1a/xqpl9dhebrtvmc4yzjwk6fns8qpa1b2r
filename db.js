@@ -1,0 +1,37 @@
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: 'postgresql://flashv2_user:LjpfY0Dt5UNUrwFEOIjOPBjLgClTqHln@dpg-d0eta695pdvs73b2omag-a.oregon-postgres.render.com/flashv2',
+  ssl: { rejectUnauthorized: false }
+});
+
+module.exports = {
+  getGroupSettings: async (groupId) => {
+    const res = await pool.query(
+      'SELECT * FROM group_settings WHERE group_id = $1', [groupId]
+    );
+    return res.rows[0];
+  },
+  setGroupSettings: async (groupId, enabled, action) => {
+    await pool.query(`
+      INSERT INTO group_settings (group_id, antilink_enabled, action)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (group_id) DO UPDATE
+      SET antilink_enabled = $2, action = $3
+    `, [groupId, enabled, action]);
+  },
+  incrementWarning: async (groupId, userId) => {
+    await pool.query(`
+      INSERT INTO user_warnings (group_id, user_id, warnings)
+      VALUES ($1, $2, 1)
+      ON CONFLICT (group_id, user_id)
+      DO UPDATE SET warnings = user_warnings.warnings + 1
+    `, [groupId, userId]);
+  },
+  getWarnings: async (groupId, userId) => {
+    const res = await pool.query(
+      'SELECT warnings FROM user_warnings WHERE group_id = $1 AND user_id = $2',
+      [groupId, userId]
+    );
+    return res.rows[0]?.warnings || 0;
+  }
+};
