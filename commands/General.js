@@ -211,4 +211,4 @@ module.exports = [
       }
     }
   }
-]:
+];
