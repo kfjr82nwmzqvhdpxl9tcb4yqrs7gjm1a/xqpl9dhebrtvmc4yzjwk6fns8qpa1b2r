@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
 app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
@@ -17,7 +18,6 @@ const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
-
 const db = require('./db');  // DB import
 
 const logger = pino({ level: 'fatal' });
@@ -81,7 +81,9 @@ async function startBot() {
             if (!superUsers.includes(callerId)) {
                 try {
                     await king.sendCallResult(callId, { type: 'reject' });
-                } catch {}
+                } catch (err) {
+                    console.error('Failed to reject call:', err);
+                }
             }
         }
     });
@@ -93,7 +95,9 @@ async function startBot() {
                 try {
                     king.ev.removeAllListeners();
                     king.ws.close();
-                } catch {}
+                } catch (err) {
+                    console.error('Error while closing WebSocket:', err);
+                }
                 startBot();
             }
         }
@@ -232,7 +236,7 @@ async function startBot() {
                     }
                 }
             } catch (e) {
-                console.error('Error in antilink handling:', e);
+                console.error('Error in anti-link handling:', e);
             }
         }
 
