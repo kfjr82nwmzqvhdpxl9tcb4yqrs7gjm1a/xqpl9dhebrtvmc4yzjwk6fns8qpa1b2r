@@ -188,10 +188,7 @@ async function startBot() {
         const cmdName = args.shift()?.toLowerCase();
 
         const botMode = (conf.MODE || 'public').toLowerCase();
-        if (botMode === 'private' && !isAllowed) {
-            console.log(`Blocked command from non-dev user: +${senderNumber} in private mode.`);
-            return;
-        }
+        if (botMode === 'private' && !isAllowed) return;
 
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
