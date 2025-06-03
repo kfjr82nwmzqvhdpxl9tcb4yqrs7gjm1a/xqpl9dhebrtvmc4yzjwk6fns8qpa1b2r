@@ -158,6 +158,7 @@ module.exports = [
     return king.sendMessage(jid, { text: 'Usage: `autobio on` to enable status fetching or `autobio off` to disable it.' }, { quoted: msg });
   }
 }
+  
 }, 
 
 
@@ -189,6 +190,7 @@ module.exports = [
     await king.sendMessage(jid, mess, { quoted: msg });
   }
 } 
+  
 },
 
 {
@@ -225,6 +227,7 @@ module.exports = [
     await king.sendMessage(jid, mess, { quoted: msg });
   }
 }
+  
 }, 
 {
   name: 'mygroups',
