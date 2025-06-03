@@ -1,4 +1,34 @@
+const conf = require('../config');
+const db = require('../db');
+
 module.exports = [
+    {
+  name: 'antilink',
+  description: 'Enable/disable antilink and set action (warn/kick/delete)',
+  category: 'Group',
+  adminOnly: true,
+  botAdminOnly: true,
+  groupOnly: true,
+
+  execute: async (king, msg, args) => {
+    const fromJid = msg.key.remoteJid;
+    const [option, action = 'warn'] = args;
+
+    if (!['on', 'off'].includes(option) || !['warn', 'kick', 'delete'].includes(action)) {
+      return king.sendMessage(fromJid, {
+        text: `❌ Usage: .antilink on|off warn|kick|delete\n⚙️ Current global warning limit: *${conf.WARN_LIMIT}*`
+      }, { quoted: msg });
+    }
+
+    const enabled = option === 'on';
+    await db.setGroupSettings(fromJid, enabled, action);
+
+    return king.sendMessage(fromJid, {
+      text: `✅ Antilink is now *${option.toUpperCase()}* with action: *${action.toUpperCase()}*\n⚠️ Global warning limit: *${conf.WARN_LIMIT}*`
+    }, { quoted: msg });
+  }
+   } 
+    }, 
     {
     name: 'tagall',
     aliases: ['mentionall'],
@@ -56,7 +86,7 @@ module.exports = [
       }
     }
   },
-{
+/*{
   name: 'antilink',
   description: 'Enable/disable antilink and set action (warn/kick/delete)',
   category: 'Group',
@@ -82,7 +112,7 @@ module.exports = [
       text: `✅ Antilink is now *${option.toUpperCase()}* with action: *${action.toUpperCase()}*`
     }, { quoted: msg });
   }
-}, 
+}, */
     
   {
     name: 'kick',
