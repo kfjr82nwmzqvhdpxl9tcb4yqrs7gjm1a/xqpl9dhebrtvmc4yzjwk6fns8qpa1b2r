@@ -19,6 +19,7 @@ module.exports = {
     NUMBER: process.env.YOUR_NUMBER || '254742063632',
 
     MODE: process.env.MODE || 'private',
+    WARN_LIMIT: process.env.WARNINGS || '3',
     ON: process.env.YOUR_NAME || 'FLASH-MD',
     ANTICALL: process.env.ANTICALL || 'on',
 ADM: process.env.ANTIDELETE || 'on',
