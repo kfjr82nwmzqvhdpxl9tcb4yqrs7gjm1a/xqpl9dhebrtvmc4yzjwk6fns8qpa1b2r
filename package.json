@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node index.js"
+  "start": "node db-init.js && node index.js"
   },
   "dependencies": {
     "@hapi/boom": "^9.1.4",
