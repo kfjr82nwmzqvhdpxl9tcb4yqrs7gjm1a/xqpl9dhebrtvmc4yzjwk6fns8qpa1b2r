@@ -1,4 +1,5 @@
-module.exports = {
+module.exports = [
+    {
     name: 'tagall',
     aliases: ['mentionall'],
     description: 'Mentions all members of the current group.',
