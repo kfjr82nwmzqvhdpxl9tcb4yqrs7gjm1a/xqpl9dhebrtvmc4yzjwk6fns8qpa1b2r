@@ -16,7 +16,7 @@ module.exports = {
         ? process.env.PREFIX.split(',').map(p => p.trim())
         : [''],
 
-    owners: ['254742063632', '254757835036'],
+    NUMBER: process.env.YOUR_NUMBER || '254742063632',
 
     MODE: process.env.MODE || 'private',
     ANTICALL: process.env.ANTICALL || 'on',
