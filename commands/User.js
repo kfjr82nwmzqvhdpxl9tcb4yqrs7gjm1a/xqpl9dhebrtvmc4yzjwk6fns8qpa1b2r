@@ -24,6 +24,8 @@ function isOwner(msg) {
   ].includes(sender);
 }
 
+ let isStatusFetching = false;
+let fetchInterval; 
 module.exports = [
   {
     name: 'block',
@@ -91,8 +93,6 @@ module.exports = [
   }
 }, 
 
- let isStatusFetching = false;
-let fetchInterval;
 
 {
   name: 'autobio',
