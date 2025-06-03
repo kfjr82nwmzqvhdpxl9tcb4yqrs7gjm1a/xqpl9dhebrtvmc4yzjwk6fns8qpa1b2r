@@ -27,8 +27,11 @@ module.exports = [
       text: `✅ Antilink is now *${option.toUpperCase()}* with action: *${action.toUpperCase()}*\n⚠️ Global warning limit: *${conf.WARN_LIMIT}*`
     }, { quoted: msg });
   }
+        
    } 
+    
     }, 
+    
     {
     name: 'tagall',
     aliases: ['mentionall'],
