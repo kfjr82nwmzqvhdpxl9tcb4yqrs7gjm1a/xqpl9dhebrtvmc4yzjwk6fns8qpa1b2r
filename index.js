@@ -183,12 +183,16 @@ async function startBot() {
         const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
         if (!usedPrefix) return;
 
-        const botMode = (conf.MODE || 'public').toLowerCase();
-        if (botMode === 'private' && !isAllowed) return;
-
         const cmdText = text.slice(usedPrefix.length).trim();
         const args = cmdText.split(/\s+/);
         const cmdName = args.shift()?.toLowerCase();
+
+        const botMode = (conf.MODE || 'public').toLowerCase();
+        if (botMode === 'private' && !isAllowed) {
+            console.log(`Blocked command from non-dev user: +${senderNumber} in private mode.`);
+            return;
+        }
+
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
