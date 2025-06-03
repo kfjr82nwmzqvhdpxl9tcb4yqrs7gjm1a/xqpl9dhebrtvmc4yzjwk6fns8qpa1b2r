@@ -186,7 +186,74 @@ async function startBot() {
         if (!text) return;
 
         // ----- ANTI-LINK HANDLING -----
-        if (isGroupJid(fromJid)) {
+     if (isGroupJid(fromJid)) {
+    try {
+        const settings = await db.getGroupSettings(fromJid);
+        if (settings?.antilink_enabled) {
+            const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
+            if (linkRegex.test(text)) {
+                const action = settings.action || 'warn';
+
+                if (senderNumber === normalizeJid(king.user.id)) {
+                    // Ignore bot's own messages
+                } else {
+                    switch (action) {
+                        case 'warn': {
+                            await db.incrementWarning(fromJid, senderJid);
+                            const warnings = await db.getWarnings(fromJid, senderJid);
+                            const warnLimit = conf.WARN_LIMIT || 3;
+
+                            if (warnings >= warnLimit) {
+                                try {
+                                    await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
+                                    await king.sendMessage(fromJid, {
+                                        text: `🚫 @${senderNumber} has been removed after ${warnings} warning(s).`,
+                                        mentions: [senderJid]
+                                    });
+                                } catch (e) {
+                                    console.error('Failed to kick user:', e);
+                                }
+                            } else {
+                                await king.sendMessage(fromJid, {
+                                    text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings}/${warnLimit}).`,
+                                    quoted: msg,
+                                    mentions: [senderJid]
+                                });
+                            }
+                            break;
+                        }
+
+                        case 'kick': {
+                            try {
+                                await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
+                                await king.sendMessage(fromJid, {
+                                    text: `🚫 @${senderNumber} has been removed for posting a link.`,
+                                    mentions: [senderJid]
+                                });
+                            } catch (e) {
+                                console.error('Failed to kick user:', e);
+                            }
+                            break;
+                        }
+
+                        case 'delete': {
+                            try {
+                                await king.sendMessage(fromJid, { delete: msg.key });
+                            } catch (e) {
+                                console.error('Failed to delete message:', e);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error in anti-link handling:', e);
+    }
+}
+        
+            /* if (isGroupJid(fromJid)) {
             try {
                 const settings = await db.getGroupSettings(fromJid);
                 if (settings?.antilink_enabled) {
@@ -238,7 +305,7 @@ async function startBot() {
             } catch (e) {
                 console.error('Error in anti-link handling:', e);
             }
-        }
+        }*/
 
         // ----- COMMAND HANDLING -----
         const prefixes = [...conf.prefixes];
