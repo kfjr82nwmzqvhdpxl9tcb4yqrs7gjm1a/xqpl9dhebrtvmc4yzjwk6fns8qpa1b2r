@@ -18,6 +18,8 @@ const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
 
+const db = require('./db');  // DB import
+
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
@@ -175,9 +177,66 @@ async function startBot() {
             }
         }
 
+        // Extract text from message
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
+        // ----- ANTI-LINK HANDLING -----
+        if (isGroupJid(fromJid)) {
+            try {
+                const settings = await db.getGroupSettings(fromJid);
+                if (settings?.antilink_enabled) {
+                    // Regex to detect links
+                    const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
+                    if (linkRegex.test(text)) {
+                        const action = settings.action || 'warn';
+
+                        if (senderNumber === normalizeJid(king.user.id)) {
+                            // Ignore messages from the bot itself
+                        } else {
+                            switch (action) {
+                                case 'warn': {
+                                    await db.incrementWarning(fromJid, senderJid);
+                                    const warnings = await db.getWarnings(fromJid, senderJid);
+                                    await king.sendMessage(fromJid, {
+                                        text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
+                                    }, {
+                                        quoted: msg,
+                                        mentions: [senderJid]
+                                    });
+                                    break;
+                                }
+                                case 'kick': {
+                                    try {
+                                        await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
+                                        await king.sendMessage(fromJid, {
+                                            text: `🚫 @${senderNumber} has been removed for posting a link.`
+                                        }, {
+                                            mentions: [senderJid]
+                                        });
+                                    } catch (e) {
+                                        console.error('Failed to kick user:', e);
+                                    }
+                                    break;
+                                }
+                                case 'delete': {
+                                    try {
+                                        await king.sendMessage(fromJid, { delete: msg.key });
+                                    } catch (e) {
+                                        console.error('Failed to delete message:', e);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error in antilink handling:', e);
+            }
+        }
+
+        // ----- COMMAND HANDLING -----
         const prefixes = [...conf.prefixes];
         const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
         if (!usedPrefix) return;
