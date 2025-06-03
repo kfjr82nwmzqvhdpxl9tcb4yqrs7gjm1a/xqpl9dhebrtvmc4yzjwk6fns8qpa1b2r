@@ -25,6 +25,7 @@
     "g-i-s": "^2.1.7",
     "yt-search": "^2.10.4",
     "node-cron": "^3.0.3",
+    "translatte": "^3.0.1",
     "pino-pretty": "^10.0.0",
     "api-dylux": "^1.1.9"
   }
