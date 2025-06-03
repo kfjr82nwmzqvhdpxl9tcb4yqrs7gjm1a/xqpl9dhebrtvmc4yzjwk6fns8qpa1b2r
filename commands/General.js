@@ -1,3 +1,7 @@
+const axios = require('axios');
+const conf = require('../config');
+const translate = require('../france/Trt');
+
 module.exports = [
   {
   name: 'trt',
