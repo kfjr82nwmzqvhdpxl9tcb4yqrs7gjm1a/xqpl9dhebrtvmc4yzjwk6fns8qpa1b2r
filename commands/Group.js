@@ -1,4 +1,37 @@
-module.exports = [
+module.exports = {
+    name: 'tagall',
+    aliases: ['mentionall'],
+    description: 'Mentions all members of the current group.',
+    category: 'Group',
+    groupOnly: true,
+
+    execute: async (king, msg, args, jid) => {
+        try {
+            const groupInfo = await king.groupMetadata(jid);
+            const participants = groupInfo.participants;
+
+            if (!participants.length) {
+                return await king.sendMessage(jid, { text: "⚠️ No participants found in this group." }, { quoted: msg });
+            }
+
+            const customText = args.length > 0 ? args.join(' ') : 'Hello everyone!';
+            let mentionText = `*📣 ${customText}*\n\n`;
+            participants.forEach((p, i) => {
+                mentionText += `${i + 1}. @${p.id.split('@')[0]}\n`;
+            });
+
+            await king.sendMessage(jid, {
+                text: mentionText,
+                mentions: participants.map(p => p.id)
+            }, { quoted: msg });
+
+        } catch (error) {
+            await king.sendMessage(jid, {
+                text: '❌ Something went wrong while tagging everyone.'
+            }, { quoted: msg });
+        }
+    }
+}, 
   {
     name: 'rename',
     aliases: ['gname'],
