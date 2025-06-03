@@ -135,7 +135,6 @@ async function startBot() {
         const senderNumber = normalizeJid(senderJid);
         const isDev = DEV_NUMBERS.has(senderNumber);
         const isSelf = senderNumber === normalizeJid(king.user.id);
-        const isAllowed = isDev || isSelf;
         const m = msg.message;
 
         const chatType = getChatCategory(fromJid);
@@ -186,12 +185,14 @@ async function startBot() {
         const cmdText = text.slice(usedPrefix.length).trim();
         const args = cmdText.split(/\s+/);
         const cmdName = args.shift()?.toLowerCase();
-
-        const botMode = (conf.MODE || 'public').toLowerCase();
-        if (botMode === 'private' && !isAllowed) return;
-
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
+
+        const botMode = (conf.MODE || 'public').toLowerCase();
+        if (botMode === 'private' && !isDev) {
+            console.log(`❌ Blocked command from non-dev: +${senderNumber}`);
+            return;
+        }
 
         await king.sendMessage(fromJid, {
             react: { key: msg.key, text: '🤍' }
