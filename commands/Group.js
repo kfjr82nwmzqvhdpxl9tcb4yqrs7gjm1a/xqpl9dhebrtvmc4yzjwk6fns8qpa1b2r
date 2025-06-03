@@ -33,6 +33,33 @@ module.exports = [
         }
     }
 }, 
+{
+  name: 'antilink',
+  description: 'Enable/disable antilink and set action (warn/kick/delete)',
+  category: 'Group',
+  adminOnly: true,
+  botAdminOnly: true,
+  groupOnly: true,
+
+  execute: async (king, msg, args) => {
+    const fromJid = msg.key.remoteJid;
+    const [option, action] = args;
+
+    if (!['on', 'off'].includes(option) || !['warn', 'kick', 'delete'].includes(action || 'warn')) {
+      return king.sendMessage(fromJid, {
+        text: 'Usage: .antilink on|off warn|kick|delete'
+      }, { quoted: msg });
+    }
+
+    const enabled = option === 'on';
+    await require('../db').setGroupSettings(fromJid, enabled, action);
+
+    return king.sendMessage(fromJid, {
+      text: `✅ Antilink is now *${option.toUpperCase()}* with action: *${action.toUpperCase()}*`
+    }, { quoted: msg });
+  }
+}, 
+    
   {
     name: 'rename',
     aliases: ['gname'],
