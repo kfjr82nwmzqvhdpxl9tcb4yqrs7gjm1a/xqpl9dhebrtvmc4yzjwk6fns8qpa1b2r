@@ -21,7 +21,9 @@ function isOwner(msg) {
     '254757835036@s.whatsapp.net'
   ].includes(sender);
 }
-
+function getSenderJid(msg) {
+  return msg.key.participant || msg.key.remoteJid;
+}
 let isStatusFetching = false;
 let fetchInterval;
 
