@@ -1,7 +1,6 @@
 const { Pool } = require('pg');
-
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: 'postgresql://flashv2_user:LjpfY0Dt5UNUrwFEOIjOPBjLgClTqHln@dpg-d0eta695pdvs73b2omag-a.oregon-postgres.render.com/flashv2',
   ssl: { rejectUnauthorized: false }
 });
 
@@ -12,7 +11,6 @@ module.exports = {
     );
     return res.rows[0];
   },
-
   setGroupSettings: async (groupId, enabled, action) => {
     await pool.query(`
       INSERT INTO group_settings (group_id, antilink_enabled, action)
@@ -21,7 +19,6 @@ module.exports = {
       SET antilink_enabled = $2, action = $3
     `, [groupId, enabled, action]);
   },
-
   incrementWarning: async (groupId, userId) => {
     await pool.query(`
       INSERT INTO user_warnings (group_id, user_id, warnings)
@@ -30,7 +27,6 @@ module.exports = {
       DO UPDATE SET warnings = user_warnings.warnings + 1
     `, [groupId, userId]);
   },
-
   getWarnings: async (groupId, userId) => {
     const res = await pool.query(
       'SELECT warnings FROM user_warnings WHERE group_id = $1 AND user_id = $2',
