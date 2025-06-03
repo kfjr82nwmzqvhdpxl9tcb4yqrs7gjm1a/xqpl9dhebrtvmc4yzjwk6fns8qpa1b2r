@@ -64,7 +64,8 @@ module.exports = [
     name: 'setbio',
     description: 'Set a custom bio/status message.',
     category: 'USER',
-
+    ownerOnly: true,
+    
     execute: async (king, msg, args) => {
       const jid = msg.key.remoteJid;
       const bioText = args.join(" ");
@@ -99,6 +100,7 @@ module.exports = [
     name: 'autobio',
     description: 'Toggle automatic status updates with random facts.',
     category: 'USER',
+    ownerOnly: true,
 
     execute: async (king, msg, args) => {
       const jid = msg.key.remoteJid;
@@ -228,6 +230,7 @@ module.exports = [
     aliases: ['groups'],
     description: 'Lists all groups the bot is in.',
     category: 'USER',
+    ownerOnly: true,
 
     execute: async (king, msg, args) => {
       const jid = msg.key.remoteJid;
@@ -264,13 +267,11 @@ module.exports = [
     aliases: ['delete'],
     description: 'Deletes a replied message.',
     category: 'USER',
+  ownerOnly: true,
 
     execute: async (king, msg, args) => {
       const jid = msg.key.remoteJid;
-      const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
-      if (!isDev) {
-        return king.sendMessage(jid, { text: "Only Owners can use this command." }, { quoted: msg });
-      }
+      
 
       const quotedMsg = msg.message?.extendedTextMessage?.contextInfo;
       if (!quotedMsg) {
