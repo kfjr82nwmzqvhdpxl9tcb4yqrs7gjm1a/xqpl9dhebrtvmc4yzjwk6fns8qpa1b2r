@@ -161,7 +161,6 @@ async function startBot() {
         console.log(`Message sender: ${pushName} (+${senderNumber})`);
         console.log(`Message: ${contentSummary}\n`);
 
-        
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
         }
@@ -177,14 +176,15 @@ async function startBot() {
             }
         }
 
-        
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
-        
         const prefixes = [...conf.prefixes];
         const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
         if (!usedPrefix) return;
+
+        const botMode = (conf.MODE || 'public').toLowerCase();
+        if (botMode === 'private' && !isAllowed) return;
 
         const cmdText = text.slice(usedPrefix.length).trim();
         const args = cmdText.split(/\s+/);
@@ -192,14 +192,6 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        const botMode = (conf.MODE || 'public').toLowerCase();
-
-        if (botMode === 'private' && !isAllowed) {
-            console.log(`Ignoring command from non-dev user (${senderNumber}) in private mode.`);
-            return;
-        }
-
-        
         await king.sendMessage(fromJid, {
             react: { key: msg.key, text: '🤍' }
         }).catch(() => {});
