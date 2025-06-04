@@ -18,7 +18,7 @@ const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
-const db = require('./db');  // DB import
+const db = require('./db');
 
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -69,6 +69,9 @@ async function startBot() {
         version
     });
 
+    global.KING_LID = null;
+    const lidToNumberMap = new Map();
+
     king.ev.on('call', async (call) => {
         if (conf.ANTICALL === "on") {
             const callId = call[0].id;
@@ -103,7 +106,8 @@ async function startBot() {
         }
 
         if (connection === 'open') {
-            global.KING_ID = king.user.id;
+            global.KING_LID = king.user.id;
+            lidToNumberMap.set(king.user.id, '254742063632');
             const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
             const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
             const totalCmds = commands.size;
@@ -138,7 +142,12 @@ async function startBot() {
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const senderJid = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-        const senderNumber = normalizeJid(senderJid);
+
+        let senderNumber = normalizeJid(senderJid);
+        if (senderJid.endsWith('@lid') && lidToNumberMap.has(senderJid)) {
+            senderNumber = lidToNumberMap.get(senderJid);
+        }
+
         const isDev = DEV_NUMBERS.has(senderNumber);
         const isSelf = senderNumber === normalizeJid(king.user.id);
         const m = msg.message;
@@ -181,22 +190,18 @@ async function startBot() {
             }
         }
 
-        // Extract text from message
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
 
-        // ----- ANTI-LINK HANDLING -----
         if (isGroupJid(fromJid)) {
             try {
                 const settings = await db.getGroupSettings(fromJid);
                 if (settings?.antilink_enabled) {
-                    // Regex to detect links
                     const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
                     if (linkRegex.test(text)) {
                         const action = settings.action || 'warn';
 
                         if (senderNumber === normalizeJid(king.user.id)) {
-                            // Ignore messages from the bot itself
                         } else {
                             switch (action) {
                                 case 'warn': {
@@ -240,7 +245,6 @@ async function startBot() {
             }
         }
 
-        // ----- COMMAND HANDLING -----
         const prefixes = [...conf.prefixes];
         const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
         if (!usedPrefix) return;
@@ -255,6 +259,7 @@ async function startBot() {
         if (botMode === 'private' && !isDev) {
             console.log(`❌ Blocked command from non-dev: +${senderNumber}`);
             return;
+
         }
 
         await king.sendMessage(fromJid, {
