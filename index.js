@@ -42,7 +42,12 @@ function isGroupJid(jid) {
 }
 
 function normalizeJid(jid) {
-    return jid.split('@')[0].split(':')[0];
+    return jid.replace(/@lid$/, '@s.whatsapp.net');
+}
+
+function getUserNumber(jid) {
+    const cleanJid = normalizeJid(jid);
+    return cleanJid.split('@')[0];
 }
 
 function getChatCategory(jid) {
@@ -141,15 +146,16 @@ async function startBot() {
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
-        const senderJid = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+        const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+        const senderJid = normalizeJid(senderJidRaw);
+        let senderNumber = getUserNumber(senderJid);
 
-        let senderNumber = normalizeJid(senderJid);
-        if (senderJid.endsWith('@lid') && lidToNumberMap.has(senderJid)) {
-            senderNumber = lidToNumberMap.get(senderJid);
+        if (senderJidRaw.endsWith('@lid') && lidToNumberMap.has(senderJidRaw)) {
+            senderNumber = lidToNumberMap.get(senderJidRaw);
         }
 
         const isDev = DEV_NUMBERS.has(senderNumber);
-        const isSelf = senderNumber === normalizeJid(king.user.id);
+        const isSelf = senderNumber === getUserNumber(king.user.id);
         const m = msg.message;
 
         const chatType = getChatCategory(fromJid);
@@ -201,7 +207,7 @@ async function startBot() {
                     if (linkRegex.test(text)) {
                         const action = settings.action || 'warn';
 
-                        if (senderNumber === normalizeJid(king.user.id)) {
+                        if (senderNumber === getUserNumber(king.user.id)) {
                         } else {
                             switch (action) {
                                 case 'warn': {
@@ -214,7 +220,7 @@ async function startBot() {
                                         mentions: [senderJid]
                                     });
                                     break;
-                                }
+                                    }
                                 case 'kick': {
                                     try {
                                         await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
@@ -259,7 +265,6 @@ async function startBot() {
         if (botMode === 'private' && !isDev) {
             console.log(`❌ Blocked command from non-dev: +${senderNumber}`);
             return;
-
         }
 
         await king.sendMessage(fromJid, {
