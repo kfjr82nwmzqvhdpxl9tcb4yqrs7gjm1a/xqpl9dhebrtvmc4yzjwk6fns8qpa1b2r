@@ -8,19 +8,63 @@
   },
   "env": {
     "SESSION": {
-      "description": "Flash md session string",
+      "description": "Flash MD session string (required for WhatsApp login)",
       "required": true
+    },
+    "PREFIX": {
+      "description": "Comma-separated list of command prefixes (e.g. !, /)",
+      "required": false
+    },
+    "YOUR_NUMBER": {
+      "description": "Your WhatsApp number in international format (e.g. 254742063632)",
+      "required": false
+    },
+    "MODE": {
+      "description": "Bot mode: 'private' or 'public'",
+      "required": false
+    },
+    "WARNINGS": {
+      "description": "Number of warnings before action is taken",
+      "required": false
+    },
+    "YOUR_NAME": {
+      "description": "Your name or bot owner name",
+      "required": false
+    },
+    "ANTICALL": {
+      "description": "Block incoming calls (on/off)",
+      "required": false
+    },
+    "ANTIDELETE": {
+      "description": "Enable anti-delete for messages (on/off)",
+      "required": false
     },
     "AUTO_READ_STATUS": {
       "description": "Enable auto view of status updates (on/off)",
       "required": false
     },
     "AUTO_LIKE": {
-      "description": "Enable auto-like on statuses (on/off)",
+      "description": "Enable auto-like on status updates (on/off)",
       "required": false
     },
     "AUTO_READ_DM": {
-      "description": "Enable auto-reading of direct messages (on/off)",
+      "description": "Enable auto-read of direct messages (on/off)",
+      "required": false
+    },
+    "HEROKU_API_KEY": {
+      "description": "Your Heroku API key (for automatic restart or deploy)",
+      "required": false
+    },
+    "HEROKU_APP_NAME": {
+      "description": "Your Heroku app name",
+      "required": false
+    },
+    "PRESENCE_DM": {
+      "description": "Bot presence status in DMs (typing, online, recording, paused, offline)",
+      "required": false
+    },
+    "PRESENCE_GROUP": {
+      "description": "Bot presence status in groups (typing, online, recording, paused, offline)",
       "required": false
     }
   },
