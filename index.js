@@ -143,6 +143,9 @@ async function startBot() {
         const msg = messages[0];
         if (!msg || !msg.message) return;
 
+        if (messageStore.has(msg.key.id)) return;
+        messageStore.set(msg.key.id, msg);
+
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
@@ -160,8 +163,6 @@ async function startBot() {
 
         const chatType = getChatCategory(fromJid);
         const pushName = msg.pushName || 'Unknown';
-
-        messageStore.set(msg.key.id, msg);
 
         let contentSummary = '';
         if (m?.conversation) contentSummary = m.conversation;
@@ -220,7 +221,7 @@ async function startBot() {
                                         mentions: [senderJid]
                                     });
                                     break;
-                                    }
+                                }
                                 case 'kick': {
                                     try {
                                         await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
@@ -285,3 +286,9 @@ async function startBot() {
 }
 
 startBot();
+
+setInterval(() => {
+    if (messageStore.size > 1000) {
+        messageStore.clear();
+    }
+}, 1000 * 60 * 5);
