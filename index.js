@@ -144,6 +144,68 @@ async function startBot() {
         if (!msg || !msg.message) return;
 
         if (messageStore.has(msg.key.id)) return;
+        
+        if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedMsg = messageStore.get(deletedMsgKey);
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            let senderName = senderNumber;
+            let chatName = '';
+            let chatType = 'Personal';
+            const timezone = king?.config?.timezone || 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    chatName = metadata.subject;
+                    chatType = 'Group';
+                } catch {
+                    chatName = 'Unknown Group';
+                } 
+            } else if (fromJid.endsWith('status@broadcast')) {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = msg.pushName; 
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Channel';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                senderName = msg.pushName || senderNumber;
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
+                    text:
+`*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await king.sendMessage(king.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
         messageStore.set(msg.key.id, msg);
 
         const fromJid = msg.key.remoteJid;
