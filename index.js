@@ -5,6 +5,37 @@ const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
 app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
+(async () => {
+  try {
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL || 'postgresql://flashv2_user:LjpfY0Dt5UNUrwFEOIjOPBjLgClTqHln@dpg-d0eta695pdvs73b2omag-a.oregon-postgres.render.com/flashv2',
+      ssl: { rejectUnauthorized: false }
+    });
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS group_settings (
+        group_id TEXT PRIMARY KEY,
+        antilink_enabled BOOLEAN DEFAULT FALSE,
+        action TEXT DEFAULT 'warn'
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_warnings (
+        group_id TEXT,
+        user_id TEXT,
+        warnings INTEGER DEFAULT 1,
+        PRIMARY KEY (group_id, user_id)
+      );
+    `);
+
+    console.log('✅ Tables initialized (optional)');
+  } catch (err) {
+    console.warn('⚠️ Skipping DB init: ', err.message);
+  }
+})();
+
 const {
     default: makeWASocket,
     DisconnectReason,
