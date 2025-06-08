@@ -1,1 +1,1 @@
-web: node db-init.js && node index.js
+web: node index.js
