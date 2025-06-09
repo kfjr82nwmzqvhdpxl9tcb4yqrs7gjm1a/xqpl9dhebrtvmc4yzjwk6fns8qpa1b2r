@@ -120,7 +120,9 @@ async function startBot() {
             if (!superUsers.includes(callerId)) {
                 try {
                     await king.sendCallResult(callId, { type: 'reject' });
-                } catch (err) {}
+                } catch (err) {
+                    console.error('Failed to reject call:', err);
+                }
             }
         }
     });
@@ -132,7 +134,9 @@ async function startBot() {
                 try {
                     king.ev.removeAllListeners();
                     king.ws.close();
-                } catch (err) {}
+                } catch (err) {
+                    console.error('Error while closing WebSocket:', err);
+                }
                 startBot();
             }
         }
@@ -169,8 +173,69 @@ async function startBot() {
     king.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg || !msg.message) return;
-        if (messageStore.has(msg.key.id)) return;
 
+        if (messageStore.has(msg.key.id)) return;
+        
+        if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            let senderName = senderNumber;
+            let chatName = '';
+            let chatType = 'Personal';
+            const timezone = king?.config?.timezone || 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    chatName = metadata.subject;
+                    chatType = 'Group';
+                } catch {
+                    chatName = 'Unknown Group';
+                } 
+            } else if (fromJid.endsWith('status@broadcast')) {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = msg.pushName; 
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Channel';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                senderName = msg.pushName || senderNumber;
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
+                    text:
+`*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await king.sendMessage(king.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
         messageStore.set(msg.key.id, msg);
 
         const fromJid = msg.key.remoteJid;
@@ -188,103 +253,48 @@ async function startBot() {
         const isSelf = senderNumber === getUserNumber(king.user.id);
         const m = msg.message;
 
-        const botMode = (conf.MODE || 'public').toLowerCase();
-        if (botMode === 'private' && !isDev) return;
+        const chatType = getChatCategory(fromJid);
+        const pushName = msg.pushName || 'Unknown';
 
-        if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
-            king.readMessages([msg.key]).catch(() => {});
-        }
+        let contentSummary = '';
+        if (m?.conversation) contentSummary = m.conversation;
+        else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
+        else if (m?.imageMessage) contentSummary = `📷 Image${m.imageMessage.caption ? ` | Caption: ${m.imageMessage.caption}` : ''}`;
+        else if (m?.videoMessage) contentSummary = `🎥 Video${m.videoMessage.caption ? ` | Caption: ${m.videoMessage.caption}` : ''}`;
+        else if (m?.audioMessage) contentSummary = `🎵 Audio`;
+        else if (m?.documentMessage) contentSummary = `📄 Document${m.documentMessage.fileName ? ` | ${m.documentMessage.fileName}` : ''}`;
+        else if (m?.locationMessage) contentSummary = `📍 Location`;
+        else if (m?.locationMessage) contentSummary = `📍 Location`;
+        else if (m?.contactMessage) contentSummary = `📇 Contact`;
 
-        if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-            king.readMessages([msg.key]).catch(() => {});
-            if (conf.AUTO_LIKE === "on" && msg.key.participant) {
-                await king.sendMessage(fromJid, {
-                    react: { key: msg.key, text: '🤍' }
-                }, {
-                    statusJidList: [msg.key.participant, king.user.id]
-                });
+        const isCommand = contentSummary.startsWith(conf.prefixes[0]);
+        const command = isCommand ? contentSummary.slice(conf.prefixes[0].length).trim() : '';
+        const args = command.split(' ');
+
+        if (isCommand) {
+            const cmdName = aliases.get(command) || command;
+            const cmd = commands.get(cmdName);
+            if (cmd) {
+                try {
+                    await cmd.execute(king, msg, args);
+                } catch (err) {
+                    console.error(`Error executing command "${cmdName}":`, err);
+                }
             }
         }
 
-        const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
-        if (!text) return;
+        if (conf.LOGGING === 'on') {
+            const logMessage = `
+New message received:
 
-        if (isGroupJid(fromJid)) {
-            try {
-                const settings = await db.getGroupSettings(fromJid);
-                if (settings?.antilink_enabled) {
-                    const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
-                    if (linkRegex.test(text)) {
-                        const action = settings.action || 'warn';
-
-                        if (senderNumber === getUserNumber(king.user.id)) {
-                        } else {
-                            switch (action) {
-                                case 'warn': {
-                                    await db.incrementWarning(fromJid, senderJid);
-                                    const warnings = await db.getWarnings(fromJid, senderJid);
-                                    await king.sendMessage(fromJid, {
-                                        text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
-                                    }, {
-                                        quoted: msg,
-                                        mentions: [senderJid]
-                                    });
-                                    break;
-                                }
-                                case 'kick': {
-                                    try {
-                                        await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
-                                        await king.sendMessage(fromJid, {
-                                            text: `🚫 @${senderNumber} has been removed for posting a link.`
-                                        }, {
-                                            mentions: [senderJid]
-                                        });
-                                    } catch (e) {}
-                                    break;
-                                }
-                                case 'delete': {
-                                    try {
-                                        await king.sendMessage(fromJid, { delete: msg.key });
-                                    } catch (e) {}
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e) {}
-        }
-
-        const prefixes = [...conf.prefixes];
-        const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
-        if (!usedPrefix) return;
-
-        const cmdText = text.slice(usedPrefix.length).trim();
-        const args = cmdText.split(/\s+/);
-        const cmdName = args.shift()?.toLowerCase();
-        const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-        if (!command) return;
-
-        await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-        }).catch(() => {});
-
-        try {
-            await command.execute(king, msg, args, fromJid, allCommands);
-        } catch (err) {
-            king.sendMessage(fromJid, {
-                text: '⚠️ Something went wrong while executing the command.'
-            }).catch(() => {});
+Sender: ${pushName} (${senderNumber})
+Chat: ${chatName}
+Type: ${chatType}
+Content: ${contentSummary}
+            `;
+            console.log(logMessage);
         }
     });
-
-    king.ev.on('creds.update', saveState);
 }
 
 startBot();
-
-setInterval(() => {
-    if (messageStore.size > 1000) {
-        messageStore.clear();
-    }
-}, 1000 * 60 * 5);
