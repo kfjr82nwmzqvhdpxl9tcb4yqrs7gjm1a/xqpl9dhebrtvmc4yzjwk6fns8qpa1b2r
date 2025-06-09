@@ -356,7 +356,7 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        if (conf.MODE && !isDev||!IsMe) {
+if (conf.MODE && !(isDev || IsMe)) {
             await king.sendMessage(fromJid, {
                 text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
             }, { quoted: msg });
