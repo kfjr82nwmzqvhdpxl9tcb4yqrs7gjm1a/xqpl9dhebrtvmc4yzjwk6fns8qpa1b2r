@@ -283,11 +283,11 @@ The following message was deleted:`,
  if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
     try {
         await king.readMessages([msg.key]);
-      /*  console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
+      console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
     } catch (err) {
         console.error('❌ Failed to view status:', err);
     }
-*/} 
+
     if (conf.AUTO_LIKE === "on") {
         const participant = msg.key.participant || msg.participant || king.user.id;
         try {
