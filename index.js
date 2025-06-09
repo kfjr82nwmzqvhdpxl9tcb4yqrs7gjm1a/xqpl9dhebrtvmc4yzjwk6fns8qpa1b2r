@@ -295,8 +295,21 @@ async function startBot() {
             return;
         }
 
+        let quotedMsg = null;
+        if (msg.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+            quotedMsg = {
+                key: {
+                    remoteJid: msg.key.remoteJid,
+                    fromMe: msg.message.extendedTextMessage.contextInfo.participant === king.user.id,
+                    id: msg.message.extendedTextMessage.contextInfo.stanzaId,
+                    participant: msg.message.extendedTextMessage.contextInfo.participant || undefined,
+                },
+                message: msg.message.extendedTextMessage.contextInfo.quotedMessage
+            };
+        }
+
         try {
-          await command.execute({ king, msg, quoted: msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix }); // await command.execute({ king, msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
+          await command.execute({ king, msg, quoted: quotedMsg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
         } catch (error) {
             console.error(`Error executing command ${cmdName}:`, error);
             await king.sendMessage(fromJid, {
