@@ -120,9 +120,7 @@ async function startBot() {
       if (!superUsers.includes(callerId)) {
         try {
           await king.sendCallResult(callId, { type: 'reject' });
-        } catch (err) {
-          console.error('Failed to reject call:', err);
-        }
+        } catch (err) {}
       }
     }
   });
@@ -134,9 +132,7 @@ async function startBot() {
         try {
           king.ev.removeAllListeners();
           king.ws.close();
-        } catch (err) {
-          console.error('Error while closing WebSocket:', err);
-        }
+        } catch (err) {}
         startBot();
       }
     }
@@ -224,58 +220,52 @@ async function startBot() {
       }
     }
 
-    const text = m?.conversation || m?.extendedTextMessage?..text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
+    const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
     if (isGroupJid(fromJid)) {
-        try {
-            const settings = await db.getGroupSettings(fromJid);
-            if (settings?.antilink_enabled) {
-                const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
-                if (linkRegex.test(text)) {
-                    const action = settings.action || 'warn';
-                    if (senderNumber === getUserNumber(king.user.id)) return;
+      try {
+        const settings = await db.getGroupSettings(fromJid);
+        if (settings?.antilink_enabled) {
+          const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
+          if (linkRegex.test(text)) {
+            const action = settings.action || 'warn';
+            if (senderNumber === getUserNumber(king.user.id)) return;
 
-                    switch (action) {
-                        case 'warn': {
-                            await db.incrementWarning(fromJid, senderJid);
-                            const warnings = await db.getWarnings(fromJid, senderJid);
-                            await king.sendMessage(fromJid, {
-                                text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
-                            }, {
-                                quoted: msg,
-                                mentions: [senderJid]
-                            });
-                            break;
-                        }
-                        case 'kick': {
-                            try {
-                                await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
-                                await king.sendMessage(fromJid, {
-                                    text: `🚫 @${senderNumber} has been removed for posting a link.`
-                                }, {
-                                    mentions: [senderJid]
-                                });
-                            } catch (e) {
-                                console.error('Failed to kick user:', e);
-                            }
-                            break;
-                        }
-                        case 'delete': {
-                            try {
-                                await king.sendMessage(fromJid, { delete: msg.key });
-                            } catch (e) {
-                                console.error('Failed to delete message:', e);
-                            }
-                            break;
-                        }
-                    }
-                    return;
-                }
+            switch (action) {
+              case 'warn': {
+                await db.incrementWarning(fromJid, senderJid);
+                const warnings = await db.getWarnings(fromJid, senderJid);
+                await king.sendMessage(fromJid, {
+                  text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
+                }, {
+                  quoted: msg,
+                  mentions: [senderJid]
+                });
+                break;
+              }
+              case 'kick': {
+                try {
+                  await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
+                  await king.sendMessage(fromJid, {
+                    text: `🚫 @${senderNumber} has been removed for posting a link.`
+                  }, {
+                    mentions: [senderJid]
+                  });
+                } catch (e) {}
+                break;
+              }
+              case 'delete': {
+                try {
+                  await king.sendMessage(fromJid, { delete: msg.key });
+                } catch (e) {}
+                break;
+              }
             }
-        } catch (e) {
-            console.error('Error checking antilink:', e);
+            return;
+          }
         }
+      } catch (e) {}
     }
 
     const prefix = conf.prefixes.find(p => text.startsWith(p)) || '';
@@ -288,29 +278,28 @@ async function startBot() {
     if (!command) return;
 
     if (conf.MODE && !(isDev || IsMe)) {
-        await king.sendMessage(fromJid, {
-            text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
-        }, { quoted: msg });
-        return;
+      await king.sendMessage(fromJid, {
+        text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
+      }, { quoted: msg });
+      return;
     }
 
     try {
-        await command.execute({
-            king,
-            msg,
-            args,
-            fromJid,
-            senderJid,
-            senderNumber,
-            isGroup: isGroupJid(fromJid),
-            isDev,
-            prefix
-        });
+      await command.execute({
+        king,
+        msg,
+        args,
+        fromJid,
+        senderJid,
+        senderNumber,
+        isGroup: isGroupJid(fromJid),
+        isDev,
+        prefix
+      });
     } catch (error) {
-        console.error(`Error executing command ${cmdName}:`, error);
-        await king.sendMessage(fromJid, {
-            text: `❌ Error executing command: ${error.message}`
-        }, { quoted: msg });
+      await king.sendMessage(fromJid, {
+        text: `❌ Error executing command: ${error.message}`
+      }, { quoted: msg });
     }
   });
 
