@@ -61,7 +61,7 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
+const DEV_NUMBERS = new Set(['254742063632@s.whatsapp.net', '254757835036@s.whatsapp.net']);
 
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
@@ -240,6 +240,7 @@ The following message was deleted:`,
         messageStore.set(msg.key.id, msg);
 
         const fromJid = msg.key.remoteJid;
+         IsMe = king.user.id;
         const isFromMe = msg.key.fromMe;
         const isDM = fromJid.endsWith('@s.whatsapp.net');
         const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
@@ -355,7 +356,7 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        if (conf.MODE && !isDev) {
+        if (conf.MODE && !isDev||!IsMe) {
             await king.sendMessage(fromJid, {
                 text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
             }, { quoted: msg });
