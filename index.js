@@ -279,24 +279,15 @@ The following message was deleted:`,
             king.readMessages([msg.key]).catch(() => {});
         }
 
-        /* if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-            king.readMessages([msg.key]).catch(() => {});
-            if (conf.AUTO_LIKE === "on" && msg.key.participant) {
-                await king.sendMessage(fromJid, {
-                    react: { key: msg.key, text: '🤍' }
-                }, {
-                    statusJidList: [msg.key.participant, king.user.id]
-                });
-            }
-        }
-*/ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+       
+ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
     try {
         await king.readMessages([msg.key]);
-        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
+      /*  console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
     } catch (err) {
         console.error('❌ Failed to view status:', err);
     }
-
+*/} 
     if (conf.AUTO_LIKE === "on") {
         const participant = msg.key.participant || msg.participant || king.user.id;
         try {
