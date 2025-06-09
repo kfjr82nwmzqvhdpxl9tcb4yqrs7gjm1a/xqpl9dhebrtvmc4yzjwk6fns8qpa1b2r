@@ -355,7 +355,7 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        if (conf.PRIVATE_MODE && !isDev) {
+        if (conf.MODE && !isDev) {
             await king.sendMessage(fromJid, {
                 text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
             }, { quoted: msg });
@@ -363,7 +363,7 @@ The following message was deleted:`,
         }
 
         try {
-            await command.run({ king, msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
+            await command.execute({ king, msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
         } catch (error) {
             console.error(`Error executing command ${cmdName}:`, error);
             await king.sendMessage(fromJid, {
