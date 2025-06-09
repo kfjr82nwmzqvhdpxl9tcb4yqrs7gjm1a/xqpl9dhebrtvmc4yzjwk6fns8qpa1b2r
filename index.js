@@ -309,7 +309,8 @@ The following message was deleted:`,
         } catch (err) {
             console.error('❌ Failed to like status:', err);
         }
-    
+    } 
+        } 
 
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
