@@ -355,13 +355,13 @@ The following message was deleted:`,
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        if (conf.MODE && !isDev) {
+      /*  if (conf.MODE && !isDev) {
             await king.sendMessage(fromJid, {
                 text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
             }, { quoted: msg });
             return;
         }
-
+*/
         try {
             await command.execute({ king, msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
         } catch (error) {
