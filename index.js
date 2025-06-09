@@ -288,7 +288,7 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        if (conf.MODE === 'private' && !isDev) {
+        if (conf.MODE === 'private' && remoteJid = !isDev) {
             await king.sendMessage(fromJid, {
                 text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
             }, { quoted: msg });
