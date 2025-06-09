@@ -338,43 +338,50 @@ The following message was deleted:`,
                                 }
                             }
                         }
-                        return;
                     }
                 }
             } catch (e) {
-                console.error('Error checking antilink:', e);
+                console.error('Error in anti-link handling:', e);
             }
         }
 
-        const prefix = conf.prefixes.find(p => text.startsWith(p)) || '';
-        if (!prefix) return;
+        const prefixes = [...conf.prefixes];
+        const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
+        if (!usedPrefix) return;
 
-        const args = text.slice(prefix.length).trim().split(/ +/);
-        const cmdName = args.shift().toLowerCase();
-
+        const cmdText = text.slice(usedPrefix.length).trim();
+        const args = cmdText.split(/\s+/);
+        const cmdName = args.shift()?.toLowerCase();
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-      /*  if (conf.MODE && !isDev) {
-            await king.sendMessage(fromJid, {
-                text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
-            }, { quoted: msg });
+        const botMode = (conf.MODE || 'public').toLowerCase();
+        if (botMode === 'private' && !isDev) {
+            console.log(`❌ Blocked command from non-dev: +${senderNumber}`);
             return;
         }
-*/
+
+        await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+        }).catch(() => {});
+
         try {
-            await command.execute({ king, msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
-        } catch (error) {
-            console.error(`Error executing command ${cmdName}:`, error);
-            await king.sendMessage(fromJid, {
-                text: `❌ Error executing command: ${error.message}`
-            }, { quoted: msg });
+            await command.execute(king, msg, args, fromJid, allCommands);
+        } catch (err) {
+            console.error('Command error:', err);
+            king.sendMessage(fromJid, {
+                text: '⚠️ Something went wrong while executing the command.'
+            }).catch(() => {});
         }
     });
 
     king.ev.on('creds.update', saveState);
-
-    return king;
 }
 
-startBot().catch(console.error);
+startBot();
+
+setInterval(() => {
+    if (messageStore.size > 1000) {
+        messageStore.clear();
+    }
+}, 1000 * 60 * 5);
