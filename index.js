@@ -250,10 +250,8 @@ The following message was deleted:`,
             senderNumber = lidToNumberMap.get(senderJidRaw);
         }
 
-        senderNumber = senderNumber.replace(/[^0-9]/g, '');
-
         const isDev = DEV_NUMBERS.has(senderNumber);
-        const isSelf = senderNumber === getUserNumber(king.user.id).replace(/[^0-9]/g, '');
+        const isSelf = senderNumber === getUserNumber(king.user.id);
         const m = msg.message;
 
         const chatType = getChatCategory(fromJid);
@@ -271,6 +269,11 @@ The following message was deleted:`,
         else if (m?.pollCreationMessage) contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
         else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
         else contentSummary = '[📦 Unknown or Unsupported Message Type]';
+
+        console.log(`\n=== ${chatType.toUpperCase()} ===`);
+        console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
+        console.log(`Message sender: ${pushName} (+${senderNumber})`);
+        console.log(`Message: ${contentSummary}\n`);
 
         if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
             king.readMessages([msg.key]).catch(() => {});
@@ -298,7 +301,7 @@ The following message was deleted:`,
                     if (linkRegex.test(text)) {
                         const action = settings.action || 'warn';
 
-                        if (senderNumber === getUserNumber(king.user.id).replace(/[^0-9]/g, '')) {
+                        if (senderNumber === getUserNumber(king.user.id)) {
                         } else {
                             switch (action) {
                                 case 'warn': {
@@ -335,49 +338,43 @@ The following message was deleted:`,
                                 }
                             }
                         }
+                        return;
                     }
                 }
             } catch (e) {
-                console.error('Error in anti-link handling:', e);
+                console.error('Error checking antilink:', e);
             }
         }
 
-        const prefixes = [...conf.prefixes];
-        const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
-        if (!usedPrefix) return;
+        const prefix = conf.prefixes.find(p => text.startsWith(p)) || '';
+        if (!prefix) return;
 
-        const cmdText = text.slice(usedPrefix.length).trim();
-        const args = cmdText.split(/\s+/);
-        const cmdName = args.shift()?.toLowerCase();
+        const args = text.slice(prefix.length).trim().split(/ +/);
+        const cmdName = args.shift().toLowerCase();
+
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        const botMode = (conf.MODE || 'public').toLowerCase();
-
-        if (botMode === 'private' && !isDev) {
+        if (conf.PRIVATE_MODE && !isDev) {
+            await king.sendMessage(fromJid, {
+                text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
+            }, { quoted: msg });
             return;
         }
 
-        await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-        }).catch(() => {});
-
         try {
-            await command.execute(king, msg, args, fromJid, allCommands);
-        } catch (err) {
-            king.sendMessage(fromJid, {
-                text: '⚠️ Something went wrong while executing the command.'
-            }).catch(() => {});
+            await command.run({ king, msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
+        } catch (error) {
+            console.error(`Error executing command ${cmdName}:`, error);
+            await king.sendMessage(fromJid, {
+                text: `❌ Error executing command: ${error.message}`
+            }, { quoted: msg });
         }
     });
 
     king.ev.on('creds.update', saveState);
+
+    return king;
 }
 
-startBot();
-
-setInterval(() => {
-    if (messageStore.size > 1000) {
-        messageStore.clear();
-    }
-}, 1000 * 60 * 5);
+startBot().catch(console.error);
