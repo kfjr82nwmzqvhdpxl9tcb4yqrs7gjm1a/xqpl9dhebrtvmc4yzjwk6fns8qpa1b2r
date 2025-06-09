@@ -67,7 +67,6 @@ allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
   if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
-
 function isGroupJid(jid) {
   return jid.endsWith('@g.us') || jid.endsWith('@lid');
 }
