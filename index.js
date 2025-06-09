@@ -279,7 +279,7 @@ The following message was deleted:`,
             king.readMessages([msg.key]).catch(() => {});
         }
 
-        if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+        /* if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
             king.readMessages([msg.key]).catch(() => {});
             if (conf.AUTO_LIKE === "on" && msg.key.participant) {
                 await king.sendMessage(fromJid, {
@@ -289,6 +289,27 @@ The following message was deleted:`,
                 });
             }
         }
+*/ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+    try {
+        await king.readMessages([msg.key]);
+        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
+    } catch (err) {
+        console.error('❌ Failed to view status:', err);
+    }
+
+    if (conf.AUTO_LIKE === "on") {
+        const participant = msg.key.participant || msg.participant || king.user.id;
+        try {
+            await king.sendMessage(fromJid, {
+                react: { key: msg.key, text: '🤍' }
+            }, {
+                statusJidList: [participant, king.user.id]
+            });
+            console.log('✅ Liked status');
+        } catch (err) {
+            console.error('❌ Failed to like status:', err);
+        }
+    }
 
         const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
         if (!text) return;
