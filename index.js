@@ -61,7 +61,7 @@ const PRESENCE = {
     GROUP: conf.PRESENCE_GROUP || 'available'
 };
 
-const DEV_NUMBERS = new Set(['254742063632', '254757835036'].map(n => n.replace(/\D/g, '')));
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 
 allCommands.forEach(cmd => {
     commands.set(cmd.name, cmd);
@@ -78,7 +78,7 @@ function normalizeJid(jid) {
 
 function getUserNumber(jid) {
     const cleanJid = normalizeJid(jid);
-    return cleanJid.split('@')[0].replace(/\D/g, '');
+    return cleanJid.split('@')[0];
 }
 
 function getChatCategory(jid) {
@@ -175,6 +175,69 @@ async function startBot() {
         if (!msg || !msg.message) return;
 
         if (messageStore.has(msg.key.id)) return;
+        
+        if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
+            const deletedMsgKey = msg.message.protocolMessage.key.id;
+            const deletedMsg = messageStore.get(deletedMsgKey);
+            const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
+            const fromJid = msg.key.remoteJid;
+
+            const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+            let senderName = senderNumber;
+            let chatName = '';
+            let chatType = 'Personal';
+            const timezone = king?.config?.timezone || 'Africa/Nairobi';
+            const date = moment().tz(timezone).format('DD/MM/YYYY');
+            const time = moment().tz(timezone).format('hh:mm:ss A');
+            let mentions = [deletedSenderJid];
+
+            if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
+                try {
+                    const metadata = await king.groupMetadata(fromJid);
+                    const participant = metadata.participants.find(p => p.id === deletedSenderJid);
+                    senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
+                    chatName = metadata.subject;
+                    chatType = 'Group';
+                } catch {
+                    chatName = 'Unknown Group';
+                } 
+            } else if (fromJid.endsWith('status@broadcast')) {
+                chatName = 'Status Update';
+                chatType = 'Status';
+                senderName = msg.pushName; 
+                mentions = [];
+            } else if (fromJid.endsWith('@newsletter')) {
+                chatName = 'Channel Post';
+                chatType = 'Channel';
+                senderName = 'System';
+                mentions = [];
+            } else {
+                senderName = msg.pushName || senderNumber;
+                chatName = senderName;
+            }
+
+            if (deletedMsg && deletedSenderJid !== king.user.id) {
+                await king.sendMessage(king.user.id, {
+                    text:
+`*⚡ FLASH-MD ANTI_DELETE ⚡*
+
+*Chat:* ${chatName}
+*Type:* ${chatType}
+*Deleted By:* ${senderName}
+*Number:* +${senderNumber}
+*Date:* ${date}
+*Time:* ${time}
+
+The following message was deleted:`,
+                    mentions
+                });
+
+                await king.sendMessage(king.user.id, {
+                    forward: deletedMsg
+                });
+            }
+        }
+        messageStore.set(msg.key.id, msg);
 
         const fromJid = msg.key.remoteJid;
         const isFromMe = msg.key.fromMe;
@@ -182,6 +245,10 @@ async function startBot() {
         const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
         const senderJid = normalizeJid(senderJidRaw);
         let senderNumber = getUserNumber(senderJid);
+
+        if (senderJidRaw.endsWith('@lid') && lidToNumberMap.has(senderJidRaw)) {
+            senderNumber = lidToNumberMap.get(senderJidRaw);
+        }
 
         const isDev = DEV_NUMBERS.has(senderNumber);
         const isSelf = senderNumber === getUserNumber(king.user.id);
@@ -288,28 +355,15 @@ async function startBot() {
         const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
         if (!command) return;
 
-        if (conf.MODE === 'private' && remoteJid === !isDev) {
+        if (conf.MODE && !isDev) {
             await king.sendMessage(fromJid, {
                 text: '⚠️ Bot is currently in Private Mode. Only Developers can use commands.'
             }, { quoted: msg });
             return;
         }
 
-        let quotedMsg = null;
-        if (msg.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
-            quotedMsg = {
-                key: {
-                    remoteJid: msg.key.remoteJid,
-                    fromMe: msg.message.extendedTextMessage.contextInfo.participant === king.user.id,
-                    id: msg.message.extendedTextMessage.contextInfo.stanzaId,
-                    participant: msg.message.extendedTextMessage.contextInfo.participant || undefined,
-                },
-                message: msg.message.extendedTextMessage.contextInfo.quotedMessage
-            };
-        }
-
         try {
-          await command.execute({ king, msg, quoted: quotedMsg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
+            await command.execute({ king, msg, args, fromJid, senderJid, senderNumber, isGroup: isGroupJid(fromJid), isDev, prefix });
         } catch (error) {
             console.error(`Error executing command ${cmdName}:`, error);
             await king.sendMessage(fromJid, {
