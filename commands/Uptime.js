@@ -46,6 +46,9 @@ module.exports = [
     },
     {
         name: 'uptime',
+        get flashOnly() {
+  return franceking();
+},
         aliases: ['runtime'],
         description: 'Displays the system uptime!',
         execute: async (sock, msg) => {
