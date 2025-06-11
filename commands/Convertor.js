@@ -1,3 +1,4 @@
+const { franceking } = require('../main');
 const axios = require('axios');
 const fs = require('fs-extra');
 const ffmpegPath = require('ffmpeg-static'); 
