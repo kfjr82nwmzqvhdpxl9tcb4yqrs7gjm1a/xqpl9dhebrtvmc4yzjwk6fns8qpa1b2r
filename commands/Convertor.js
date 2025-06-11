@@ -106,6 +106,48 @@ module.exports = [
     }
   }
 },
+{
+    name: 'enhance',
+    aliases: [],
+    description: 'Enhance an image from a given URL using AI enhancement.',
+    category: 'Media',
+    execute: async (sock, msg, args) => {
+        const chatId = msg.key.remoteJid;
+
+        if (!args || args.length === 0) {
+            return await sock.sendMessage(chatId, {
+                text: '❗ Please provide the URL of the image you want to enhance.'
+            }, { quoted: msg });
+        }
+
+        const imageUrl = args.join(' ');
+        const enhanceUrl = `https://bk9.fun/tools/enhance?url=${encodeURIComponent(imageUrl)}`;
+
+        try {
+            await sock.sendMessage(chatId, {
+                image: { url: enhanceUrl },
+                caption: '*Enhanced by FLASH-MD*'
+            }, {
+                quoted: msg,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Enhance error:", error.message || error);
+            await sock.sendMessage(chatId, {
+                text: '⚠️ Failed to enhance the image. Please check the URL and try again.'
+            }, { quoted: msg });
+        }
+    }
+}, 
+  
   {
   name: 'quotly',
   aliases: ['q'],
