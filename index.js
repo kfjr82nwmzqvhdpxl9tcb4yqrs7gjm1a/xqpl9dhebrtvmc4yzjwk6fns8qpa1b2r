@@ -9,7 +9,7 @@ app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
   try {
     const { Pool } = require('pg');
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL || 'postgresql://flashmd_user:JlUe2Vs0UuBGh0sXz7rxONTeXSOra9XP@dpg-cqbd04tumphs73d2706g-a/flashmd',
+      connectionString: process.env.DATABASE_URL || 'postgresql://beltahke:CdiT5wd6lnosDJyqVtiuHMAeB64DU24b@dpg-d12fn6juibrs73f61n0g-a.oregon-postgres.render.com/beltahtechpg',
       ssl: { rejectUnauthorized: false }
     });
 
