@@ -396,7 +396,7 @@ The following message was deleted:`,
       }, { quoted: msg });
     }
     
-   if (command.flashOnly && conf.MODE === 'private' && !isAllowed) {
+   if (conf.MODE === 'private' && command.flashOnly && !isAllowed) {
   return king.sendMessage(fromJid, {
     text: '⛔ This command is restricted in Private Mode.',
   }, { quoted: msg });
