@@ -107,6 +107,47 @@ module.exports = [
   }
 },
   {
+  name: 'quotly',
+  aliases: ['q'],
+  description: 'Make a quote sticker from text and username',
+  category: 'Converter',
+  execute: async (sock, msg, args) => {
+    const chatId = msg.key.remoteJid;
+    const senderName = msg.pushName || 'User';
+
+    if (args.length < 3 || !args.includes('by')) {
+      return await sock.sendMessage(chatId, { text: 'Use format: .quotly <text> by <username>', contextInfo }, { quoted: msg });
+    }
+
+    const byIndex = args.indexOf('by');
+    const text = args.slice(0, byIndex).join(' ');
+    const username = args.slice(byIndex + 1).join(' ');
+
+    const apiUrl = `https://weeb-api.vercel.app/quotly?pfp=https://files.catbox.moe/c2jdkw.jpg&username=${encodeURIComponent(username)}&text=${encodeURIComponent(text)}`;
+    const stickerPath = `./quotly_${Date.now()}.webp`;
+
+    try {
+      const res = await axios.get(apiUrl, { responseType: 'arraybuffer' });
+      const buffer = Buffer.from(res.data, 'binary');
+
+      const sticker = new Sticker(buffer, {
+        pack: 'FLASH-MD',
+        author: senderName,
+        type: 'full',
+        quality: 70
+      });
+
+      await sticker.toFile(stickerPath);
+
+      await sock.sendMessage(chatId, { sticker: await fs.readFile(stickerPath), contextInfo }, { quoted: msg });
+    } catch (err) {
+      return await sock.sendMessage(chatId, { text: `Error making quotly: ${err.message}`, contextInfo }, { quoted: msg });
+    } finally {
+      if (await fs.pathExists(stickerPath)) await fs.unlink(stickerPath);
+    }
+  }
+}, 
+  {
   name: 'crop',
   description: 'Create cropped sticker from media',
   category: 'Converter',
