@@ -35,8 +35,8 @@ const contextInfo = {
 module.exports = [
 
   {
-    name: 's',
-    aliases: ['sticker'],
+    name: 'sticker',
+    aliases: ['s'],
     description: 'Convert image or video to sticker',
     category: 'Converter',
     execute: async (sock, msg, args) => {
