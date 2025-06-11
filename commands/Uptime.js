@@ -1,11 +1,11 @@
 const now = require('performance-now');
-
+const { franceking } = require('../main');
 if (!global.botStartTime) global.botStartTime = Date.now();
 
 module.exports = [
     {
         name: 'ping',
-        flashOnly: true, 
+        flashOnly: franceking(), 
         aliases: ['latency', 'speed'],
         description: "Checks the bot's response time",
         execute: async (sock, msg) => {
