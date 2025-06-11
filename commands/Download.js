@@ -673,8 +673,7 @@ _Use this info to explore or install the package via terminal_`;
     }
   }
 }, 
-    
-{
+    {
   name: "story",
   aliases: ["instastory", "igstory"],
   description: "Download all Instagram stories from a username",
@@ -682,16 +681,16 @@ _Use this info to explore or install the package via terminal_`;
   execute: async (sock, msg, args) => {
     const chatId = msg.key.remoteJid;
     const senderName = msg.pushName || "User";
-const contextInfo = {
-  forwardingScore: 1,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363238139244263@newsletter',
-    newsletterName: 'FLASH-MD',
-    serverMessageId: -1
-  }
-};
-      
+    const contextInfo = {
+      forwardingScore: 1,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: '120363238139244263@newsletter',
+        newsletterName: 'FLASH-MD',
+        serverMessageId: -1
+      }
+    };
+
     if (!args[0]) {
       return await sock.sendMessage(chatId, { text: "Please provide a valid Instagram username.", contextInfo }, { quoted: msg });
     }
@@ -718,28 +717,39 @@ const contextInfo = {
         contextInfo
       }, { quoted: msg });
 
+      let mediaSent = 0;
+
       for (const story of stories) {
-        if (story.type === "image") {
-          await sock.sendMessage(chatId, {
-            image: { url: story.url },
-            caption: `📷 Instagram Story - @${username}`
-          }, { quoted: msg });
-        } else if (story.type === "video") {
-          await sock.sendMessage(chatId, {
-            video: { url: story.url },
-            caption: `🎥 Instagram Story - @${username}`
-          }, { quoted: msg });
+        if (story.url) {
+          if (story.type.includes("image")) {
+            await sock.sendMessage(chatId, {
+              image: { url: story.url },
+              caption: `📷 Instagram Story - @${username}`
+            }, { quoted: msg });
+            mediaSent++;
+          } else if (story.type.includes("video")) {
+            await sock.sendMessage(chatId, {
+              video: { url: story.url },
+              caption: `🎥 Instagram Story - @${username}`
+            }, { quoted: msg });
+            mediaSent++;
+          }
         }
       }
 
-      await sock.sendMessage(chatId, { text: `✅ All ${stories.length} stories have been sent.`, contextInfo }, { quoted: msg });
+      if (mediaSent > 0) {
+        await sock.sendMessage(chatId, { text: `✅ All ${mediaSent} stories have been sent.`, contextInfo }, { quoted: msg });
+      } else {
+        await sock.sendMessage(chatId, { text: "⚠️ The stories could not be sent. They might be expired or private.", contextInfo }, { quoted: msg });
+      }
 
     } catch (error) {
       console.error("IG Story Error:", error);
       await sock.sendMessage(chatId, { text: "An error occurred while fetching stories. Try again later.", contextInfo }, { quoted: msg });
     }
   }
-}, 
+    },  
+            
    {
   name: "mediafire",
   aliases: ["mf", "mfdl"],
