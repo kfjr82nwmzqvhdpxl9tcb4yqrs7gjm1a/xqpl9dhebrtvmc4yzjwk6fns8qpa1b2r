@@ -1,3 +1,4 @@
+const { franceking } = require('../main');
 const conf = require('../config');
 const db = require('../db');
 
