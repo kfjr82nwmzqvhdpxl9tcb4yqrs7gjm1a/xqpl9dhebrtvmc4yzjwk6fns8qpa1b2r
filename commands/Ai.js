@@ -42,7 +42,240 @@ module.exports = [
       }
     }
   },
+  
+{
+    name: 'jokes',
+    aliases: [],
+    description: 'Get a random joke.',
+    category: 'Fun',
+    execute: async (sock, msg, args) => {
+        const chatId = msg.key.remoteJid;
 
+        try {
+            const response = await fetch('https://api.popcat.xyz/joke');
+            if (!response.ok) throw new Error('Network response was not ok.');
+            const data = await response.json();
+
+            await sock.sendMessage(chatId, {
+                text: data.joke
+            }, {
+                quoted: msg,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching joke:', error.message);
+            await sock.sendMessage(chatId, {
+                text: '❌ Failed to fetch a joke. Please try again later.'
+            }, { quoted: msg });
+        }
+    }
+}, 
+
+  {
+    name: 'advice',
+    aliases: [],
+    description: 'Get a random piece of advice.',
+    category: 'Fun',
+    execute: async (sock, msg, args) => {
+        const chatId = msg.key.remoteJid;
+
+        try {
+            const response = await fetch(`https://api.adviceslip.com/advice`);
+            const data = await response.json();
+            const quote = data.slip.advice;
+
+            await sock.sendMessage(chatId, {
+                text: `*Here is an advice for you:* \n${quote}`
+            }, {
+                quoted: msg,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error:', error.message || 'An error occurred');
+            await sock.sendMessage(chatId, {
+                text: '❌ Oops, an error occurred while processing your request.'
+            }, { quoted: msg });
+        }
+    }
+}, 
+
+{
+    name: 'trivia',
+    aliases: [],
+    description: 'Get a random trivia question.',
+    category: 'Fun',
+    execute: async (sock, msg, args) => {
+        const chatId = msg.key.remoteJid;
+
+        try {
+            const response = await fetch('https://opentdb.com/api.php?amount=1&type=multiple');
+            if (!response.ok) throw new Error(`Invalid API response: ${response.status}`);
+
+            const result = await response.json();
+            if (!result.results || !result.results[0]) throw new Error('No trivia data received.');
+
+            const trivia = result.results[0];
+            const question = trivia.question;
+            const correctAnswer = trivia.correct_answer;
+            const allAnswers = [...trivia.incorrect_answers, correctAnswer].sort();
+
+            const answers = allAnswers.map((ans, i) => `${i + 1}. ${ans}`).join('\n');
+
+            await sock.sendMessage(chatId, {
+                text: `🤔 *Trivia Time!*\n\n${question}\n\n${answers}\n\n_I'll reveal the correct answer in 10 seconds..._`
+            }, {
+                quoted: msg,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+
+            setTimeout(async () => {
+                await sock.sendMessage(chatId, {
+                    text: `✅ *Correct Answer:* ${correctAnswer}`
+                }, {
+                    quoted: msg,
+                    contextInfo: {
+                        forwardingScore: 1,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: '120363238139244263@newsletter',
+                            newsletterName: 'FLASH-MD',
+                            serverMessageId: -1
+                        }
+                    }
+                });
+            }, 10000);
+        } catch (error) {
+            console.error('Trivia Error:', error.message);
+            await sock.sendMessage(chatId, {
+                text: '❌ Error fetching trivia. Please try again later.'
+            }, { quoted: msg });
+        }
+    }
+}, 
+  {
+  name: 'bard',
+  aliases: ['bard-ai'],
+  description: 'Chat with BARD AI.',
+  category: 'AI',
+  execute: async (sock, msg, args) => {
+    const chatId = msg.key.remoteJid;
+
+    try {
+      if (!args || args.length === 0) {
+        return await sock.sendMessage(chatId, {
+          text: 'Hello, I am *BARD AI*.\n\nHow can I assist you today?'
+        }, {
+          quoted: msg,
+          contextInfo: {
+            forwardingScore: 5,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: "FLASH-MD",
+              serverMessageId: 143,
+              sourceUrl: 'https://whatsapp.com/channel/0029VaTbb3p84Om9LRX1jg0P'
+            }
+          }
+        });
+      }
+
+      const prompt = args.join(' ');
+      const response = await fetch(`https://api.diioffc.web.id/api/ai/bard?query=${encodeURIComponent(prompt)}`);
+      const data = await response.json();
+
+      if (data.status && data.result && data.result.message) {
+        const answer = data.result.message;
+
+        await sock.sendMessage(chatId, {
+          text: `${answer}\n\n> *POWERED BY FLASH-MD*`
+        }, {
+          quoted: msg,
+          contextInfo: {
+            forwardingScore: 5,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: "FLASH-MD",
+              serverMessageId: 143,
+              sourceUrl: 'https://whatsapp.com/channel/0029VaTbb3p84Om9LRX1jg0P'
+            }
+          }
+        });
+
+      } else {
+        throw new Error('Invalid response from the API.');
+      }
+
+    } catch (error) {
+      console.error('Error getting response:', error.message);
+      await sock.sendMessage(chatId, {
+        text: '❌ Error getting response from BARD AI.'
+      }, { quoted: msg });
+    }
+  }
+}, 
+
+  {
+    name: 'inspire',
+    aliases: [],
+    description: 'Get an inspirational quote.',
+    category: 'General',
+    execute: async (sock, msg, args) => {
+        const chatId = msg.key.remoteJid;
+
+        try {
+            const response = await fetch(`https://type.fit/api/quotes`);
+            const data = await response.json();
+            const randomIndex = Math.floor(Math.random() * data.length);
+            const quote = data[randomIndex];
+
+            await sock.sendMessage(chatId, {
+                text: `✨ *Inspirational Quote:*\n"${quote.text}"\n— ${quote.author || "Unknown"}`
+            }, {
+                quoted: msg,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Inspire Error:', error.message);
+            await sock.sendMessage(chatId, {
+                text: '❌ Failed to fetch an inspirational quote.'
+            }, { quoted: msg });
+        }
+    }
+}
+  
   {
     name: 'pair',
     aliases: ['pairing', 'generatecode'],
