@@ -1,4 +1,5 @@
 const axios = require('axios');
+const getFBInfo = require('@xaviabot/fb-downloader');
 
 function formatDate(dateStr) {
     const date = new Date(dateStr);
