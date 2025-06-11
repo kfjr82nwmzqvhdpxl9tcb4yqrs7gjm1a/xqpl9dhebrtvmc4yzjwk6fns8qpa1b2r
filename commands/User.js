@@ -234,12 +234,9 @@ module.exports = [
 
     execute: async (king, msg, args) => {
       const jid = msg.key.remoteJid;
-      const isDev = DEVS.includes(getSenderJid(msg, king)?.split(':')[0]);
-      if (!isDev) {
-        return king.sendMessage(jid, { text: "Only Owners can use this command." }, { quoted: msg });
-      }
-
-      try {
+      
+try {
+      
         const allChats = await king.groupFetchAllParticipating();
         const groups = Object.values(allChats);
 
