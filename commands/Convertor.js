@@ -1,8 +1,8 @@
 const axios = require('axios');
-const ffmpegPath = require('ffmpeg-static'); 
-ffmpeg.setFfmpegPath(ffmpegPath); 
 const fs = require('fs-extra');
-const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static'); 
+const ffmpeg = require('fluent-ffmpeg'); 
+ffmpeg.setFfmpegPath(ffmpegPath); 
 const baileys = require('@whiskeysockets/baileys');
 const { Sticker } = require('wa-sticker-formatter');
 const { Catbox } = require('node-catbox');
