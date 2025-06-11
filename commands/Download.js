@@ -11,6 +11,7 @@ function formatDate(dateStr) {
     return `${day}/${month}/${year} at ${hours}:${minutes} ${ampm}`;
 }
 
+
 module.exports = [
     {
         name: 'npm',
@@ -680,7 +681,16 @@ _Use this info to explore or install the package via terminal_`;
   execute: async (sock, msg, args) => {
     const chatId = msg.key.remoteJid;
     const senderName = msg.pushName || "User";
-
+const contextInfo = {
+  forwardingScore: 1,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363238139244263@newsletter',
+    newsletterName: 'FLASH-MD',
+    serverMessageId: -1
+  }
+};
+      
     if (!args[0]) {
       return await sock.sendMessage(chatId, { text: "Please provide a valid Instagram username.", contextInfo }, { quoted: msg });
     }
@@ -736,7 +746,15 @@ _Use this info to explore or install the package via terminal_`;
   category: "Download",
   execute: async (sock, msg, args) => {
     const chatId = msg.key.remoteJid;
-
+const contextInfo = {
+  forwardingScore: 1,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363238139244263@newsletter',
+    newsletterName: 'FLASH-MD',
+    serverMessageId: -1
+  }
+};
     const input = args.join(' ');
     if (!input) {
       return await sock.sendMessage(chatId, {
@@ -792,7 +810,15 @@ _Use this info to explore or install the package via terminal_`;
   category: "Download",
   execute: async (sock, msg, args) => {
     const chatId = msg.key.remoteJid;
-
+const contextInfo = {
+  forwardingScore: 1,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363238139244263@newsletter',
+    newsletterName: 'FLASH-MD',
+    serverMessageId: -1
+  }
+};
     const input = args.join(' ');
     if (!input) {
       return await sock.sendMessage(chatId, {
