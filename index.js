@@ -398,9 +398,9 @@ The following message was deleted:`,
     
    
     if (command.flashOnly && !isAllowed) {
-      return king.sendMessage(fromJid, {
+      return; /* king.sendMessage(fromJid, {
         text: '⛔ MODE TESTING.',
-      }, { quoted: msg });
+      }, { quoted: msg });*/
     }
     
     if (command.groupOnly && !isGroup) {
