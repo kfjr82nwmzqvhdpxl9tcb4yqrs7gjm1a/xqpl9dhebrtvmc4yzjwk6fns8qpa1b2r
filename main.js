@@ -1,7 +1,9 @@
 const conf = require('./config');
 
 function franceking() {
-  return conf.MODE === 'private';
+  const isPrivate = conf.MODE === 'private';
+  console.log('Current MODE:', conf.MODE, 'franceking() returns:', isPrivate);
+  return isPrivate;
 }
 
-module.exports = { franceking }; 
+module.exports = { franceking };
