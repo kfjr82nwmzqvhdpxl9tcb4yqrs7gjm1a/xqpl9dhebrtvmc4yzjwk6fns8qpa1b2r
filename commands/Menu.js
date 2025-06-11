@@ -1,3 +1,4 @@
+const { franceking } = require('../main');
 const os = require('os');
 const moment = require('moment-timezone');
 const config = require('../config.js');
