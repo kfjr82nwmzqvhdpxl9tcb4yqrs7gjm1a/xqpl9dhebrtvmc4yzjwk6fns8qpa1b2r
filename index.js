@@ -390,23 +390,18 @@ The following message was deleted:`,
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
     const isAllowed = isDev || isSelf;
 
-    /*if (command.ownerOnly && !isAllowed) {
+    if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
       }, { quoted: msg });
     }
     
-if (command.flashOnly && conf.MODE === 'private' && !isAllowed) {
-  return;
-}*/
-    if (command.ownerOnly && !isAllowed) {
-  return king.sendMessage('This is an owner command!');
-}
-
-if (conf.MODE === 'private' && !isAllowed && command.flashOnly) {
-  return;
-}
-  
+    if (command.flashOnly && !isAllowed) {
+      return king.sendMessage(fromJid, {
+        text: '⛔ MODE TESTING.',
+      }, { quoted: msg });
+    }
+    
     if (command.groupOnly && !isGroup) {
       return king.sendMessage(fromJid, {
         text: '❌ This command only works in groups.'
