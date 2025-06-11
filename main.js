@@ -1,6 +1,6 @@
 const conf = require('./config');
 
-function isFlashOnly() {
+function franceking() {
   return conf.MODE === 'private';
 }
 
