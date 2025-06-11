@@ -19,7 +19,7 @@ const getBuffer = async (mediaMsg, type) => {
 
 const uploadToCatbox = async (path) => {
   if (!fs.existsSync(path)) throw new Error("File does not exist");
-  const response = await catbox.uploadFile(path);
+  const response = await catbox.uploadFile({ path });
   if (!response) throw new Error("Failed to upload");
   return response;
 };
@@ -130,7 +130,7 @@ module.exports = [
 
       await new Promise((resolve, reject) => {
         ffmpeg(inputPath)
-          .setFfmpegPath(ffmpegPath) // 🆕 Just to be safe inside the scope
+          .setFfmpegPath(ffmpegPath)
           .output(outputPath)
           .on('end', resolve)
           .on('error', reject)
@@ -149,54 +149,56 @@ module.exports = [
     }
   }
 }, 
-  {
-    name: 'take',
-    description: 'Take sticker with custom pack name',
-    category: 'Converter',
-    execute: async (sock, msg, args) => {
-      const chatId = msg.key.remoteJid;
-      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const mediaMsg = quoted?.imageMessage || quoted?.videoMessage || quoted?.stickerMessage;
 
-      if (!mediaMsg) {
-        return await sock.sendMessage(chatId, { text: 'Reply to an image, video or sticker.', contextInfo }, { quoted: msg });
-      }
+{
+  name: 'take',
+  description: 'Take sticker with custom pack name',
+  category: 'Converter',
+  execute: async (sock, msg, args) => {
+    const chatId = msg.key.remoteJid;
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const mediaMsg = quoted?.imageMessage || quoted?.videoMessage || quoted?.stickerMessage;
 
-      const type = quoted?.imageMessage ? 'image' :
-                   quoted?.videoMessage ? 'video' :
-                   quoted?.stickerMessage ? 'sticker' : null;
-
-      if (!type) return await sock.sendMessage(chatId, { text: 'Unsupported media type.', contextInfo }, { quoted: msg });
-
-      const buffer = await getBuffer(mediaMsg, type);
-      const filePath = `./temp_${Date.now()}`;
-      await fs.writeFile(filePath, buffer);
-
-      try {
-        const pack = args.length ? args.join(' ') : msg.pushName || 'Flash-MD';
-
-        const sticker = new Sticker(buffer, {
-  pack,
-  type: 'full',
-  categories: ["🤩", "🎉"],
-  id: "12345",
-  quality: 70,
-  background: "transparent"
-});
-
-        const stickerBuffer = await sticker.toBuffer();
-        await sock.sendMessage(chatId, { sticker: stickerBuffer, contextInfo }, { quoted: msg });
-
-      } finally {
-        if (await fs.pathExists(filePath)) await fs.unlink(filePath);
-      }
+    if (!mediaMsg) {
+      return await sock.sendMessage(chatId, { text: 'Reply to an image, video or sticker.', contextInfo }, { quoted: msg });
     }
-  },
+
+    const type = quoted?.imageMessage ? 'image' :
+                 quoted?.videoMessage ? 'video' :
+                 quoted?.stickerMessage ? 'sticker' : null;
+
+    if (!type) return await sock.sendMessage(chatId, { text: 'Unsupported media type.', contextInfo }, { quoted: msg });
+
+    const buffer = await getBuffer(mediaMsg, type);
+    const filePath = `./temp_${Date.now()}`;
+    await fs.writeFile(filePath, buffer);
+
+    try {
+      const pack = args.length ? args.join(' ') : msg.pushName || 'Flash-MD';
+
+      const sticker = new Sticker(buffer, {
+        pack,
+        type: 'full',
+        categories: ["🤩", "🎉"],
+        id: "12345",
+        quality: 70,
+        background: "transparent"
+      });
+
+      const stickerBuffer = await sticker.toBuffer();
+      await sock.sendMessage(chatId, { sticker: stickerBuffer, contextInfo }, { quoted: msg });
+
+    } finally {
+      if (await fs.pathExists(filePath)) await fs.unlink(filePath);
+    }
+  }
+},
+
 {
   name: 'url',
   description: 'Upload media to Catbox and return URL',
   category: 'Converter',
-  execute: async (king, msg) => {
+  execute: async (sock, msg) => {
     const chatId = msg.key.remoteJid;
     const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     const mediaMsg = quoted?.imageMessage || quoted?.videoMessage || quoted?.stickerMessage;
@@ -230,12 +232,12 @@ module.exports = [
       await fs.writeFile(filePath, buffer);
 
       const url = await uploadToCatbox(filePath);
-      await king.sendMessage(chatId, { text: `Here is your URL:\n${url}`, contextInfo }, { quoted: msg });
+      await sock.sendMessage(chatId, { text: `Here is your URL:\n${url}`, contextInfo }, { quoted: msg });
 
     } catch (err) {
-      return await king.sendMessage(chatId, { text: `Upload failed: ${err.message}`, contextInfo }, { quoted: msg });
+      return await sock.sendMessage(chatId, { text: `Upload failed: ${err.message}`, contextInfo }, { quoted: msg });
     } finally {
-      if (await fs.pathExists(filePath)) await fs.unlink(filePath);
+if (await fs.pathExists(filePath)) await fs.unlink(filePath);
     }
   }
 }
