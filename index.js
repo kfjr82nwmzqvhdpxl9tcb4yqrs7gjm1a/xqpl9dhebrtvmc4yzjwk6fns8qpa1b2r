@@ -176,68 +176,6 @@ async function startBot() {
 
     if (messageStore.has(msg.key.id)) return;
 
-    if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
-      const deletedMsgKey = msg.message.protocolMessage.key.id;
-      const deletedMsg = messageStore.get(deletedMsgKey);
-      const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
-      const fromJid = msg.key.remoteJid;
-
-      const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
-      let senderName = senderNumber;
-      let chatName = '';
-      let chatType = 'Personal';
-      const timezone = king?.config?.timezone || 'Africa/Nairobi';
-      const date = moment().tz(timezone).format('DD/MM/YYYY');
-      const time = moment().tz(timezone).format('hh:mm:ss A');
-      let mentions = [deletedSenderJid];
-
-      if (fromJid.endsWith('@g.us') || fromJid.endsWith('@lid')) {
-        try {
-          const metadata = await king.groupMetadata(fromJid);
-          const participant = metadata.participants.find(p => p.id === deletedSenderJid);
-          senderName = participant?.name || participant?.notify || msg.pushName || senderNumber;
-          chatName = metadata.subject;
-          chatType = 'Group';
-        } catch {
-          chatName = 'Unknown Group';
-        }
-      } else if (fromJid.endsWith('status@broadcast')) {
-        chatName = 'Status Update';
-        chatType = 'Status';
-        senderName = msg.pushName;
-        mentions = [];
-      } else if (fromJid.endsWith('@newsletter')) {
-        chatName = 'Channel Post';
-        chatType = 'Channel';
-        senderName = 'System';
-        mentions = [];
-      } else {
-        senderName = msg.pushName || senderNumber;
-        chatName = senderName;
-      }
-
-      if (deletedMsg && deletedSenderJid !== king.user.id) {
-        await king.sendMessage(king.user.id, {
-          text:
-`*⚡ FLASH-MD ANTI_DELETE ⚡*
-
-*Chat:* ${chatName}
-*Type:* ${chatType}
-*Deleted By:* ${senderName}
-*Number:* +${senderNumber}
-*Date:* ${date}
-*Time:* ${time}
-
-The following message was deleted:`,
-          mentions
-        });
-
-        await king.sendMessage(king.user.id, {
-          forward: deletedMsg
-        });
-      }
-    }
-
     messageStore.set(msg.key.id, msg);
 
     const fromJid = msg.key.remoteJid;
@@ -251,111 +189,20 @@ The following message was deleted:`,
       senderNumber = lidToNumberMap.get(senderJidRaw);
     }
 
+    const isBot = normalizeJid(senderJid) === normalizeJid(king.user.id);
     const isDev = DEV_NUMBERS.has(senderNumber);
-    const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+    const isAllowed = isDev || isBot;
+
+    const BOT_MODE = conf.MODE?.toLowerCase() || 'public';
+    if (BOT_MODE === 'private' && !isAllowed) {
+      return king.sendMessage(fromJid, {
+        text: '⛔ Bot is currently in *private mode*. Only the owner(s) can use commands.',
+      }, { quoted: msg });
+    }
+
     const m = msg.message;
-
-    const chatType = getChatCategory(fromJid);
-    const pushName = msg.pushName || 'Unknown';
-
-    let contentSummary = '';
-    if (m?.conversation) contentSummary = m.conversation;
-    else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
-    else if (m?.imageMessage) contentSummary = `📷 Image${m.imageMessage.caption ? ` | Caption: ${m.imageMessage.caption}` : ''}`;
-    else if (m?.videoMessage) contentSummary = `🎥 Video${m.videoMessage.caption ? ` | Caption: ${m.videoMessage.caption}` : ''}`;
-    else if (m?.audioMessage) contentSummary = `🎵 Audio`;
-    else if (m?.stickerMessage) contentSummary = `🖼️ Sticker`;
-    else if (m?.documentMessage) contentSummary = `📄 Document`;
-    else if (m?.contactMessage) contentSummary = `👤 Contact: ${m.contactMessage.displayName || 'Unknown'}`;
-    else if (m?.pollCreationMessage) contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
-    else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
-    else contentSummary = '[📦 Unknown or Unsupported Message Type]';
-
-    console.log(`\n=== ${chatType.toUpperCase()} ===`);
-    console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
-    console.log(`Message sender: ${pushName} (+${senderNumber})`);
-    console.log(`Message: ${contentSummary}\n`);
-
-    if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
-      king.readMessages([msg.key]).catch(() => {});
-    }
-
-    if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-      try {
-        await king.readMessages([msg.key]);
-        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
-      } catch (err) {
-        console.error('❌ Failed to view status:', err);
-      }
-
-      if (conf.AUTO_LIKE === "on") {
-        const participant = msg.key.participant || msg.participant || king.user.id;
-        try {
-          await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-          }, {
-            statusJidList: [participant, king.user.id]
-          });
-          console.log('✅ Liked status');
-        } catch (err) {
-          console.error('❌ Failed to like status:', err);
-        }
-      }
-    }
-
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
-
-    if (isGroupJid(fromJid)) {
-      try {
-        const settings = await db.getGroupSettings(fromJid);
-        if (settings?.antilink_enabled) {
-          const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
-          if (linkRegex.test(text)) {
-            const action = settings.action || 'warn';
-
-            if (senderNumber !== getUserNumber(king.user.id)) {
-              switch (action) {
-                case 'warn': {
-                  await db.incrementWarning(fromJid, senderJid);
-                  const warnings = await db.getWarnings(fromJid, senderJid);
-                  await king.sendMessage(fromJid, {
-                    text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
-                  }, {
-                    quoted: msg,
-                    mentions: [senderJid]
-                  });
-                  break;
-                }
-                case 'kick': {
-                  try {
-                    await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
-                    await king.sendMessage(fromJid, {
-                      text: `🚫 @${senderNumber} has been removed for posting a link.`
-                    }, {
-                      mentions: [senderJid]
-                    });
-                  } catch (e) {
-                    console.error('Failed to kick user:', e);
-                  }
-                  break;
-                }
-                case 'delete': {
-                  try {
-                    await king.sendMessage(fromJid, { delete: msg.key });
-                  } catch (e) {
-                    console.error('Failed to delete message:', e);
-                  }
-                  break;
-                }
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Error in anti-link handling:', e);
-      }
-    }
 
     const prefixes = [...conf.prefixes];
     const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
@@ -366,8 +213,6 @@ The following message was deleted:`,
     const cmdName = args.shift()?.toLowerCase();
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
     if (!command) return;
-
-    
 
     await king.sendMessage(fromJid, {
       react: { key: msg.key, text: '🤍' }
@@ -388,26 +233,20 @@ The following message was deleted:`,
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-    const isAllowed = isDev || isSelf;
 
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
       }, { quoted: msg });
     }
-    
-if (conf.MODE === 'private' && !isAllowed) {
-  return king.sendMessage(fromJid, {
-    text: '⛔ Bot is currently in *private mode*. Only the owner(s) can use commands.',
-  }, { quoted: msg });
-}
+
     if (command.groupOnly && !isGroup) {
       return king.sendMessage(fromJid, {
         text: '❌ This command only works in groups.'
       }, { quoted: msg });
     }
 
-    if (command.adminOnly && !isAdmin && !isDev) {
+if (command.adminOnly && !isAdmin && !isDev) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to group admins.'
       }, { quoted: msg });
