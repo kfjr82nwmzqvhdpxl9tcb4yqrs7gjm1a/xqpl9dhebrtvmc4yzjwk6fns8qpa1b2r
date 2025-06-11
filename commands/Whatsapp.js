@@ -1,3 +1,4 @@
+const { franceking } = require('../main');
 const { downloadContentFromMessage, downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { prefix } = require('../config');
 const isDev = ['254742063632', '254757835036'];
