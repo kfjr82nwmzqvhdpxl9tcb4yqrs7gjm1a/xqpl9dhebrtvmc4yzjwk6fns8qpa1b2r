@@ -1,3 +1,4 @@
+const { franceking } = require('../main');
 const mumaker = require('mumaker');
 
 module.exports = [
