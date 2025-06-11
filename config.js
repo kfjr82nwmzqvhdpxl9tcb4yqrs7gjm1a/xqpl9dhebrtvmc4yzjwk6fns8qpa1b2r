@@ -18,17 +18,17 @@ module.exports = {
 
     NUMBER: process.env.YOUR_NUMBER || '254742063632',
 
-    MODE: process.env.MODE || 'private',
+    MODE: (process.env.MODE || 'private').toLowerCase().trim(),
     WARN_LIMIT: process.env.WARNINGS || '3',
     ON: process.env.YOUR_NAME || 'FLASH-MD',
     ANTICALL: process.env.ANTICALL || 'on',
-ADM: process.env.ANTIDELETE || 'on',
+    ADM: process.env.ANTIDELETE || 'on',
 
     AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS === 'on',
     AUTO_LIKE: process.env.AUTO_LIKE === 'on',
     AUTO_READ_MESSAGES: process.env.AUTO_READ_DM === 'on',
-HEROKU_API_KEY: process.env.HEROKU_API_KEY,
-HEROKU_APP_NAME: process.env.HEROKU_APP_NAME,
+    HEROKU_API_KEY: process.env.HEROKU_API_KEY,
+    HEROKU_APP_NAME: process.env.HEROKU_APP_NAME,
     sessionBase64: process.env.SESSION || '',
     timezone: 'Africa/Nairobi',
 
