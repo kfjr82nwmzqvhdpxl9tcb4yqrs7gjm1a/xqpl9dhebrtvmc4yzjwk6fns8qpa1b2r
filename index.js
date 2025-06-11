@@ -396,7 +396,7 @@ The following message was deleted:`,
       }, { quoted: msg });
     }
     
-if (command && conf.MODE === 'private' && !isAllowed) {
+if (conf.MODE === 'private' && !isAllowed) {
   return king.sendMessage(fromJid, {
     text: '⛔ Bot is currently in *private mode*. Only the owner(s) can use commands.',
   }, { quoted: msg });
