@@ -5,7 +5,9 @@ if (!global.botStartTime) global.botStartTime = Date.now();
 module.exports = [
     {
         name: 'ping',
-        flashOnly: franceking(), 
+        get flashOnly() {
+  return franceking();
+},
         aliases: ['latency', 'speed'],
         description: "Checks the bot's response time",
         execute: async (sock, msg) => {
