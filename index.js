@@ -396,11 +396,16 @@ The following message was deleted:`,
       }, { quoted: msg });
     }
     
-    if (command.flashOnly && !isAllowed) {
+   if (command.flashOnly && conf.MODE === 'private' && !isAllowed) {
+  return king.sendMessage(fromJid, {
+    text: '⛔ This command is restricted in Private Mode.',
+  }, { quoted: msg });
+}
+    /*if (command.flashOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ MODE TESTING.',
       }, { quoted: msg });
-    }
+    }*/
     
     if (command.groupOnly && !isGroup) {
       return king.sendMessage(fromJid, {
