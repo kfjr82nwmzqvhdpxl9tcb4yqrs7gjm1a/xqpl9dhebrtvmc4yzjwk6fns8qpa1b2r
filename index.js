@@ -396,7 +396,7 @@ The following message was deleted:`,
       }, { quoted: msg });
     }
     
-if (command.FlashOnly && conf.MODE === 'private' && !isAllowed) {
+if (command.flashOnly && conf.MODE === 'private' && !isAllowed) {
   return;
 }
   
