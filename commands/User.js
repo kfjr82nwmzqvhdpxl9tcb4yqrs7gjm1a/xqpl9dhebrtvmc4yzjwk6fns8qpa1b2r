@@ -1,3 +1,4 @@
+const { franceking } = require('../main');
 const { S_WHATSAPP_NET, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const jimp = require('jimp');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
