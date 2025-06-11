@@ -1,4 +1,6 @@
 const axios = require('axios');
+const ffmpegPath = require('ffmpeg-static'); 
+ffmpeg.setFfmpegPath(ffmpegPath); 
 const fs = require('fs-extra');
 const ffmpeg = require('fluent-ffmpeg');
 const baileys = require('@whiskeysockets/baileys');
@@ -97,6 +99,49 @@ module.exports = [
     }
   },
 
+{
+  name: 'tomp3',
+  aliases: ['toaudio', 'audio'],
+  description: 'Convert video to audio (mp3)',
+  category: 'Converter',
+  execute: async (sock, msg, args) => {
+    const chatId = msg.key.remoteJid;
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const videoMsg = msg.message?.videoMessage || quoted?.videoMessage;
+
+    if (!videoMsg) {
+      return await sock.sendMessage(chatId, { text: 'Reply to a video message to convert to MP3.', contextInfo }, { quoted: msg });
+    }
+
+    const inputPath = `./video_${Date.now()}.mp4`;
+    const outputPath = `./audio_${Date.now()}.mp3`;
+
+    try {
+      const buffer = await getBuffer(videoMsg, 'video');
+      await fs.writeFile(inputPath, buffer);
+
+      await new Promise((resolve, reject) => {
+        ffmpeg(inputPath)
+          .setFfmpegPath(ffmpegPath) // 🆕 Just to be safe inside the scope
+          .output(outputPath)
+          .on('end', resolve)
+          .on('error', reject)
+          .run();
+      });
+
+      const audio = await fs.readFile(outputPath);
+      await sock.sendMessage(chatId, { audio, mimetype: 'audio/mpeg', contextInfo }, { quoted: msg });
+
+    } catch (err) {
+      console.error('Error during conversion:', err);
+      return await sock.sendMessage(chatId, { text: `Error while converting video to MP3: ${err.message}`, contextInfo }, { quoted: msg });
+    } finally {
+      if (await fs.pathExists(inputPath)) await fs.unlink(inputPath);
+      if (await fs.pathExists(outputPath)) await fs.unlink(outputPath);
+    }
+  }
+}, 
+/*
   {
     name: 'tomp3',
     aliases: ['toaudio', 'audio'],
@@ -137,7 +182,7 @@ module.exports = [
       }
     }
   },
-
+*/
   {
     name: 'take',
     description: 'Take sticker with custom pack name',
