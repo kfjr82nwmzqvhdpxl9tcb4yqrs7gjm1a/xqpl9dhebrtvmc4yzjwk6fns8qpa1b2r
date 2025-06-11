@@ -106,6 +106,50 @@ module.exports = [
     }
   }
 },
+  {
+  name: 'crop',
+  description: 'Create cropped sticker from media',
+  category: 'Converter',
+  execute: async (sock, msg, args) => {
+    const chatId = msg.key.remoteJid;
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const mediaMsg = quoted?.imageMessage || quoted?.videoMessage || quoted?.stickerMessage;
+
+    if (!mediaMsg) {
+      return await sock.sendMessage(chatId, { text: 'Reply to an image, video or sticker.', contextInfo }, { quoted: msg });
+    }
+
+    const type = quoted?.imageMessage ? 'image' :
+                 quoted?.videoMessage ? 'video' :
+                 quoted?.stickerMessage ? 'sticker' : null;
+
+    if (!type) return await sock.sendMessage(chatId, { text: 'Unsupported media type.', contextInfo }, { quoted: msg });
+
+    const buffer = await getBuffer(mediaMsg, type);
+    const filePath = `./temp_crop_${Date.now()}`;
+    await fs.writeFile(filePath, buffer);
+
+    try {
+      const pack = args.length ? args.join(' ') : msg.pushName || 'Flash-MD';
+
+      const sticker = new Sticker(buffer, {
+        pack,
+        author: pack,
+        type: 'cropped',
+        categories: ["🤩", "🎉"],
+        id: "12345",
+        quality: 70,
+        background: "transparent"
+      });
+
+      const stickerBuffer = await sticker.toBuffer();
+      await sock.sendMessage(chatId, { sticker: stickerBuffer, contextInfo }, { quoted: msg });
+
+    } finally {
+      if (await fs.pathExists(filePath)) await fs.unlink(filePath);
+    }
+  }
+}, 
 
 {
   name: 'tomp3',
