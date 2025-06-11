@@ -396,11 +396,10 @@ The following message was deleted:`,
       }, { quoted: msg });
     }
     
-if (conf.MODE === 'private' && fromJid === !isAllowed) {
-  return king.sendMessage(fromJid, {
-    text: '⛔ Bot is currently in *private mode*. Only the owner(s) can use commands.',
-  }, { quoted: msg });
+if (command.FlashOnly && conf.MODE === 'private' && !isAllowed) {
+  return;
 }
+  
     if (command.groupOnly && !isGroup) {
       return king.sendMessage(fromJid, {
         text: '❌ This command only works in groups.'
