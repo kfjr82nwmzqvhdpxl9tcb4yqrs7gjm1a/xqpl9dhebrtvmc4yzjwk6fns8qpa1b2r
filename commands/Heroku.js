@@ -1,18 +1,19 @@
+const { franceking } = require('../main');
 const Heroku = require('heroku-client');
 
-// Dev numbers with WhatsApp suffix
+
 const OWNERS = [
   '254742063632@s.whatsapp.net',
   '254757835036@s.whatsapp.net'
 ];
 
-// Check if sender is a global owner
+
 function isOwner(msg) {
   const sender = msg.key.participant || msg.key.remoteJid;
   return sender === global.KING_ID || OWNERS.includes(sender);
 }
 
-// Check if ENV vars are set
+
 function getHerokuClient() {
   const apiKey = process.env.HEROKU_API_KEY;
   const appName = process.env.HEROKU_APP_NAME;
