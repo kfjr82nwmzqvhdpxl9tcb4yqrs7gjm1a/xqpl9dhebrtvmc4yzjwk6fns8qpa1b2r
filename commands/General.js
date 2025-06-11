@@ -1,3 +1,4 @@
+const { franceking } = require('../main');
 const axios = require('axios');
 const fetch = require('node-fetch');
 const conf = require('../config');
