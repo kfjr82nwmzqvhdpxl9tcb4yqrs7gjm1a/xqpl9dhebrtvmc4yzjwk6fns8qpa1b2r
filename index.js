@@ -367,11 +367,7 @@ The following message was deleted:`,
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
     if (!command) return;
 
-    const botMode = (conf.MODE || 'public').toLowerCase();
-    if (botMode === 'private' && !isDev) {
-      console.log(`❌ Blocked command from non-dev: +${senderNumber}`);
-      return;
-    }
+    
 
     await king.sendMessage(fromJid, {
       react: { key: msg.key, text: '🤍' }
@@ -399,7 +395,12 @@ The following message was deleted:`,
         text: '⛔ This command is restricted to the bot owner.',
       }, { quoted: msg });
     }
-
+    
+if (command && conf.MODE === 'private' && !isAllowed) {
+  return king.sendMessage(fromJid, {
+    text: '⛔ Bot is currently in *private mode*. Only the owner(s) can use commands.',
+  }, { quoted: msg });
+}
     if (command.groupOnly && !isGroup) {
       return king.sendMessage(fromJid, {
         text: '❌ This command only works in groups.'
