@@ -36,7 +36,7 @@ module.exports = [
                         key: pingMsg.key,
                         type: 14,
                         editedMessage: {
-                            conversation: `🏓 Pong!\n⏱️ *_Flash-MD-V2 Speed: ${latency} ms_*`,
+                            conversation: `🏓 Pong!\n⏱️ *_Flash-Md-V2.5 Speed: ${latency} ms_*`,
                         },
                     },
                 },
