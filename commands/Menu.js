@@ -76,6 +76,9 @@ const fetchRepoStats = async () => {
 module.exports = [
     {
         name: 'menu',
+        get flashOnly() {
+  return franceking();
+},
         aliases: [],
         description: 'Displays categorized list of commands',
         category: 'General',
@@ -144,7 +147,10 @@ module.exports = [
 
     {
         name: 'help',
-        aliases: [],
+        get flashOnly() {
+  return franceking();
+},
+        aliases: ['list'],
         description: 'Provides help and guide for new users',
         category: 'General',
         execute: async (sock, msg, args, fromJid, allCommands) => {
