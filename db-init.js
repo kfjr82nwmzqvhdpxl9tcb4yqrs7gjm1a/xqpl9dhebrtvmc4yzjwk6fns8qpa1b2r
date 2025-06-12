@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: 'postgresql://flashv2_user:LjpfY0Dt5UNUrwFEOIjOPBjLgClTqHln@dpg-d0eta695pdvs73b2omag-a.oregon-postgres.render.com/flashv2',
+  connectionString: process.env.DATABASE_URL || 'postgresql://beltahke:CdiT5wd6lnosDJyqVtiuHMAeB64DU24b@dpg-d12fn6juibrs73f61n0g-a.oregon-postgres.render.com/beltahtechpg',
   ssl: { rejectUnauthorized: false }
 });
 
-(async () => {
+async function initDB() {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS group_settings (
@@ -24,10 +24,10 @@ const pool = new Pool({
       );
     `);
 
-    console.log('✅ Tables are ready.');
-    process.exit(0);
+    console.log('✅ Tables initialized (db-init)');
   } catch (err) {
-    console.error('❌ Failed to initialize tables:', err);
-    process.exit(1);
+    console.warn('⚠️ Failed to initialize tables:', err.message);
   }
-})();
+}
+
+module.exports = initDB;
