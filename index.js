@@ -360,6 +360,7 @@ The following message was deleted:`,
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
     const isAllowed = isDev || isSelf;
 
+    
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
