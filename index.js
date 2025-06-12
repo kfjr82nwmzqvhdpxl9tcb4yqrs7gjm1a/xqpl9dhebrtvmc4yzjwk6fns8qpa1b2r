@@ -344,23 +344,19 @@ The following message was deleted:`,
     }).catch(() => {});
 
     let groupAdmins = [];
-const isGroup = isGroupJid(fromJid);
-if (isGroup) {
-  try {
-    const metadata = await king.groupMetadata(fromJid);
-    groupAdmins = metadata.participants
-      .filter(p => p.admin)
-      .map(p => p.id); // do NOT normalize
+    const isGroup = isGroupJid(fromJid);
+    if (isGroup) {
+      try {
+        const metadata = await king.groupMetadata(fromJid);
+        groupAdmins = metadata.participants
+          .filter(p => p.admin)
+          .map(p => normalizeJid(p.id));
+      } catch (err) {
+        console.error('Failed to fetch group admins:', err);
+      }
+    }
 
-    console.log('Group Admins:', groupAdmins);
-    console.log('Sender JID:', senderJidRaw);
-
-  } catch (err) {
-    console.error('Failed to fetch group metadata:', err);
-  }
-}
-
-const isAdmin = groupAdmins.includes(senderJidRaw);
+    const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
     const isAllowed = isDev || isSelf;
 
