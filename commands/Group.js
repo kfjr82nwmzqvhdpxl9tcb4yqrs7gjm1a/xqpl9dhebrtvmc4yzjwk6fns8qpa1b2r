@@ -5,6 +5,9 @@ const db = require('../db');
 module.exports = [
     {
   name: 'antilink',
+        get flashOnly() {
+  return franceking();
+},
   description: 'Enable/disable antilink and set action (warn/kick/delete)',
   category: 'Group',
   adminOnly: true,
@@ -32,6 +35,9 @@ module.exports = [
     
     {
     name: 'tagall',
+        get flashOnly() {
+  return franceking();
+},
     aliases: ['mentionall'],
     description: 'Mentions all members of the current group.',
     category: 'Group',
@@ -67,6 +73,9 @@ module.exports = [
     
   {
     name: 'rename',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['gname'],
     description: 'Change the group subject (name).',
     category: 'Group',
@@ -87,36 +96,12 @@ module.exports = [
       }
     }
   },
-/*{
-  name: 'antilink',
-  description: 'Enable/disable antilink and set action (warn/kick/delete)',
-  category: 'Group',
-  adminOnly: true,
-  botAdminOnly: true,
-  groupOnly: true,
-
-  execute: async (king, msg, args) => {
-    const fromJid = msg.key.remoteJid;
-    const [option, action = 'warn'] = args;
-
-    if (!['on', 'off'].includes(option) || !['warn', 'kick', 'delete'].includes(action)) {
-      return king.sendMessage(fromJid, {
-        text: 'Usage: .antilink on|off warn|kick|delete'
-      }, { quoted: msg });
-    }
-
-    const enabled = option === 'on';
-    const db = require('../db');
-    await db.setGroupSettings(fromJid, enabled, action);
-
-    return king.sendMessage(fromJid, {
-      text: `✅ Antilink is now *${option.toUpperCase()}* with action: *${action.toUpperCase()}*`
-    }, { quoted: msg });
-  }
-}, */
     
   {
     name: 'kick',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['remove'],
     description: 'Remove a user from the group.',
     category: 'Group',
@@ -146,6 +131,9 @@ module.exports = [
 
   {
     name: 'add',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Add a user to the group.',
     category: 'Group',
@@ -176,6 +164,9 @@ module.exports = [
 
   {
     name: 'kickall',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Remove all non-admin members.',
     category: 'Group',
@@ -198,6 +189,9 @@ module.exports = [
 
   {
     name: 'promote',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Promote a member to admin.',
     category: 'Group',
@@ -228,6 +222,9 @@ module.exports = [
 
   {
     name: 'demote',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Demote a group admin.',
     category: 'Group',
@@ -257,6 +254,9 @@ module.exports = [
   },
 {
     name: 'approve',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['approve-all', 'accept'],
     description: 'Approve all pending join requests.',
     category: 'Group',
@@ -282,6 +282,9 @@ module.exports = [
 
   {
     name: 'reject',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['rejectall', 'rej', 'reject-all'],
     description: 'Reject all pending join requests.',
     category: 'Group',
@@ -307,6 +310,9 @@ module.exports = [
 
   {
     name: 'req',
+      get flashOnly() {
+  return franceking();
+},
     description: 'List pending join requests.',
     category: 'Group',
     groupOnly: true,
@@ -330,6 +336,9 @@ module.exports = [
 
   {
     name: 'disap1',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Set disappearing messages to 24 hours.',
     category: 'Group',
     groupOnly: true,
@@ -349,6 +358,9 @@ module.exports = [
 
   {
     name: 'disap7',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Set disappearing messages to 7 days.',
     category: 'Group',
     groupOnly: true,
@@ -368,6 +380,9 @@ module.exports = [
 
   {
     name: 'disap90',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Set disappearing messages to 90 days.',
     category: 'Group',
     groupOnly: true,
@@ -387,6 +402,9 @@ module.exports = [
 
   {
     name: 'disap-off',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Turn off disappearing messages.',
     category: 'Group',
     groupOnly: true,
@@ -406,6 +424,9 @@ module.exports = [
 
   {
     name: 'disap',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Instructions for disappearing messages.',
     category: 'Group',
     groupOnly: true,
@@ -422,6 +443,9 @@ module.exports = [
 
    {
     name: 'desc',
+       get flashOnly() {
+  return franceking();
+},
     aliases: ['gdesc'],
     description: 'Change the group description.',
     category: 'Group',
@@ -450,6 +474,9 @@ module.exports = [
 
   {
     name: 'lock',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['close'],
     description: 'Only admins can send messages.',
     category: 'Group',
@@ -470,6 +497,9 @@ module.exports = [
 
   {
     name: 'unlock',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['open'],
     description: 'Allow all members to send messages.',
     category: 'Group',
@@ -490,6 +520,9 @@ module.exports = [
 
   {
     name: 'invite',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['link'],
     description: 'Get the group invite link.',
     category: 'Group',
@@ -512,6 +545,9 @@ module.exports = [
 
   {
     name: 'revoke',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['reset'],
     description: 'Revoke current invite link and generate new one.',
     category: 'Group',
@@ -534,6 +570,9 @@ module.exports = [
 
   {
     name: 'broadcast',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['bc', 'cast'],
     description: 'Send a broadcast message to all groups.',
     category: 'General',
@@ -567,6 +606,9 @@ module.exports = [
 
   {
     name: 'left',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['leave'],
     description: 'Force the bot to leave the group.',
     category: 'Group',
@@ -590,6 +632,9 @@ module.exports = [
 
   {
     name: 'create',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['newgroup', 'newgc'],
     description: 'Create a new group with users.',
     category: 'General',
