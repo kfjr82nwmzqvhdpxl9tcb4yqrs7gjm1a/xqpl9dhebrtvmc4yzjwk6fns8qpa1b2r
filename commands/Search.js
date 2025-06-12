@@ -7,6 +7,9 @@ const fg = require('api-dylux');
 module.exports = [
   {
     name: 'attp',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['attp-sticker'],
     description: 'Converts text into an ATTP sticker.',
     category: 'User',
@@ -59,6 +62,9 @@ module.exports = [
   },
   {
     name: 'stickersearch',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['stsearch', 'stickerfind'],
     description: 'Search and create stickers from Tenor GIFs.',
     category: 'Search',
@@ -122,6 +128,9 @@ module.exports = [
   },
   {
     name: 'weather',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['climate'],
     description: 'Get the current weather for a specific location.',
     category: 'Search',
@@ -200,6 +209,9 @@ module.exports = [
   },
   {
     name: 'yts',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['ytsearch'],
     description: 'Searches YouTube videos by keyword.',
     category: 'Search',
@@ -261,6 +273,9 @@ module.exports = [
   },
   {
     name: 'ytmp4',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Downloads a YouTube video.',
     category: 'Download',
@@ -312,6 +327,9 @@ module.exports = [
   },
   {
     name: 'ytmp3',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Downloads audio from a YouTube video.',
     category: 'Download',
