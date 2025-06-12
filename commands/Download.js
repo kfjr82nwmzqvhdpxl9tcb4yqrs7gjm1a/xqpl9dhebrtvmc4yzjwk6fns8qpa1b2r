@@ -17,6 +17,9 @@ function formatDate(dateStr) {
 module.exports = [
     {
         name: 'npm',
+        get flashOnly() {
+  return franceking();
+},
         aliases: [],
         description: 'Search for an NPM package and view its details.',
         category: 'General',
@@ -81,6 +84,9 @@ _Use this info to explore or install the package via terminal_`;
     },
 {
   name: "video-dl",
+    get flashOnly() {
+  return franceking();
+},
   aliases: ["vddownload"],
   description: "Download high-quality videos from social media URLs",
   category: "Download",
@@ -133,6 +139,9 @@ _Use this info to explore or install the package via terminal_`;
 }, 
     {
   name: "tgs",
+        get flashOnly() {
+  return franceking();
+},
   aliases: ["tg"],
   description: "Download and send all stickers from a Telegram pack",
   category: "Sticker",
@@ -186,6 +195,9 @@ _Use this info to explore or install the package via terminal_`;
 }, 
 {
   name: "xdl",
+    get flashOnly() {
+  return franceking();
+},
   aliases: ["xvideodl"],
   description: "Download adult video from xnxx in high quality",
   category: "Download",
@@ -249,6 +261,9 @@ _Use this info to explore or install the package via terminal_`;
     
  {
   name: "xsearch",
+     get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: "Search for videos on XNXX",
   category: "General",
@@ -297,6 +312,9 @@ _Use this info to explore or install the package via terminal_`;
 },   
   {
   name: "insta",
+      get flashOnly() {
+  return franceking();
+},
   aliases: ["ig", "Instagram", "igdl"],
   reaction: "📸",
   category: "Download",
@@ -361,6 +379,9 @@ _Use this info to explore or install the package via terminal_`;
 },  
   {
   name: "gitclone",
+      get flashOnly() {
+  return franceking();
+},
   category: "Download",
   execute: async (sock, msg, args) => {
     const chatId = msg.key.remoteJid;
@@ -414,7 +435,10 @@ _Use this info to explore or install the package via terminal_`;
     
   {
   name: "math",
-  category: "Finance",
+      get flashOnly() {
+  return franceking();
+},
+  category: "General",
   execute: async (sock, msg, args) => {
     const chatId = msg.key.remoteJid;
     const input = args.join("").replace(/\s+/g, "");
@@ -437,6 +461,9 @@ _Use this info to explore or install the package via terminal_`;
 },  
 {
   name: "fb",
+    get flashOnly() {
+  return franceking();
+},
   aliases: ["fbdl", "facebook", "fb1"],
   reaction: "📽️",
   category: "Download",
@@ -490,6 +517,9 @@ _Use this info to explore or install the package via terminal_`;
 }, 
    {
   name: "fb2",
+       get flashOnly() {
+  return franceking();
+},
   aliases: ["fbdl2", "fb2", "facebook2"],
   reaction: "📽️",
   category: "Download",
@@ -544,6 +574,9 @@ _Use this info to explore or install the package via terminal_`;
     
   {
   name: "element",
+      get flashOnly() {
+  return franceking();
+},
   aliases: ["chem", "study"],
   category: "User",
   execute: async (sock, msg, args) => {
@@ -611,6 +644,9 @@ _Use this info to explore or install the package via terminal_`;
 }, 
 {
   name: "blackpink",
+    get flashOnly() {
+  return franceking();
+},
   aliases: ["bpink"],
   category: "Download",
   execute: async (sock, msg, args) => {
@@ -676,6 +712,9 @@ _Use this info to explore or install the package via terminal_`;
 }, 
     {
   name: "story",
+        get flashOnly() {
+  return franceking();
+},
   aliases: ["instastory", "igstory"],
   description: "Download all Instagram stories from a username",
   category: "Download",
@@ -753,6 +792,9 @@ _Use this info to explore or install the package via terminal_`;
             
    {
   name: "mediafire",
+       get flashOnly() {
+  return franceking();
+},
   aliases: ["mf", "mfdl"],
   description: "Download files from MediaFire",
   category: "Download",
@@ -817,6 +859,9 @@ const contextInfo = {
 }, 
     {
   name: "tiktok",
+        get flashOnly() {
+  return franceking();
+},
   aliases: ["tik", "tok", "tikdl"],
   description: "Download TikTok video",
   category: "Download",
@@ -875,6 +920,9 @@ const contextInfo = {
 }, 
 {
   name: "image-dl",
+    get flashOnly() {
+  return franceking();
+},
   aliases: ["imgdl"],
   description: "Download high-quality images from social media URLs",
   category: "Download",
@@ -928,6 +976,9 @@ const contextInfo = {
     
     {
         name: 'apk',
+        get flashOnly() {
+  return franceking();
+},
         aliases: ['app', 'application'],
         description: 'Search and download Android APK files.',
         category: 'Download',
@@ -1001,6 +1052,9 @@ _Enjoy using the app. Powered by FLASH-MD_`,
 
     {
         name: 'fetch',
+        get flashOnly() {
+  return franceking();
+},
         aliases: [],
         description: 'Fetches content from a URL and responds with the appropriate media or text.',
         category: 'Search',
