@@ -1,116 +1,3 @@
-/*const { franceking } = require('../main');
-const os = require('os');
-const moment = require('moment-timezone');
-const config = require('../config.js');
-
-const startTime = Date.now();
-
-const styles = {
-    10: {
-        "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ғ", "g": "ɢ", "h": "ʜ", "i": "ɪ", "j": "ᴊ",
-        "k": "ᴋ", "l": "ʟ", "m": "ᴍ", "n": "ɴ", "o": "ᴏ", "p": "ᴘ", "q": "ϙ", "r": "ʀ", "s": "s", "t": "ᴛ",
-        "u": "ᴜ", "v": "v", "w": "ᴡ", "x": "x", "y": "ʏ", "z": "ᴢ",
-        "A": "ᴀ", "B": "ʙ", "C": "ᴄ", "D": "ᴅ", "E": "ᴇ", "F": "ғ", "G": "ɢ", "H": "ʜ", "I": "ɪ", "J": "ᴊ",
-        "K": "ᴋ", "L": "ʟ", "M": "ᴍ", "N": "ɴ", "O": "ᴏ", "P": "ᴘ", "Q": "ϙ", "R": "ʀ", "S": "s", "T": "ᴛ",
-        "U": "ᴜ", "V": "v", "W": "ᴡ", "X": "x", "Y": "ʏ", "Z": "ᴢ"
-    }
-};
-
-const applyStyle = (text, styleNum) => {
-    const map = styles[styleNum];
-    return text.split('').map(c => map[c] || c).join('');
-};
-
-const formatUptime = ms => {
-    const sec = Math.floor(ms / 1000) % 60;
-    const min = Math.floor(ms / (1000 * 60)) % 60;
-    const hr = Math.floor(ms / (1000 * 60 * 60)) % 24;
-    const day = Math.floor(ms / (1000 * 60 * 60 * 24));
-
-    const parts = [];
-
-    if (day === 1) parts.push(`1 day`);
-    else if (day > 1) parts.push(`${day} days`);
-
-    if (hr === 1) parts.push(`1 hour`);
-    else if (hr > 1) parts.push(`${hr} h`);
-
-    if (min === 1) parts.push(`1 minute`);
-    else if (min > 1) parts.push(`${min} m`);
-
-    if (sec === 1) parts.push(`1 second`);
-    else if (sec > 1 || parts.length === 0) parts.push(`${sec} s`);
-
-    return parts.join(', ');
-};
-
-const detectPlatform = () => {
-    if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
-    if (process.env.KOYEB_ENV) return 'Koyeb';
-    if (process.env.RENDER) return 'Render';
-    if (process.env.GITHUB_ACTIONS) return 'GitHub Actions';
-    if (process.env.DYNO) return 'Heroku';
-    return 'Linux';
-};
-
-module.exports = [
-    {
-        name: 'menu',
-        aliases: [],
-        description: 'Displays categorized list of commands',
-        category: 'General',
-        execute: async (king, msg, args, fromJid, allCommands) => {
-            const time = moment().tz(config.timezone || 'Africa/Lagos');
-            const uptime = formatUptime(Date.now() - startTime);
-            const platform = detectPlatform();
-            const usedMem = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
-            const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-
-            const categorized = {};
-            for (const cmd of allCommands) {
-                const category = cmd.category ? cmd.category.toUpperCase() : 'GENERAL';
-                if (!categorized[category]) categorized[category] = [];
-                categorized[category].push(cmd);
-            }
-
-            let text = `*◇ FLASH-MD V2 MENU ◇*\n\n`;
-            text += `╭──── System Info ────◆\n`;
-            text += `│ *Platform:* ${platform}\n`;
-            text += `│ *RAM:* ${usedMem}/${totalMem} GB\n`;
-            text += `│ *Time:* ${time.format('HH:mm:ss')}\n`;
-            text += `│ *Date:* ${time.format('DD/MM/YYYY')}\n`;
-            text += `│ *Uptime:* ${uptime}\n`;
-            text += `╰────────────────────◆\n\n`;
-
-            let counter = 1;
-            const sortedCategories = Object.keys(categorized).sort();
-            for (const category of sortedCategories) {
-                const commandsInCategory = categorized[category].filter(c => c.name);
-                if (commandsInCategory.length === 0) continue;
-
-                text += `*╭──❒ ${applyStyle(category, 10)} ❒───⊷*\n`;
-                text += `│╭────────────\n`;
-                for (const cmd of commandsInCategory) {
-                    text += `││ ${counter++}. ${applyStyle(cmd.name, 10)}\n`;
-                }
-                text += `│╰────────────\n`;
-                text += `╰══════════════⊷\n\n`;
-            }
-
-            await king.sendMessage(fromJid, {
-                text,
-                contextInfo: {
-                    forwardingScore: 1,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363238139244263@newsletter',
-                        newsletterName: 'FLASH-MD',
-                        serverMessageId: -1
-                    }
-                }
-            });
-        }
-    },*/
 const { franceking } = require('../main');
 const os = require('os');
 const moment = require('moment-timezone');
@@ -173,12 +60,15 @@ const detectPlatform = () => {
     return 'Unknown (Linux)';
 };
 
-const fetchForkCount = async () => {
+const fetchRepoData = async () => {
     try {
         const response = await axios.get('https://api.github.com/repos/franceking1/Flash-Md-V2');
-        return response.data.forks_count;
+        return {
+            forks: response.data.forks_count || 0,
+            stars: response.data.stargazers_count || 0
+        };
     } catch {
-        return 0;
+        return { forks: 0, stars: 0 };
     }
 };
 
@@ -194,10 +84,9 @@ module.exports = [
             const platform = detectPlatform();
             const usedMem = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
             const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-            const forkCount = await fetchForkCount();
-            const users = forkCount * 2;
-            const starts = forkCount * 2;
-            const prefix = config.prefixes.join(', ') || '.';
+            const { forks, stars } = await fetchRepoData();
+            const users = forks * 2 + stars * 2;
+            const prefix = Array.isArray(config.prefixes) && config.prefixes.length > 0 ? config.prefixes.join(', ') : '.';
 
             const categorized = {};
             for (const cmd of allCommands) {
@@ -214,10 +103,9 @@ module.exports = [
             text += `│ *Date:* ${time.format('DD/MM/YYYY')}\n`;
             text += `│ *Uptime:* ${uptime}\n`;
             text += `│ *Prefix:* ${prefix}\n`;
-            text += `│ *Timezone:* ${config.timezone || 'Africa/Lagos'}\n`;
+            text += `│ *Timezone:* ${config.timezone || 'Default: Africa/Nairobi'}\n`;
             text += `│ *Commands:* ${allCommands.length}\n`;
             text += `│ *Users:* ${users}\n`;
-            text += `│ *Starts:* ${starts}\n`;
             text += `╰────────────────────◆\n\n`;
 
             let counter = 1;
@@ -255,10 +143,11 @@ module.exports = [
         description: 'Provides help and guide for new users',
         category: 'General',
         execute: async (sock, msg, args, fromJid, allCommands) => {
+            const prefix = Array.isArray(config.prefixes) && config.prefixes.length > 0 ? config.prefixes[0] : '.';
             let text = `*🛠️ FLASH-MD-V2 USER GUIDE*\n\n`;
             text += `To use the bot:\n`;
-            text += `• Start commands with the prefix\n`;
-            text += `• Use .menu to view all available commands\n`;
+            text += `• Start commands with the prefix *${prefix}*\n`;
+            text += `• Use ${prefix}menu to view all available commands\n`;
             text += `*COMMANDS LIST:*\n\n`;
 
             const categorized = {};
