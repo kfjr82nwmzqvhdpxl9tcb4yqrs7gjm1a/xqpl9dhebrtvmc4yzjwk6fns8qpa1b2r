@@ -60,15 +60,12 @@ const detectPlatform = () => {
     return 'Unknown (Linux)';
 };
 
-const fetchRepoData = async () => {
+const fetchForkCount = async () => {
     try {
         const response = await axios.get('https://api.github.com/repos/franceking1/Flash-Md-V2');
-        return {
-            forks: response.data.forks_count || 0,
-            stars: response.data.stargazers_count || 0
-        };
+        return response.data.forks_count;
     } catch {
-        return { forks: 0, stars: 0 };
+        return 0;
     }
 };
 
@@ -84,9 +81,10 @@ module.exports = [
             const platform = detectPlatform();
             const usedMem = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
             const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-            const { forks, stars } = await fetchRepoData();
-            const users = forks * 2 + stars * 2;
-            const prefix = Array.isArray(config.prefixes) && config.prefixes.length > 0 ? config.prefixes.join(', ') : '.';
+            const forkCount = await fetchForkCount();
+            const users = forkCount * 2;
+            const prefix = config.prefixes.join(', ') || '.';
+            const botOwner = config.ON || 'Unknown';
 
             const categorized = {};
             for (const cmd of allCommands) {
@@ -95,18 +93,18 @@ module.exports = [
                 categorized[category].push(cmd);
             }
 
-            let text = `*◇ FLASH-MD V2 MENU ◇*\n\n`;
-            text += `╭──── System Info ────◆\n`;
-            text += `│ *Platform:* ${platform}\n`;
-            text += `│ *RAM:* ${usedMem}/${totalMem} GB\n`;
-            text += `│ *Time:* ${time.format('HH:mm:ss')}\n`;
-            text += `│ *Date:* ${time.format('DD/MM/YYYY')}\n`;
-            text += `│ *Uptime:* ${uptime}\n`;
-            text += `│ *Prefix:* ${prefix}\n`;
-            text += `│ *Timezone:* ${config.timezone || 'Default: Africa/Nairobi'}\n`;
-            text += `│ *Commands:* ${allCommands.length}\n`;
-            text += `│ *Users:* ${users}\n`;
-            text += `╰────────────────────◆\n\n`;
+            let text = `╭━━━〔 ${applyStyle("FLASH-MD V2 MENU", 10)} 〕━━━╮\n`;
+            text += `┃ 🧩 *Commands:* ${allCommands.length}\n`;
+            text += `┃ 🪄 *Prefix:* ${prefix}\n`;
+            text += `┃ ⏰ *Time:* ${time.format('HH:mm:ss')}\n`;
+            text += `┃ 🌍 *Timezone:* ${config.timezone || 'Africa/Lagos'}\n`;
+            text += `┃ 📅 *Date:* ${time.format('DD/MM/YYYY')}\n`;
+            text += `┃ 🔋 *Uptime:* ${uptime}\n`;
+            text += `┃ 💻 *Platform:* ${platform}\n`;
+            text += `┃ 💾 *RAM:* ${usedMem}/${totalMem} GB\n`;
+            text += `┃ 👥 *Users:* ${users}\n`;
+            text += `┃ 👑 *Bot Owner:* ${botOwner}\n`;
+            text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
             let counter = 1;
             const sortedCategories = Object.keys(categorized).sort();
@@ -135,7 +133,7 @@ module.exports = [
                 }
             });
         }
-    }, 
+    },
 
     {
         name: 'help',
