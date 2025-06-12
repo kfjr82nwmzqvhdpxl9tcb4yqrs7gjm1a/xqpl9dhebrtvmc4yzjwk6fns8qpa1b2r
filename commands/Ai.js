@@ -4,6 +4,9 @@ const axios = require('axios');
 module.exports = [
   {
     name: 'llama',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['ilama'],
     description: 'Ask LLaMA AI a question or prompt.',
     category: 'AI',
@@ -44,6 +47,9 @@ module.exports = [
   },
   {
     name: 'jokes',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Get a random joke.',
     category: 'Fun',
@@ -77,6 +83,9 @@ module.exports = [
   },
   {
     name: 'advice',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Get a random piece of advice.',
     category: 'Fun',
@@ -110,6 +119,9 @@ module.exports = [
   },
   {
     name: 'trivia',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Get a random trivia question.',
     category: 'Fun',
@@ -167,6 +179,9 @@ module.exports = [
   },
   {
     name: 'bard',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['bard-ai'],
     description: 'Chat with BARD AI.',
     category: 'AI',
@@ -228,7 +243,10 @@ module.exports = [
     }
   },
   {
-    name: 'inspire',
+    name: 'inspire', 
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Get an inspirational quote.',
     category: 'General',
@@ -263,6 +281,9 @@ module.exports = [
   },
   {
     name: 'pair',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['pairing', 'generatecode'],
     description: 'Generates a pairing code for a phone number.',
     category: 'General',
@@ -310,6 +331,9 @@ module.exports = [
   },
   {
     name: 'best-wallp',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['bestwal', 'best', 'bw'],
     description: 'Sends a high-quality random wallpaper.',
     category: 'FLASH PICS',
@@ -342,6 +366,9 @@ module.exports = [
   },
   {
     name: 'random',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Sends a random wallpaper from Unsplash.',
     category: 'FLASH PICS',
