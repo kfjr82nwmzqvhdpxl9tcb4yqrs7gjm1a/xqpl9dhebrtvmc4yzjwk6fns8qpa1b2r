@@ -31,6 +31,9 @@ function getHerokuClient() {
 module.exports = [
   {
     name: 'addvar',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Adds a new Heroku config variable.',
     category: 'HEROKU',
     execute: async (king, msg, args) => {
@@ -63,6 +66,9 @@ module.exports = [
 
   {
     name: 'delvar',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Deletes a Heroku config variable.',
     category: 'HEROKU',
     execute: async (king, msg, args) => {
@@ -90,6 +96,9 @@ module.exports = [
 
   {
     name: 'setvar',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Updates or sets a Heroku config variable.',
     category: 'HEROKU',
     execute: async (king, msg, args) => {
@@ -119,6 +128,9 @@ module.exports = [
 
   {
     name: 'getvar',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Fetches a specific Heroku config variable.',
     category: 'HEROKU',
     execute: async (king, msg, args) => {
@@ -150,6 +162,9 @@ module.exports = [
 
   {
     name: 'allvar',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Lists all Heroku environment variables.',
     category: 'HEROKU',
     execute: async (king, msg) => {
