@@ -46,6 +46,9 @@ function formatUptime(totalSec) {
 
 module.exports = {
     name: 'host',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['platform'],
     description: 'Shows details about the current hosting environment.',
     execute: async (king, msg, args, fromJid) => {
