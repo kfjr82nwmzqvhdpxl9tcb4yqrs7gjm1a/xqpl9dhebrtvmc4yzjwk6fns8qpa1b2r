@@ -7,7 +7,10 @@ const BASE_URL = 'https://noobs-api.top';
 module.exports = [
   {
     name: 'play',
-    aliases: ['music', 'ytmp3'],
+    get flashOnly() {
+  return franceking();
+},
+    aliases: ['music'],
     description: 'Search and play MP3 music from YouTube (audio only).',
     category: 'Search',
     execute: async (king, msg, args) => {
@@ -86,6 +89,9 @@ module.exports = [
 
   {
     name: 'song',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['audiofile', 'mp3doc'],
     description: 'Search and send MP3 music as document from YouTube.',
     category: 'Search',
@@ -165,6 +171,9 @@ module.exports = [
 
   {
     name: 'video',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['vid', 'mp4', 'movie'],
     description: 'Search and send video from YouTube as MP4.',
     category: 'Search',
