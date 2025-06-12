@@ -12,6 +12,9 @@ async function getBuffer(message, type) {
 module.exports = [
   {
     name: 'privacy',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Displays your current privacy settings.',
     category: 'Whatsapp',
@@ -58,6 +61,9 @@ module.exports = [
   },
   {
     name: 'pin',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Pin a chat.',
     category: 'Whatsapp',
     execute: async (king, msg, args, fromJid) => {
@@ -72,6 +78,9 @@ module.exports = [
   },
   {
     name: 'unpin',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Unpin a chat.',
     category: 'Whatsapp',
     execute: async (king, msg, args, fromJid) => {
@@ -86,6 +95,9 @@ module.exports = [
   },
   {
     name: 'star',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Star a quoted message.',
     category: 'Whatsapp',
     execute: async (king, msg, args, fromJid) => {
@@ -114,6 +126,9 @@ module.exports = [
   },
   {
     name: 'unstar',
+      get flashOnly() {
+  return franceking();
+},
     description: 'Unstar a quoted message.',
     category: 'Whatsapp',
     execute: async (king, msg, args, fromJid) => {
@@ -142,6 +157,9 @@ module.exports = [
   }, 
   {
     name: 'mydp',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Updates your profile picture privacy setting.',
     category: 'Whatsapp',
@@ -176,6 +194,9 @@ module.exports = [
   },
   {
     name: 'mystatus',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Updates your status privacy setting.',
     category: 'Whatsapp',
@@ -210,6 +231,9 @@ module.exports = [
   },
   {
     name: 'groupadd',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Updates who can add you to groups.',
     category: 'Whatsapp',
@@ -242,6 +266,9 @@ module.exports = [
   }, 
   {
     name: 'lastseen',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Updates your last seen privacy settings.',
     category: 'Whatsapp',
@@ -283,6 +310,9 @@ module.exports = [
   },
   {
     name: 'myonline',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Updates your online privacy setting.',
     category: 'Whatsapp',
@@ -314,6 +344,9 @@ module.exports = [
 
   {
     name: 'onwa',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ["checkid", "checkno"],
     description: 'Checks if a WhatsApp ID exists.',
     category: 'Whatsapp',
@@ -342,6 +375,9 @@ module.exports = [
   },
   {
     name: 'bizprofile',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ["bizp"],
     description: 'Fetches business description and category.',
     category: 'Whatsapp',
@@ -359,6 +395,9 @@ module.exports = [
   },
   {
     name: 'removedp',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Removes your profile picture.',
     category: 'Whatsapp',
@@ -376,9 +415,13 @@ module.exports = [
   }, 
   {
     name: 'save',
+      get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Saves and resends the replied media message.',
     category: 'User',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
@@ -430,6 +473,9 @@ module.exports = [
   },
   {
     name: 'archive',
+        get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Archives the current chat.',
     category: 'Whatsapp',
@@ -450,18 +496,17 @@ module.exports = [
   }, 
   {
     name: 'fullpp',
+      get flashOnly() {
+  return franceking();
+},
     aliases: ['setdp'],
     description: 'Sets bot profile picture from a quoted image.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
       const senderJid = msg.key.participant || msg.key.remoteJid;
       const senderNumber = senderJid.replace(/@.*$/, '').split(':')[0];
 
-      if (!DEVS.includes(senderNumber)) {
-        return await king.sendMessage(jid, {
-          text: 'This command is for my owner only!'
-        }, { quoted: msg });
-      }
 
       const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       if (!quotedMsg?.imageMessage) {
