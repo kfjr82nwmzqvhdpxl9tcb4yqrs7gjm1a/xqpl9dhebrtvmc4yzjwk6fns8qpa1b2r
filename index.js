@@ -339,10 +339,10 @@ The following message was deleted:`,
 
     
 
-    await king.sendMessage(fromJid, {
+   /* await king.sendMessage(fromJid, {
       react: { key: msg.key, text: '🤍' }
     }).catch(() => {});
-
+*/
     let groupAdmins = [];
     const isGroup = isGroupJid(fromJid);
     if (isGroup) {
@@ -366,7 +366,11 @@ The following message was deleted:`,
         text: '⛔ This command is restricted to the bot owner.',
       }, { quoted: msg });
     }
-    
+    if (!command.flashOnly || isAllowed) {
+  await king.sendMessage(fromJid, {
+    react: { key: msg.key, text: '🤍' }
+  }).catch(() => {});
+    }
    
     if (command.flashOnly && !isAllowed) {
       return; 
