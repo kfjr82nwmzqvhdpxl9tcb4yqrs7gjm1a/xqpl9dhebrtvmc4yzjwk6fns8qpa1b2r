@@ -7,6 +7,9 @@ const translate = require('../france/Trt');
 module.exports = [
   {
     name: 'trt',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['translate'],
     description: 'Translate a replied message to the specified language.',
     category: 'General',
@@ -45,6 +48,9 @@ module.exports = [
   },
   {
     name: 'owner',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Sends contact card of the bot owner.',
     category: 'General',
     execute: async (king, msg, args) => {
@@ -67,6 +73,9 @@ module.exports = [
   },
   {
     name: 'ss',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Takes a screenshot of a website.',
     category: 'General',
     execute: async (king, msg, args) => {
@@ -92,6 +101,9 @@ module.exports = [
   },
   {
     name: 'bible',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Get a Bible verse from a specific book, chapter, and verse.',
     category: 'General',
     execute: async (king, msg, args) => {
@@ -119,6 +131,9 @@ module.exports = [
   },
   {
     name: 'poll',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Create a poll.',
     category: 'General',
     execute: async (king, msg, args) => {
@@ -140,6 +155,9 @@ module.exports = [
   },
   {
     name: 'fact',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Get a random fact.',
     category: 'User',
     execute: async (king, msg) => {
@@ -154,6 +172,9 @@ module.exports = [
   },
   {
     name: 'quotes',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Get a random quote.',
     category: 'User',
     execute: async (king, msg) => {
@@ -169,6 +190,9 @@ module.exports = [
   },
   {
     name: 'define',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Get a definition for a term.',
     category: 'Search',
     execute: async (king, msg, args) => {
@@ -190,6 +214,9 @@ module.exports = [
   },
   {
     name: 'eval',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['evaluate'],
     description: 'Evaluate JavaScript code (owner only).',
     category: 'General',
