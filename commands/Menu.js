@@ -100,7 +100,7 @@ module.exports = [
                 categorized[category].push(cmd);
             }
 
-            let text = `╭━━━❒ ${applyStyle("FLASH-MD V2 INFO", 10)} ❒━━━╮\n`;
+            let text = `╭━━━❒ ${applyStyle("FLASH-MD V2.5 INFO", 10)} ❒━━━╮\n`;
             text += `┃ 🧩 *Commands:* ${allCommands.length.toLocaleString()}\n`;
             text += `┃ 🪄 *Prefix:* ${prefix}\n`;
             text += `┃ ⏰ *Time:* ${time.format('HH:mm:ss')}\n`;
@@ -111,7 +111,7 @@ module.exports = [
             text += `┃ 💾 *RAM:* ${usedMem}/${totalMem} GB\n`;
             text += `┃ 👥 *Users:* ${usersFormatted}\n`;
             text += `┃ 👑 *Owner:* ${botOwner}\n`;
-            text += `╰━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+            text += `╰━━━━━━❒${applyStyle("Powered by France King", 10)} ❒━━━━━━╯\n\n`;
 
             let counter = 1;
             const sortedCategories = Object.keys(categorized).sort();
