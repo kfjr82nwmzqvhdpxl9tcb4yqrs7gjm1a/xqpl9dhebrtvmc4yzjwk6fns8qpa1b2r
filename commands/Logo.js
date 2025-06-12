@@ -733,7 +733,8 @@ module.exports = [
 },
 
 {
-  name: 'light',. get flashOnly() {
+  name: 'light',
+  get flashOnly() {
   return franceking();
 },
   aliases: [],
