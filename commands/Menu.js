@@ -111,7 +111,7 @@ module.exports = [
             text += `┃ 💾 *RAM:* ${usedMem}/${totalMem} GB\n`;
             text += `┃ 👥 *Users:* ${usersFormatted}\n`;
             text += `┃ 👑 *Owner:* ${botOwner}\n`;
-            text += `╰━━━━━━❒${applyStyle("Version 2.5", 10)} ❒━━━━━━╯\n\n`;
+            text += `╰━━━━━━❒ ${applyStyle("Version 2.5", 10)} ❒━━━━━╯\n\n`;
 
             let counter = 1;
             const sortedCategories = Object.keys(categorized).sort();
