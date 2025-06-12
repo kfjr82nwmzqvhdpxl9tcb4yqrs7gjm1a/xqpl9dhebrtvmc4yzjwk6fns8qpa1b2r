@@ -18,6 +18,7 @@ module.exports = [
     aliases: [],
     description: 'Displays your current privacy settings.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
        
 
