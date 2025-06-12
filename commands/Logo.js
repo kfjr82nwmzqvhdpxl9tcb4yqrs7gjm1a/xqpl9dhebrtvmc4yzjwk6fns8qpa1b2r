@@ -4,6 +4,9 @@ const mumaker = require('mumaker');
 module.exports = [
   {
     name: 'hacker',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Generate a neon hacker-style logo.',
     category: 'Logo',
@@ -38,6 +41,9 @@ module.exports = [
 
   {
     name: 'dragonball',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Generate a Dragon Ball style logo.',
     category: 'Logo',
@@ -73,6 +79,9 @@ module.exports = [
 
   {
     name: 'naruto',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Generate a Naruto Shippuden style logo.',
     category: 'Logo',
@@ -108,6 +117,9 @@ module.exports = [
 
   {
     name: 'sand',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Generate a sand-style logo.',
     category: 'Logo',
@@ -140,6 +152,9 @@ module.exports = [
   },
   {
   name: 'sunset',
+    get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a sunset light text effect.',
   category: 'Logo',
@@ -173,6 +188,9 @@ module.exports = [
 
 {
   name: 'chocolate',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a chocolate text effect.',
   category: 'Logo',
@@ -206,6 +224,9 @@ module.exports = [
 
 {
   name: 'mechanical',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a mechanical style text effect.',
   category: 'Logo',
@@ -238,6 +259,9 @@ module.exports = [
 }, 
 {
   name: 'rain',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a foggy rainy text effect.',
   category: 'Logo',
@@ -271,6 +295,9 @@ module.exports = [
 
 {
   name: 'cloth',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a text on cloth effect.',
   category: 'Logo',
@@ -304,6 +331,9 @@ module.exports = [
 
 {
   name: 'water',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a water effect text logo.',
   category: 'Logo',
@@ -337,6 +367,9 @@ module.exports = [
 
 {
   name: '1917',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a 1917 movie-style text logo.',
   category: 'Logo',
@@ -369,6 +402,9 @@ module.exports = [
 }, 
 {
   name: 'graffiti',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a cartoon-style graffiti text effect.',
   category: 'Logo',
@@ -403,6 +439,9 @@ module.exports = [
 
 {
   name: 'boom',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a comic-style boom text effect.',
   category: 'Logo',
@@ -437,6 +476,9 @@ module.exports = [
 
 {
   name: 'cat',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate handwritten text on foggy glass.',
   category: 'Logo',
@@ -471,6 +513,9 @@ module.exports = [
 
 {
   name: 'purple',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a purple text effect.',
   category: 'Logo',
@@ -504,6 +549,9 @@ module.exports = [
 }, 
 {
   name: 'gold',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a modern gold text effect.',
   category: 'Logo',
@@ -538,6 +586,9 @@ module.exports = [
 
 {
   name: 'arena',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate Arena of Valor-style cover text.',
   category: 'Logo',
@@ -572,6 +623,9 @@ module.exports = [
 
 {
   name: 'incandescent',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate incandescent bulb text effect.',
   category: 'Logo',
@@ -606,6 +660,9 @@ module.exports = [
 
 {
   name: 'child',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Write text on wet glass style.',
   category: 'Logo',
@@ -640,6 +697,9 @@ module.exports = [
 
   {
   name: 'typo',
+    get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate typography text on pavement.',
   category: 'Logo',
@@ -673,7 +733,9 @@ module.exports = [
 },
 
 {
-  name: 'light',
+  name: 'light',. get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate futuristic light technology style text.',
   category: 'Logo',
@@ -708,6 +770,9 @@ module.exports = [
 
 {
   name: 'steel',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate dragon steel text effect.',
   category: 'Logo',
@@ -742,6 +807,9 @@ module.exports = [
 
 {
   name: 'sunlight',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a sunlight shadow text effect.',
   category: 'Logo',
@@ -776,6 +844,9 @@ module.exports = [
 
 {
   name: 'frozen',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a frozen Christmas text effect.',
   category: 'Logo',
@@ -810,6 +881,9 @@ module.exports = [
 
 {
   name: 'leaves',
+  get flashOnly() {
+  return franceking();
+},
   aliases: [],
   description: 'Generate a green brush text effect.',
   category: 'Logo',
@@ -844,6 +918,9 @@ module.exports = [
   
   {
     name: 'night',
+    get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Generate a stars-at-night style logo.',
     category: 'Logo',
