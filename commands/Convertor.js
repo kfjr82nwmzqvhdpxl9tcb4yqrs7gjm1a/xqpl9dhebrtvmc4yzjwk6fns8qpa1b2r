@@ -39,6 +39,9 @@ module.exports = [
 
 {
   name: 'sticker',
+  get flashOnly() {
+  return franceking();
+},
   aliases: ['s'],
   description: 'Convert image or video to sticker',
   category: 'Converter',
@@ -109,6 +112,9 @@ module.exports = [
 },
 {
     name: 'enhance',
+  get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Enhance an image from a given URL using AI enhancement.',
     category: 'Media',
@@ -151,6 +157,9 @@ module.exports = [
   
   {
   name: 'quotly',
+    get flashOnly() {
+  return franceking();
+},
   aliases: ['q'],
   description: 'Make a quote sticker from text and username',
   category: 'Converter',
@@ -192,6 +201,9 @@ module.exports = [
 }, 
   {
   name: 'crop',
+    get flashOnly() {
+  return franceking();
+},
   description: 'Create cropped sticker from media',
   category: 'Converter',
   execute: async (sock, msg, args) => {
@@ -237,6 +249,9 @@ module.exports = [
 
 {
   name: 'tomp3',
+  get flashOnly() {
+  return franceking();
+},
   aliases: ['toaudio', 'audio'],
   description: 'Convert video to audio (mp3)',
   category: 'Converter',
@@ -280,6 +295,9 @@ module.exports = [
 
 {
   name: 'take',
+  get flashOnly() {
+  return franceking();
+},
   description: 'Take sticker with custom pack name',
   category: 'Converter',
   execute: async (sock, msg, args) => {
@@ -324,6 +342,9 @@ module.exports = [
 
 {
   name: 'url',
+  get flashOnly() {
+  return franceking();
+},
   description: 'Upload media to Catbox and return URL',
   category: 'Converter',
   execute: async (sock, msg) => {
