@@ -3,6 +3,9 @@ const axios = require('axios');
 
 module.exports = {
     name: 'repo',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['sc', 'script'],
     description: 'Sends the official GitHub repository and stats for FLASH-MD-V2 WhatsApp bot',
     execute: async (sock, msg) => {
