@@ -60,12 +60,16 @@ const detectPlatform = () => {
     return 'Unknown (Linux)';
 };
 
-const fetchForkCount = async () => {
+const fetchRepoStats = async () => {
     try {
         const response = await axios.get('https://api.github.com/repos/franceking1/Flash-Md-V2');
-        return response.data.forks_count;
+        const { forks_count, stargazers_count } = response.data;
+        return {
+            forks: forks_count || 0,
+            stars: stargazers_count || 0
+        };
     } catch {
-        return 0;
+        return { forks: 0, stars: 0 };
     }
 };
 
@@ -81,8 +85,11 @@ module.exports = [
             const platform = detectPlatform();
             const usedMem = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
             const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-            const forkCount = await fetchForkCount();
-            const users = forkCount * 2;
+            const { forks, stars } = await fetchRepoStats();
+            const users = (stars * 3) + (forks * 2);
+            const usersFormatted = users.toLocaleString();
+            const starsFormatted = stars.toLocaleString();
+            const forksFormatted = forks.toLocaleString();
             const prefix = config.prefixes.join(', ') || '.';
             const botOwner = config.ON || 'Unknown';
 
@@ -93,8 +100,8 @@ module.exports = [
                 categorized[category].push(cmd);
             }
 
-            let text = `╭━━━〔 ${applyStyle("FLASH-MD V2 MENU", 10)} 〕━━━╮\n`;
-            text += `┃ 🧩 *Commands:* ${allCommands.length}\n`;
+            let text = `╭━━━❒ ${applyStyle("FLASH-MD V2 INFO", 10)} ❒━━━╮\n`;
+            text += `┃ 🧩 *Commands:* ${allCommands.length.toLocaleString()}\n`;
             text += `┃ 🪄 *Prefix:* ${prefix}\n`;
             text += `┃ ⏰ *Time:* ${time.format('HH:mm:ss')}\n`;
             text += `┃ 🌍 *Timezone:* ${config.timezone || 'Africa/Lagos'}\n`;
@@ -102,9 +109,9 @@ module.exports = [
             text += `┃ 🔋 *Uptime:* ${uptime}\n`;
             text += `┃ 💻 *Platform:* ${platform}\n`;
             text += `┃ 💾 *RAM:* ${usedMem}/${totalMem} GB\n`;
-            text += `┃ 👥 *Users:* ${users}\n`;
-            text += `┃ 👑 *Bot Owner:* ${botOwner}\n`;
-            text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+            text += `┃ 👥 *Users:* ${usersFormatted}\n`;
+            text += `┃ 👑 *Owner:* ${botOwner}\n`;
+            text += `╰━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
             let counter = 1;
             const sortedCategories = Object.keys(categorized).sort();
@@ -156,7 +163,7 @@ module.exports = [
             }
 
             for (const [cat, cmds] of Object.entries(categorized)) {
-                if (cmds.length === 0) continue;
+            if (cmds.length === 0) continue;
                 text += `📂 *${cat}*\n`;
                 for (const cmd of cmds) {
                     text += `• *${cmd.name}* - ${cmd.description}`;
