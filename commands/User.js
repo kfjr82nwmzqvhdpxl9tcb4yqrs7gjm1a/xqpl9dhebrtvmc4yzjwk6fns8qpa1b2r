@@ -31,6 +31,9 @@ let fetchInterval;
 module.exports = [
   {
     name: 'block',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Blocks a user on WhatsApp.',
     category: 'USER',
     ownerOnly: true,
@@ -63,6 +66,9 @@ module.exports = [
 
   {
     name: 'setbio',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Set a custom bio/status message.',
     category: 'USER',
     ownerOnly: true,
@@ -99,6 +105,9 @@ module.exports = [
 
   {
     name: 'autobio',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Toggle automatic status updates with random facts.',
     category: 'USER',
     ownerOnly: true,
@@ -164,6 +173,9 @@ module.exports = [
   },
 {
     name: 'getpp',
+  get flashOnly() {
+  return franceking();
+},
     description: 'Get the profile picture of a user.',
     category: 'USER',
 
@@ -193,6 +205,9 @@ module.exports = [
 
   {
     name: 'whois',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Get user profile picture and status.',
     category: 'USER',
 
@@ -228,6 +243,9 @@ module.exports = [
 
   {
     name: 'mygroups',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['groups'],
     description: 'Lists all groups the bot is in.',
     category: 'USER',
@@ -262,6 +280,9 @@ try {
   },
 {
     name: 'del',
+  get flashOnly() {
+  return franceking();
+},
     aliases: ['delete'],
     description: 'Deletes a replied message.',
     category: 'USER',
@@ -303,6 +324,9 @@ try {
 
   {
     name: 'restart',
+    get flashOnly() {
+  return franceking();
+},
     aliases: ['reboot'],
     description: 'Restarts the bot.',
     category: 'USER',
@@ -323,6 +347,9 @@ try {
 
   {
     name: 'unblock',
+    get flashOnly() {
+  return franceking();
+},
     description: 'Unblocks a user on WhatsApp.',
     category: 'USER',
     ownerOnly: true,
