@@ -396,13 +396,10 @@ The following message was deleted:`,
       }, { quoted: msg });
     }
     
-   
-    if (command.flashOnly && !isAllowed) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ MODE TESTING.',
-      }, { quoted: msg });
-    }
-    
+if (command.flashOnly && conf.MODE === 'private' && !isAllowed) {
+  return;
+}
+  
     if (command.groupOnly && !isGroup) {
       return king.sendMessage(fromJid, {
         text: '❌ This command only works in groups.'
