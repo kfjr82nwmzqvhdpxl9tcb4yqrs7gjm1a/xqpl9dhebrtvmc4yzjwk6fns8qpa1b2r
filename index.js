@@ -5,7 +5,37 @@ const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('WhatsApp Bot is running!'));
 app.listen(PORT, () => console.log(`Web server running on port ${PORT}`));
 
-require('./db-init')();
+(async () => {
+  try {
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL || 'postgresql://beltahke:CdiT5wd6lnosDJyqVtiuHMAeB64DU24b@dpg-d12fn6juibrs73f61n0g-a.oregon-postgres.render.com/beltahtechpg',
+      ssl: { rejectUnauthorized: false }
+    });
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS group_settings (
+        group_id TEXT PRIMARY KEY,
+        antilink_enabled BOOLEAN DEFAULT FALSE,
+        action TEXT DEFAULT 'warn'
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_warnings (
+        group_id TEXT,
+        user_id TEXT,
+        warnings INTEGER DEFAULT 1,
+        PRIMARY KEY (group_id, user_id)
+      );
+    `);
+
+    console.log('✅ Tables initialized (optional)');
+  } catch (err) {
+    console.warn('⚠️ Skipping DB init: ', err.message);
+  }
+})();
+
 const {
   default: makeWASocket,
   DisconnectReason,
@@ -228,98 +258,19 @@ The following message was deleted:`,
     const chatType = getChatCategory(fromJid);
     const pushName = msg.pushName || 'Unknown';
 
-let contentSummary = '';
+    let contentSummary = '';
+    if (m?.conversation) contentSummary = m.conversation;
+    else if (m?.extendedTextMessage?.text) contentSummary = m.extendedTextMessage.text;
+    else if (m?.imageMessage) contentSummary = `📷 Image${m.imageMessage.caption ? ` | Caption: ${m.imageMessage.caption}` : ''}`;
+    else if (m?.videoMessage) contentSummary = `🎥 Video${m.videoMessage.caption ? ` | Caption: ${m.videoMessage.caption}` : ''}`;
+    else if (m?.audioMessage) contentSummary = `🎵 Audio`;
+    else if (m?.stickerMessage) contentSummary = `🖼️ Sticker`;
+    else if (m?.documentMessage) contentSummary = `📄 Document`;
+    else if (m?.contactMessage) contentSummary = `👤 Contact: ${m.contactMessage.displayName || 'Unknown'}`;
+    else if (m?.pollCreationMessage) contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
+    else if (m?.reactionMessage) contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
+    else contentSummary = '[📦 Unknown or Unsupported Message Type]';
 
-if (m?.conversation) {
-  contentSummary = m.conversation;
-} else if (m?.extendedTextMessage?.text) {
-  contentSummary = m.extendedTextMessage.text;
-} else if (m?.imageMessage) {
-  contentSummary = `📷 Image${m.imageMessage.caption ? ` | Caption: ${m.imageMessage.caption}` : ''}`;
-} else if (m?.videoMessage) {
-  contentSummary = `🎥 Video${m.videoMessage.caption ? ` | Caption: ${m.videoMessage.caption}` : ''}`;
-} else if (m?.audioMessage) {
-  contentSummary = `🎵 Audio`;
-} else if (m?.stickerMessage) {
-  contentSummary = `🖼️ Sticker`;
-} else if (m?.documentMessage) {
-  contentSummary = `📄 Document`;
-} else if (m?.contactMessage) {
-  contentSummary = `👤 Contact: ${m.contactMessage.displayName || 'Unknown'}`;
-} else if (m?.contactsArrayMessage) {
-  contentSummary = `👥 Contact List`;
-} else if (m?.pollCreationMessage) {
-  contentSummary = `📊 Poll: ${m.pollCreationMessage.name}`;
-} else if (m?.reactionMessage) {
-  contentSummary = `❤️ Reaction: ${m.reactionMessage.text}`;
-} else if (m?.locationMessage) {
-  contentSummary = `📍 Location: ${m.locationMessage.degreesLatitude}, ${m.locationMessage.degreesLongitude}`;
-} else if (m?.liveLocationMessage) {
-  contentSummary = `📍 Live Location`;
-} else if (m?.buttonsMessage) {
-  contentSummary = `🛎️ Button Message: ${m.buttonsMessage.contentText || '[No Text]'}`;
-} else if (m?.listMessage) {
-  contentSummary = `📋 List Message: ${m.listMessage.description || '[No Description]'}`;
-} else if (m?.templateMessage) {
-  contentSummary = `📨 Template Message`;
-} else if (m?.interactiveMessage) {
-  contentSummary = `🧾 Interactive Message`;
-} else if (m?.paymentInfoMessage) {
-  contentSummary = `💰 Payment Info`;
-} else if (m?.requestPaymentMessage) {
-  contentSummary = `💳 Payment Request`;
-} else if (m?.productMessage) {
-  contentSummary = `🛍️ Product: ${m.productMessage.product?.productImage?.caption || '[No Name]'}`;
-} else if (m?.ephemeralMessage?.message) {
-  const innerMsg = m.ephemeralMessage.message;
-  contentSummary = `⌛ Ephemeral → `;
-  // recursively check inner message
-  if (innerMsg?.conversation) contentSummary += innerMsg.conversation;
-  else if (innerMsg?.extendedTextMessage?.text) contentSummary += innerMsg.extendedTextMessage.text;
-  else contentSummary += '[Ephemeral Message]';
-} else if (m?.viewOnceMessage?.message || m?.viewOnceMessageV2?.message) {
-  const innerMsg = m.viewOnceMessage?.message || m.viewOnceMessageV2?.message;
-  contentSummary = `👁️ View Once → `;
-  if (innerMsg?.imageMessage) {
-    contentSummary += `📷 Image (View Once)`;
-  } else if (innerMsg?.videoMessage) {
-    contentSummary += `🎥 Video (View Once)`;
-  } else {
-    contentSummary += '[Unknown View Once Content]';
-  }
-} else if (m?.protocolMessage) {
-  switch (m.protocolMessage.type) {
-    case 0:
-      contentSummary = `🗑️ Message Deleted`;
-      break;
-    case 1:
-      contentSummary = `✏️ Message Edited`;
-      break;
-    case 2:
-      contentSummary = `⛔ Message Revoked`;
-      break;
-    case 3:
-      contentSummary = `🔁 Message Resent`;
-      break;
-    case 4:
-      contentSummary = `📂 History Sync Notification`;
-      break;
-    case 5:
-      contentSummary = `🔑 App State Key Shared`;
-      break;
-    default:
-      contentSummary = `⚙️ Protocol Message Type ${m.protocolMessage.type}`;
-  }
-  const target = m.protocolMessage.key;
-  if (target?.id) {
-    contentSummary += ` | Target Msg ID: ${target.id}`;
-  }
-} else if (m?.senderKeyDistributionMessage) {
-  contentSummary = `[🔐 Encryption Key Distribution]`;
-} else {
-  contentSummary = '[📦 Unknown or Unsupported Message Type]';
-}
-    
     console.log(`\n=== ${chatType.toUpperCase()} ===`);
     console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
     console.log(`Message sender: ${pushName} (+${senderNumber})`);
@@ -416,6 +367,12 @@ if (m?.conversation) {
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
     if (!command) return;
 
+    
+
+    await king.sendMessage(fromJid, {
+      react: { key: msg.key, text: '🤍' }
+    }).catch(() => {});
+
     let groupAdmins = [];
     const isGroup = isGroupJid(fromJid);
     if (isGroup) {
@@ -433,20 +390,17 @@ if (m?.conversation) {
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
     const isAllowed = isDev || isSelf;
 
-    
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
       }, { quoted: msg });
     }
-    if (!command.flashOnly || isAllowed) {
-  await king.sendMessage(fromJid, {
-    react: { key: msg.key, text: '🤍' }
-  }).catch(() => {});
-    }
+    
    
     if (command.flashOnly && !isAllowed) {
-      return; 
+      return king.sendMessage(fromJid, {
+        text: '⛔ MODE TESTING.',
+      }, { quoted: msg });
     }
     
     if (command.groupOnly && !isGroup) {
