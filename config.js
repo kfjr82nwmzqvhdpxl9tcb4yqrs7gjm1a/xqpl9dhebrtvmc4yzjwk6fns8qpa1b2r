@@ -17,7 +17,6 @@ module.exports = {
         : [''],
 
     NUMBER: process.env.YOUR_NUMBER || '254742063632',
-
     MODE: (process.env.MODE || 'private').toLowerCase().trim(),
     WARN_LIMIT: process.env.WARNINGS || '3',
     ON: process.env.YOUR_NAME || 'FLASH-MD',
@@ -31,10 +30,11 @@ module.exports = {
     HEROKU_APP_NAME: process.env.HEROKU_APP_NAME,
     sessionBase64: process.env.SESSION || '',
     timezone: 'Africa/Nairobi',
-        USER_LID: 'process.env.YOUR_LID',
+
+    USER_LID: process.env.YOUR_LID || null,
 
     PRESENCE_DM: mapPresence(process.env.PRESENCE_DM || 'typing'),
     PRESENCE_GROUP: mapPresence(process.env.PRESENCE_GROUP || 'recording'),
 
-    mapPresence 
+    mapPresence
 };
