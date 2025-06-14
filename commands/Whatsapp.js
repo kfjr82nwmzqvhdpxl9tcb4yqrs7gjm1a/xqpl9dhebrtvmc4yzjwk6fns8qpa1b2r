@@ -67,6 +67,7 @@ module.exports = [
 },
     description: 'Pin a chat.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
         try {
             await king.chatModify({ pin: true }, jid);
@@ -84,6 +85,7 @@ module.exports = [
 },
     description: 'Unpin a chat.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
         try {
             await king.chatModify({ pin: false }, jid);
@@ -101,6 +103,7 @@ module.exports = [
 },
     description: 'Star a quoted message.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
         const fromMe = msg.message?.extendedTextMessage?.contextInfo?.participant === king.user.id;
@@ -132,6 +135,7 @@ module.exports = [
 },
     description: 'Unstar a quoted message.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
         const quoted = msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
         const fromMe = msg.message?.extendedTextMessage?.contextInfo?.participant === king.user.id;
@@ -164,11 +168,11 @@ module.exports = [
     aliases: [],
     description: 'Updates your profile picture privacy setting.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
         
 
-        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
-
+        
         const options = {
             all: 'Everyone can see your profile photo',
             contacts: 'Only your contacts can see your profile photo',
@@ -201,11 +205,11 @@ module.exports = [
     aliases: [],
     description: 'Updates your status privacy setting.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
         
 
-        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
-
+        
         const options = {
             all: 'Everyone can see your status updates',
             contacts: 'Only your contacts can see your status',
@@ -238,9 +242,9 @@ module.exports = [
     aliases: [],
     description: 'Updates who can add you to groups.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
-        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
-
+        
         const options = {
             all: 'Everyone can add you to groups',
             contacts: 'Only contacts can add you to groups',
@@ -273,10 +277,9 @@ module.exports = [
     aliases: [],
     description: 'Updates your last seen privacy settings.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
-        if (!isDev) {
-            return await king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
-        }
+        
 
         const availablePrivacies = {
             all: "Everyone can see your last seen",
@@ -317,9 +320,9 @@ module.exports = [
     aliases: [],
     description: 'Updates your online privacy setting.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
-        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
-
+        
         const options = {
             all: "Everyone can see when you're online",
             match_last_seen: "Matches your Last Seen setting"
@@ -402,10 +405,9 @@ module.exports = [
     aliases: [],
     description: 'Removes your profile picture.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
-        if (!isDev) {
-            return await king.sendMessage(fromJid, { text: "This command is for my owner only!" }, { quoted: msg });
-        }
+        
         try {
             await king.removeProfilePicture(fromJid);
             await king.sendMessage(fromJid, { text: 'Profile picture removed.' }, { quoted: msg });
@@ -480,10 +482,9 @@ module.exports = [
     aliases: [],
     description: 'Archives the current chat.',
     category: 'Whatsapp',
+      ownerOnly: true, 
     execute: async (king, msg, args, fromJid) => {
-         if (!isDev) {
-            return await king.sendMessage(fromJid, { text: "This command is for my owner only!" }, { quoted: msg });
-        }
+         
 
         try {
             const lastMsgInChat = msg;
@@ -528,6 +529,9 @@ module.exports = [
   },
   {
     name: 'vv',
+          get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Reveals view-once images, videos or audios.',
     category: 'User',
@@ -570,6 +574,9 @@ module.exports = [
   },
   {
     name: 'vv2',
+          get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Sends the view once media to the bot user ID.',
     category: 'User',
@@ -618,6 +625,9 @@ module.exports = [
   },
   {
     name: 'details',
+          get flashOnly() {
+  return franceking();
+},
     aliases: [],
     description: 'Displays the full raw quoted message using Baileys structure.',
     category: 'User',
@@ -645,14 +655,16 @@ module.exports = [
   },
   {
     name: 'blocklist',
+          get flashOnly() {
+  return franceking();
+},
     aliases: ['blocked'],
     description: 'Shows the list of blocked users.',
     category: 'Whatsapp',
+      ownerOnly: true, 
 
     execute: async (king, msg, args, fromJid) => {
-        if (!isDev) {
-            return await king.sendMessage(fromJid, { text: "Only Owners can use this command." }, { quoted: msg });
-        }
+        
 
         try {
             const blockedJids = await king.fetchBlocklist();
@@ -676,6 +688,9 @@ module.exports = [
   },
   {
     name: 'vcard',
+          get flashOnly() {
+  return franceking();
+},
     aliases: ['card'],
     description: 'Save a contact from a replied message with a custom name.',
     category: 'WhatsApp',
@@ -716,6 +731,9 @@ module.exports = [
   },
   {
     name: 'location',
+          get flashOnly() {
+  return franceking();
+},
     aliases: ['loc'],
     description: 'Returns Google Maps link from a replied location message.',
     category: 'WhatsApp',
