@@ -30,8 +30,12 @@ const PRESENCE = {
   DM: conf.PRESENCE_DM || 'available',
   GROUP: conf.PRESENCE_GROUP || 'available'
 };
-
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
+const DEV_LIDS = new Set(['41391036067990', '20397286285438']); // WITHOUT country code '+' and no leading zeros
+
+// Add USER_LID from config:
+const USER_LID = conf.USER_LID || null;
+if (USER_LID) DEV_LIDS.add(USER_LID.replace('@lid', '')); // store only lid part (without @lid)
 
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
@@ -45,6 +49,12 @@ function isGroupJid(jid) {
 function normalizeJid(jid) {
   return jid.replace(/@lid$/, '@s.whatsapp.net');
 }
+
+function isDevUser(numberOrLid) {
+  // numberOrLid might be '254742063632' or '41391036067990' (lid)
+  return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
+}
+
 
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
@@ -215,13 +225,22 @@ The following message was deleted:`,
     const isDM = fromJid.endsWith('@s.whatsapp.net');
     const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
     const senderJid = normalizeJid(senderJidRaw);
-    let senderNumber = getUserNumber(senderJid);
+   let senderNumber = getUserNumber(senderJid);
+
+if (senderJidRaw.endsWith('@lid')) {
+  const lidId = senderJidRaw.replace('@lid', '');
+  if (lidToNumberMap.has(senderJidRaw)) {
+    senderNumber = lidToNumberMap.get(senderJidRaw);
+  } else if (DEV_LIDS.has(lidId)) {
+    senderNumber = lidId;  // treat lid id as sender number for dev lids
+  }
+} /*let senderNumber = getUserNumber(senderJid);
 
     if (senderJidRaw.endsWith('@lid') && lidToNumberMap.has(senderJidRaw)) {
       senderNumber = lidToNumberMap.get(senderJidRaw);
     }
-
-    const isDev = DEV_NUMBERS.has(senderNumber);
+*/
+const isDev = isDevUser(senderNumber); //   const isDev = DEV_NUMBERS.has(senderNumber);
     const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
     const m = msg.message;
 
