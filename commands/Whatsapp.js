@@ -22,8 +22,6 @@ module.exports = [
     execute: async (king, msg, args, fromJid) => {
        
 
-        if (!isDev) return king.sendMessage(fromJid, { text: 'Only Owners can use this command.' }, { quoted: msg });
-
         try {
             const {
                 readreceipts,
