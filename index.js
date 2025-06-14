@@ -153,6 +153,15 @@ async function startBot() {
   king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
+const fromJid = msg.key.remoteJid; 
+    const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
+if (presenceToSend) {
+  try {
+    await king.sendPresenceUpdate(presenceToSend, fromJid);
+  } catch (err) {
+    console.error('Failed to update presence:', err);
+  }
+}
 
     if (messageStore.has(msg.key.id)) return;
 
@@ -220,7 +229,7 @@ The following message was deleted:`,
 
     messageStore.set(msg.key.id, msg);
 
-    const fromJid = msg.key.remoteJid;
+    //const fromJid = msg.key.remoteJid;
     const isFromMe = msg.key.fromMe;
     const isDM = fromJid.endsWith('@s.whatsapp.net');
     const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
@@ -475,16 +484,6 @@ if (m?.conversation) {
       }, { quoted: msg });
     }
 
-
-const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
-if (presenceToSend) {
-  try {
-    await king.sendPresenceUpdate(presenceToSend, fromJid);
-  } catch (err) {
-    console.error('Failed to update presence:', err);
-  }
-}
-    
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
     } catch (err) {
