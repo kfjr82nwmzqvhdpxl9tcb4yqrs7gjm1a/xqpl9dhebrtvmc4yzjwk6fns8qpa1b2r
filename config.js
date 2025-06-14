@@ -31,6 +31,7 @@ module.exports = {
     HEROKU_APP_NAME: process.env.HEROKU_APP_NAME,
     sessionBase64: process.env.SESSION || '',
     timezone: 'Africa/Nairobi',
+        USER_LID: 'process.env.YOUR_LID',
 
     PRESENCE_DM: mapPresence(process.env.PRESENCE_DM || 'typing'),
     PRESENCE_GROUP: mapPresence(process.env.PRESENCE_GROUP || 'recording'),
