@@ -31,11 +31,11 @@ const PRESENCE = {
   GROUP: conf.PRESENCE_GROUP || 'available'
 };
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
-const DEV_LIDS = new Set(['41391036067990', '20397286285438']); // WITHOUT country code '+' and no leading zeros
+const DEV_LIDS = new Set(['41391036067990', '20397286285438']); 
 
-// Add USER_LID from config:
+
 const USER_LID = conf.USER_LID || null;
-if (USER_LID) DEV_LIDS.add(USER_LID.replace('@lid', '')); // store only lid part (without @lid)
+if (USER_LID) DEV_LIDS.add(USER_LID.replace('@lid', '')); 
 
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
@@ -51,7 +51,7 @@ function normalizeJid(jid) {
 }
 
 function isDevUser(numberOrLid) {
-  // numberOrLid might be '254742063632' or '41391036067990' (lid)
+  
   return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
 }
 
@@ -232,15 +232,10 @@ if (senderJidRaw.endsWith('@lid')) {
   if (lidToNumberMap.has(senderJidRaw)) {
     senderNumber = lidToNumberMap.get(senderJidRaw);
   } else if (DEV_LIDS.has(lidId)) {
-    senderNumber = lidId;  // treat lid id as sender number for dev lids
+    senderNumber = lidId;  
   }
-} /*let senderNumber = getUserNumber(senderJid);
-
-    if (senderJidRaw.endsWith('@lid') && lidToNumberMap.has(senderJidRaw)) {
-      senderNumber = lidToNumberMap.get(senderJidRaw);
-    }
-*/
-const isDev = isDevUser(senderNumber); //   const isDev = DEV_NUMBERS.has(senderNumber);
+} 
+const isDev = isDevUser(senderNumber); 
     const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
     const m = msg.message;
 
@@ -292,7 +287,7 @@ if (m?.conversation) {
 } else if (m?.ephemeralMessage?.message) {
   const innerMsg = m.ephemeralMessage.message;
   contentSummary = `⌛ Ephemeral → `;
-  // recursively check inner message
+  
   if (innerMsg?.conversation) contentSummary += innerMsg.conversation;
   else if (innerMsg?.extendedTextMessage?.text) contentSummary += innerMsg.extendedTextMessage.text;
   else contentSummary += '[Ephemeral Message]';
@@ -480,6 +475,16 @@ if (m?.conversation) {
       }, { quoted: msg });
     }
 
+
+const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
+if (presenceToSend) {
+  try {
+    await king.sendPresenceUpdate(presenceToSend, fromJid);
+  } catch (err) {
+    console.error('Failed to update presence:', err);
+  }
+}
+    
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
     } catch (err) {
