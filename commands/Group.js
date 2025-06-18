@@ -32,7 +32,6 @@ module.exports = [
     }, { quoted: msg });
   }
     }, 
-
 {
   name: 'hidetag',
   aliases: ['tag'],
@@ -47,16 +46,26 @@ module.exports = [
     const jid = msg.key.remoteJid;
     const metadata = await king.groupMetadata(jid);
     const tagList = metadata.participants.map(p => p.id);
-    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+
+    const quoted = msg.message?.extendedTextMessage?.contextInfo;
 
     let outMsg;
 
-    if (quotedMsg) {
+    if (quoted?.quotedMessage) {
+      const quotedMsg = quoted.quotedMessage;
       const type = Object.keys(quotedMsg)[0];
 
       switch (type) {
         case 'imageMessage': {
-          const buffer = await getMediaBuffer(quotedMsg.imageMessage, 'image');
+          const buffer = await king.downloadMediaMessage({
+            key: {
+              remoteJid: jid,
+              fromMe: false,
+              id: quoted.stanzaId,
+              participant: quoted.participant
+            },
+            message: quotedMsg
+          });
           outMsg = {
             image: buffer,
             caption: quotedMsg.imageMessage.caption || '',
@@ -64,8 +73,17 @@ module.exports = [
           };
           break;
         }
+
         case 'videoMessage': {
-          const buffer = await getMediaBuffer(quotedMsg.videoMessage, 'video');
+          const buffer = await king.downloadMediaMessage({
+            key: {
+              remoteJid: jid,
+              fromMe: false,
+              id: quoted.stanzaId,
+              participant: quoted.participant
+            },
+            message: quotedMsg
+          });
           outMsg = {
             video: buffer,
             caption: quotedMsg.videoMessage.caption || '',
@@ -73,37 +91,38 @@ module.exports = [
           };
           break;
         }
+
         case 'audioMessage': {
-          const buffer = await getMediaBuffer(quotedMsg.audioMessage, 'audio');
+          const buffer = await king.downloadMediaMessage({
+            key: {
+              remoteJid: jid,
+              fromMe: false,
+              id: quoted.stanzaId,
+              participant: quoted.participant
+            },
+            message: quotedMsg
+          });
           outMsg = {
             audio: buffer,
             mimetype: 'audio/mp4',
+            ptt: true,
             mentions: tagList
           };
           break;
         }
-        case 'stickerMessage': {
-          const buffer = await getMediaBuffer(quotedMsg.stickerMessage, 'sticker');
-          const sticker = new Sticker(buffer, {
-            pack: 'FLASH-MD V2',
-            type: StickerTypes.CROPPED,
-            categories: ["🤩", "🎉"],
-            id: "hidetag-123",
-            quality: 70,
-            background: "transparent",
-          });
-          const stickerBuffer = await sticker.toBuffer();
-          outMsg = {
-            sticker: stickerBuffer,
-            mentions: tagList
-          };
-          break;
-        }
-        default: {
-          const text = quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || 'Tag';
+
+        case 'conversation':
+        case 'extendedTextMessage': {
+          const text = quotedMsg?.conversation || quotedMsg.extendedTextMessage?.text || 'Tag';
           outMsg = { text, mentions: tagList };
+          break;
+        }
+
+        default: {
+          outMsg = { text: '👥', mentions: tagList };
         }
       }
+
     } else {
       if (!args || !args.length) {
         await king.sendMessage(jid, { text: "Please provide a message or reply to one to announce." }, { quoted: msg });
