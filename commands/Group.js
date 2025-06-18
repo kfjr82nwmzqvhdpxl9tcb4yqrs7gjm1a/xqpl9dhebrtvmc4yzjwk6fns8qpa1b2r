@@ -35,31 +35,17 @@ module.exports = [
 
 {
   name: 'hidetag',
+  aliases: ['tag'],
   description: 'Mentions all members in the group using a message or media.',
+  category: 'Group',
   get flashOnly() {
     return franceking();
   },
-  category: 'Group',
-    
+  groupOnly: true,
 
   execute: async (king, msg, args) => {
     const jid = msg.key.remoteJid;
     const metadata = await king.groupMetadata(jid);
-    const senderId = msg.key.participant || msg.key.remoteJid;
-    const participantInfo = metadata.participants.find(p => p.id === senderId);
-    const isAdmin = participantInfo?.admin === 'admin' || participantInfo?.admin === 'superadmin';
-
-    const botId = king.user?.id?.split(':')[0] || '';
-    const normalizedBotId = botId.includes('@s.whatsapp.net') ? botId : `${botId}@s.whatsapp.net`;
-    const isBotAdmin = metadata.participants.some(p =>
-      p.id === normalizedBotId && (p.admin === 'admin' || p.admin === 'superadmin')
-    );
-
-    if (!isAdmin && !isBotAdmin) {
-      await king.sendMessage(jid, { text: "Command reserved for administrators." }, { quoted: msg });
-      return;
-    }
-
     const tagList = metadata.participants.map(p => p.id);
     const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
@@ -132,7 +118,6 @@ module.exports = [
     await king.sendMessage(jid, outMsg);
   }
 }, 
-
     
     {
     name: 'tagall',
