@@ -137,7 +137,7 @@ module.exports = [
 
     await king.sendMessage(jid, outMsg);
   }
-}
+}, 
 
     {
     name: 'tagall',
