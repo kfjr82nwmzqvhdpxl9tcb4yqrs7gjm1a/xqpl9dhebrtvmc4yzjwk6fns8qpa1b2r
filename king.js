@@ -443,31 +443,12 @@ The following message was deleted:`,
     }
 
     try {
-      await command.execute({
-        sock: king,
-        msg,
-        args,
-        text,
-        command: cmdName,
-        usedPrefix,
-        from: fromJid,
-        sender: senderJid,
-        senderNumber,
-        isGroup,
-        isDM,
-        isAdmin,
-        isBotAdmin,
-        isDev,
-        isSelf,
-        groupAdmins,
-        pushName,
-        messageStore
-      });
+      await command.execute(king, msg, args, fromJid, allCommands);
     } catch (err) {
-      console.error(`❌ Error executing command: ${cmdName}\n`, err);
-      await king.sendMessage(fromJid, {
-        text: '❌ An error occurred while executing the command.'
-      }, { quoted: msg });
+      console.error('Command error:', err);
+      king.sendMessage(fromJid, {
+        text: '⚠️ Something went wrong while executing the command.'
+      }).catch(() => {});
     }
   });
 
