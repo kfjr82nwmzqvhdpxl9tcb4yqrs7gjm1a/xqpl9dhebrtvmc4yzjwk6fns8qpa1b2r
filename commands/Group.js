@@ -1,7 +1,7 @@
 const { franceking } = require('../main');
 const conf = require('../config');
 const db = require('../db');
-
+const downloadMediaMessage = require('@whiskeysockets/baileys');
 module.exports = [
     {
   name: 'antilink',
@@ -32,6 +32,7 @@ module.exports = [
     }, { quoted: msg });
   }
     }, 
+
 {
   name: 'hidetag',
   aliases: ['tag'],
@@ -54,17 +55,19 @@ module.exports = [
       const quotedMsg = quoted.quotedMessage;
       const type = Object.keys(quotedMsg)[0];
 
+      const mediaMessage = {
+        key: {
+          remoteJid: jid,
+          fromMe: false,
+          id: quoted.stanzaId,
+          participant: quoted.participant
+        },
+        message: quotedMsg
+      };
+
       switch (type) {
         case 'imageMessage': {
-          const buffer = await king.downloadMediaMessage({
-            key: {
-              remoteJid: jid,
-              fromMe: false,
-              id: quoted.stanzaId,
-              participant: quoted.participant
-            },
-            message: quotedMsg
-          });
+          const buffer = await king.downloadMediaMessage(mediaMessage);
           outMsg = {
             image: buffer,
             caption: quotedMsg.imageMessage.caption || '',
@@ -74,15 +77,7 @@ module.exports = [
         }
 
         case 'videoMessage': {
-          const buffer = await king.downloadMediaMessage({
-            key: {
-              remoteJid: jid,
-              fromMe: false,
-              id: quoted.stanzaId,
-              participant: quoted.participant
-            },
-            message: quotedMsg
-          });
+          const buffer = await king.downloadMediaMessage(mediaMessage);
           outMsg = {
             video: buffer,
             caption: quotedMsg.videoMessage.caption || '',
@@ -92,15 +87,7 @@ module.exports = [
         }
 
         case 'audioMessage': {
-          const buffer = await king.downloadMediaMessage({
-            key: {
-              remoteJid: jid,
-              fromMe: false,
-              id: quoted.stanzaId,
-              participant: quoted.participant
-            },
-            message: quotedMsg
-          });
+          const buffer = await king.downloadMediaMessage(mediaMessage);
           outMsg = {
             audio: buffer,
             mimetype: 'audio/mp4',
@@ -110,18 +97,18 @@ module.exports = [
           break;
         }
 
-        case 'conversation':
-        case 'extendedTextMessage': {
-          const text = quotedMsg?.conversation || quotedMsg.extendedTextMessage?.text || '👥';
-          outMsg = { text, mentions: tagList };
-          break;
-        }
-
         default: {
-          outMsg = { text: '👥', mentions: tagList };
+          const text =
+            quotedMsg.conversation ||
+            quotedMsg.extendedTextMessage?.text ||
+            quotedMsg[type]?.caption ||
+            '👥';
+          outMsg = {
+            text,
+            mentions: tagList
+          };
         }
       }
-
     } else {
       if (!args || !args.length) {
         await king.sendMessage(jid, {
@@ -129,6 +116,7 @@ module.exports = [
         }, { quoted: msg });
         return;
       }
+
       outMsg = {
         text: args.join(' '),
         mentions: tagList
@@ -138,7 +126,6 @@ module.exports = [
     await king.sendMessage(jid, outMsg);
   }
 }, 
-
     {
     name: 'tagall',
         get flashOnly() {
