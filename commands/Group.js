@@ -46,7 +46,6 @@ module.exports = [
     const jid = msg.key.remoteJid;
     const metadata = await king.groupMetadata(jid);
     const tagList = metadata.participants.map(p => p.id);
-
     const quoted = msg.message?.extendedTextMessage?.contextInfo;
 
     let outMsg;
@@ -113,7 +112,7 @@ module.exports = [
 
         case 'conversation':
         case 'extendedTextMessage': {
-          const text = quotedMsg?.conversation || quotedMsg.extendedTextMessage?.text || 'Tag';
+          const text = quotedMsg?.conversation || quotedMsg.extendedTextMessage?.text || '👥';
           outMsg = { text, mentions: tagList };
           break;
         }
@@ -125,7 +124,9 @@ module.exports = [
 
     } else {
       if (!args || !args.length) {
-        await king.sendMessage(jid, { text: "Please provide a message or reply to one to announce." }, { quoted: msg });
+        await king.sendMessage(jid, {
+          text: "❗ Please provide a message or reply to one to mention everyone."
+        }, { quoted: msg });
         return;
       }
       outMsg = {
@@ -136,8 +137,8 @@ module.exports = [
 
     await king.sendMessage(jid, outMsg);
   }
-}, 
-    
+}
+
     {
     name: 'tagall',
         get flashOnly() {
