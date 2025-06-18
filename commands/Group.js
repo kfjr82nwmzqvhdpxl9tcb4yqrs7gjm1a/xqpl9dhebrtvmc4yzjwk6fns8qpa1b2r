@@ -32,6 +32,107 @@ module.exports = [
     }, { quoted: msg });
   }
     }, 
+
+{
+  name: 'hidetag',
+  description: 'Mentions all members in the group using a message or media.',
+  get flashOnly() {
+    return franceking();
+  },
+  category: 'Group',
+    
+
+  execute: async (king, msg, args) => {
+    const jid = msg.key.remoteJid;
+    const metadata = await king.groupMetadata(jid);
+    const senderId = msg.key.participant || msg.key.remoteJid;
+    const participantInfo = metadata.participants.find(p => p.id === senderId);
+    const isAdmin = participantInfo?.admin === 'admin' || participantInfo?.admin === 'superadmin';
+
+    const botId = king.user?.id?.split(':')[0] || '';
+    const normalizedBotId = botId.includes('@s.whatsapp.net') ? botId : `${botId}@s.whatsapp.net`;
+    const isBotAdmin = metadata.participants.some(p =>
+      p.id === normalizedBotId && (p.admin === 'admin' || p.admin === 'superadmin')
+    );
+
+    if (!isAdmin && !isBotAdmin) {
+      await king.sendMessage(jid, { text: "Command reserved for administrators." }, { quoted: msg });
+      return;
+    }
+
+    const tagList = metadata.participants.map(p => p.id);
+    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+
+    let outMsg;
+
+    if (quotedMsg) {
+      const type = Object.keys(quotedMsg)[0];
+
+      switch (type) {
+        case 'imageMessage': {
+          const buffer = await getMediaBuffer(quotedMsg.imageMessage, 'image');
+          outMsg = {
+            image: buffer,
+            caption: quotedMsg.imageMessage.caption || '',
+            mentions: tagList
+          };
+          break;
+        }
+        case 'videoMessage': {
+          const buffer = await getMediaBuffer(quotedMsg.videoMessage, 'video');
+          outMsg = {
+            video: buffer,
+            caption: quotedMsg.videoMessage.caption || '',
+            mentions: tagList
+          };
+          break;
+        }
+        case 'audioMessage': {
+          const buffer = await getMediaBuffer(quotedMsg.audioMessage, 'audio');
+          outMsg = {
+            audio: buffer,
+            mimetype: 'audio/mp4',
+            mentions: tagList
+          };
+          break;
+        }
+        case 'stickerMessage': {
+          const buffer = await getMediaBuffer(quotedMsg.stickerMessage, 'sticker');
+          const sticker = new Sticker(buffer, {
+            pack: 'FLASH-MD V2',
+            type: StickerTypes.CROPPED,
+            categories: ["🤩", "🎉"],
+            id: "hidetag-123",
+            quality: 70,
+            background: "transparent",
+          });
+          const stickerBuffer = await sticker.toBuffer();
+          outMsg = {
+            sticker: stickerBuffer,
+            mentions: tagList
+          };
+          break;
+        }
+        default: {
+          const text = quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || 'Tag';
+          outMsg = { text, mentions: tagList };
+        }
+      }
+    } else {
+      if (!args || !args.length) {
+        await king.sendMessage(jid, { text: "Please provide a message or reply to one to announce." }, { quoted: msg });
+        return;
+      }
+      outMsg = {
+        text: args.join(' '),
+        mentions: tagList
+      };
+    }
+
+    await king.sendMessage(jid, outMsg);
+  }
+}, 
+
     
     {
     name: 'tagall',
