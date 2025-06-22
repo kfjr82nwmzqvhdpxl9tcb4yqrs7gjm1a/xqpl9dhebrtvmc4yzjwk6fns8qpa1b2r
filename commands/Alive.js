@@ -21,13 +21,11 @@ function formatUptime(ms) {
     const min = Math.floor(ms / (1000 * 60)) % 60;
     const hr = Math.floor(ms / (1000 * 60 * 60)) % 24;
     const day = Math.floor(ms / (1000 * 60 * 60 * 24));
-
     const parts = [];
     if (day > 0) parts.push(`${day} day${day > 1 ? 's' : ''}`);
     if (hr > 0) parts.push(`${hr} h`);
     if (min > 0) parts.push(`${min} m`);
     parts.push(`${sec} s`);
-
     return parts.join(', ');
 }
 
@@ -43,28 +41,18 @@ module.exports = [
         execute: async (sock, msg) => {
             const senderId = getSenderId(msg);
             const jid = msg.key.remoteJid;
-
-            // Step 1: Send initial placeholder
+            const start = now();
             const initialMsg = await sock.sendMessage(jid, {
                 text: '🔄 Checking bot status...'
             }, {
                 quoted: createQuotedContact(senderId)
             });
-
-            // Step 2: Measure latency
-            const start = now();
-            await new Promise(res => setTimeout(res, 50)); // simulate light delay
+            await new Promise(res => setTimeout(res, 1000));
             const latency = (now() - start).toFixed(0);
-
-            // Step 3: Calculate uptime
             const uptime = Date.now() - global.botStartTime;
             const formattedUptime = formatUptime(uptime);
-
-            // Other system info
             const platform = os.platform();
             const ramUsage = (process.memoryUsage().rss / 1024 / 1024).toFixed(1);
-
-            // Step 4: Compose final alive message
             const finalText = `🟢 *FLASH-MD-V2 IS ONLINE*
 
 *⏱️ Uptime:* ${formattedUptime}
@@ -73,8 +61,6 @@ module.exports = [
 *💾 RAM Usage:* ${ramUsage} MB
 
 _Type *!help* to view all available commands._`;
-
-            // Step 5: Edit the original message
             await sock.relayMessage(
                 jid,
                 {
