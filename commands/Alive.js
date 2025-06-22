@@ -1,8 +1,31 @@
 const now = require('performance-now');
-const os = require('os');
 const { franceking } = require('../main');
 
 if (!global.botStartTime) global.botStartTime = Date.now();
+
+function detectPlatform() {
+    const hostEnv = process.env.HOST_PROVIDER?.toLowerCase();
+
+    const providers = {
+        'optiklink': 'Optiklink.com',
+        'bot-hosting': 'Bot-Hosting.net',
+        'heroku': 'Heroku',
+        'railway': 'Railway',
+        'koyeb': 'Koyeb',
+        'render': 'Render',
+        'github': 'GitHub Actions',
+        'katabump': 'Katabump.com'
+    };
+
+    if (hostEnv && providers[hostEnv]) return providers[hostEnv];
+    if (process.env.RAILWAY_STATIC_URL || process.env.RAILWAY_ENVIRONMENT) return 'Railway';
+    if (process.env.KOYEB_ENV) return 'Koyeb';
+    if (process.env.RENDER) return 'Render';
+    if (process.env.GITHUB_WORKFLOW || process.env.GITHUB_ACTIONS) return 'GitHub Actions';
+    if (process.env.DYNO) return 'Heroku';
+
+    return 'Unknown (Linux)';
+}
 
 const getSenderId = (msg) => (msg.key?.participant || msg.key?.remoteJid || '0@s.whatsapp.net').split('@')[0];
 
@@ -22,11 +45,15 @@ function formatUptime(ms) {
     const hr = Math.floor(ms / (1000 * 60 * 60)) % 24;
     const day = Math.floor(ms / (1000 * 60 * 60 * 24));
     const parts = [];
-    if (day > 0) parts.push(`${day} day${day > 1 ? 's' : ''}`);
-    if (hr > 0) parts.push(`${hr} h`);
-    if (min > 0) parts.push(`${min} m`);
-    parts.push(`${sec} s`);
-    return parts.join(', ');
+    if (day === 1) parts.push(`1 day`);
+    else if (day > 1) parts.push(`${day} days`);
+    if (hr === 1) parts.push(`1 hour`);
+    else if (hr > 1) parts.push(`${hr} h`);
+    if (min === 1) parts.push(`1 minute`);
+    else if (min > 1) parts.push(`${min} m`);
+    if (sec === 1) parts.push(`1 second`);
+    else if (sec > 1 || parts.length === 0) parts.push(`${sec} s`);
+    return parts.join(', ') || '0 second';
 }
 
 module.exports = [
@@ -38,21 +65,25 @@ module.exports = [
         aliases: ['status', 'bot'],
         description: 'Check if the bot is alive with uptime and ping.',
         category: 'General',
-        execute: async (sock, msg) => {
+        execute: async (king, msg) => {
+            const fromJid = msg.key.remoteJid;
             const senderId = getSenderId(msg);
-            const jid = msg.key.remoteJid;
             const start = now();
-            const initialMsg = await sock.sendMessage(jid, {
+
+            const initialMsg = await king.sendMessage(fromJid, {
                 text: '🔄 Checking bot status...'
             }, {
                 quoted: createQuotedContact(senderId)
             });
-            await new Promise(res => setTimeout(res, 1000));
+
             const latency = (now() - start).toFixed(0);
+            await new Promise(res => setTimeout(res, 1000));
+
             const uptime = Date.now() - global.botStartTime;
             const formattedUptime = formatUptime(uptime);
-            const platform = os.platform();
+            const platform = detectPlatform();
             const ramUsage = (process.memoryUsage().rss / 1024 / 1024).toFixed(1);
+
             const finalText = `🟢 *FLASH-MD-V2 IS ONLINE*
 
 *⏱️ Uptime:* ${formattedUptime}
@@ -61,19 +92,19 @@ module.exports = [
 *💾 RAM Usage:* ${ramUsage} MB
 
 _Type *!help* to view all available commands._`;
-            await sock.relayMessage(
-                jid,
-                {
-                    protocolMessage: {
-                        key: initialMsg.key,
-                        type: 14,
-                        editedMessage: {
-                            conversation: finalText,
-                        },
-                    },
-                },
-                {}
-            );
+
+            await king.sendMessage(fromJid, {
+                text: finalText,
+                contextInfo: {
+                    forwardingScore: 1,
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363238139244263@newsletter',
+                        newsletterName: 'FLASH-MD',
+                        serverMessageId: -1
+                    }
+                }
+            }, { quoted: initialMsg });
         }
     }
 ];
