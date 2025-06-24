@@ -33,7 +33,7 @@ module.exports = {
       const shortLyrics = lyrics.length > 4096 ? lyrics.slice(0, 4093) + '...' : lyrics;
 
       const caption =
-        `🎶 *LYRICS FOUND!*\n\n` +
+        `🎶 *FLASH-MD LYRICS!*\n\n` +
         `*Title:* ${title}\n` +
         `*Artist:* ${artist}\n` +
         `*Link:* ${link}\n\n` +
