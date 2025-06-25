@@ -285,74 +285,174 @@ The following message was deleted:`,
       else if (innerMsg?.extendedTextMessage?.text) contentSummary += innerMsg.extendedTextMessage.text;
       else contentSummary += '[Ephemeral Message]';
     } else if (m?.viewOnceMessage?.message || m?.viewOnceMessageV2?.message) {
-      const viewOnceMsg = m.viewOnceMessage?.message || m.viewOnceMessageV2?.message;
-      if (viewOnceMsg.conversation) {
-        contentSummary = `👁️‍🗨️ View Once: ${viewOnceMsg.conversation}`;
-      } else if (viewOnceMsg.imageMessage) {
-        contentSummary = `👁️‍🗨️ View Once Image`;
-      } else if (viewOnceMsg.videoMessage) {
-        contentSummary = `👁️‍🗨️ View Once Video`;
-      } else {
-        contentSummary = `👁️‍🗨️ View Once Message`;
+      const innerMsg = m.viewOnceMessage?.message || m.viewOnceMessageV2?.message;
+      contentSummary = `👁️ View Once → `;
+      if (innerMsg?.imageMessage) contentSummary += `📷 Image (View Once)`;
+      else if (innerMsg?.videoMessage) contentSummary += `🎥 Video (View Once)`;
+      else contentSummary += '[Unknown View Once Content]';
+    } else if (m?.protocolMessage) {
+      switch (m.protocolMessage.type) {
+        case 0: contentSummary = `🗑️ Message Deleted`; break;
+        case 1: contentSummary = `✏️ Message Edited`; break;
+        case 2: contentSummary = `⛔ Message Revoked`; break;
+        case 3: contentSummary = `🔁 Message Resent`; break;
+        case 4: contentSummary = `📂 History Sync Notification`; break;
+        case 5: contentSummary = `🔑 App State Key Shared`; break;
+        default: contentSummary = `⚙️ Protocol Message Type ${m.protocolMessage.type}`;
       }
+      const target = m.protocolMessage.key;
+      if (target?.id) contentSummary += ` | Target Msg ID: ${target.id}`;
+    } else if (m?.senderKeyDistributionMessage) {
+      contentSummary = `[🔐 Encryption Key Distribution]`;
     } else {
-      contentSummary = '[Unknown message type]';
+      contentSummary = '[📦 Unknown or Unsupported Message Type]';
     }
 
-    const logText = `[${chatType}] [${senderNumber}] ${pushName}: ${contentSummary}`;
+    console.log(`\n=== ${chatType.toUpperCase()} ===`);
+    console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
+    console.log(`Message sender: ${pushName} (+${senderNumber})`);
+    console.log(`Message: ${contentSummary}\n`);
 
-    console.log(logText);
-
-    if (!conf.prefixes || conf.prefixes.length === 0) return;
-
-    const msgText = m?.conversation || m?.extendedTextMessage?.text || '';
-    if (!msgText) return;
-
-    const prefixUsed = conf.prefixes.find(p => msgText.startsWith(p));
-    if (!prefixUsed) return;
-
-    const body = msgText.slice(prefixUsed.length).trim();
-    if (!body) return;
-
-    const args = body.split(/\s+/);
-    const commandName = args.shift().toLowerCase();
-
-    let cmdName = null;
-    if (commands.has(commandName)) {
-      cmdName = commandName;
-    } else if (aliases.has(commandName)) {
-      cmdName = aliases.get(commandName);
+    if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
+      king.readMessages([msg.key]).catch(() => {});
     }
 
-    if (!cmdName) return;
+    if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+      try {
+        await king.readMessages([msg.key]);
+        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
+      } catch (err) {}
 
-    const command = commands.get(cmdName);
+      if (conf.AUTO_LIKE === "on") {
+        const participant = msg.key.participant || msg.participant || king.user.id;
+        try {
+          await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+          }, {
+            statusJidList: [participant, king.user.id]
+          });
+          console.log('✅ Liked status');
+        } catch (err) {}
+      }
+    }
+
+    const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
+    if (!text) return;
+
+    if (isGroupJid(fromJid)) {
+      try {
+        const settings = await db.getGroupSettings(fromJid);
+        if (settings?.antilink_enabled) {
+          const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
+          if (linkRegex.test(text)) {
+            const action = settings.action || 'warn';
+            if (senderNumber !== getUserNumber(king.user.id)) {
+              switch (action) {
+                case 'warn': {
+                  await db.incrementWarning(fromJid, senderJid);
+                  const warnings = await db.getWarnings(fromJid, senderJid);
+                  await king.sendMessage(fromJid, {
+                    text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
+                  }, {
+                    quoted: msg,
+                    mentions: [senderJid]
+                  });
+                  break;
+                }
+                case 'kick': {
+                  try {
+                    await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
+                    await king.sendMessage(fromJid, {
+                      text: `🚫 @${senderNumber} has been removed for posting a link.`
+                    }, {
+                      mentions: [senderJid]
+                    });
+                  } catch (e) {}
+                  break;
+                }
+                case 'delete': {
+                  try {
+                    await king.sendMessage(fromJid, { delete: msg.key });
+                  } catch (e) {}
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    const prefixes = [...conf.prefixes];
+    const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
+    if (!usedPrefix) return;
+
+    const cmdText = text.slice(usedPrefix.length).trim();
+    const args = cmdText.split(/\s+/);
+    const cmdName = args.shift()?.toLowerCase();
+    const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
     if (!command) return;
 
+    let groupAdmins = [];
+    const isGroup = isGroupJid(fromJid);
+    if (isGroup) {
+      try {
+        const metadata = await king.groupMetadata(fromJid);
+        groupAdmins = metadata.participants
+          .filter(p => p.admin)
+          .map(p => normalizeJid(p.id));
+      } catch (err) {}
+    }
+
+    const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
+    const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
+    const isAllowed = isDev || isSelf;
+
+    if (command.ownerOnly && !isAllowed) {
+      return king.sendMessage(fromJid, {
+        text: '⛔ This command is restricted to the bot owner.',
+      }, { quoted: msg });
+    }
+
+    if (!command.flashOnly || isAllowed) {
+      await king.sendMessage(fromJid, {
+        react: { key: msg.key, text: '🤍' }
+      }).catch(() => {});
+    }
+
+    if (command.flashOnly && !isAllowed) {
+      return;
+    }
+
+    if (command.groupOnly && !isGroup) {
+      return king.sendMessage(fromJid, {
+        text: '❌ This command only works in groups.'
+      }, { quoted: msg });
+    }
+
+    if (command.adminOnly && !isAdmin && !isDev) {
+      return king.sendMessage(fromJid, {
+        text: '⛔ This command is restricted to group admins.'
+      }, { quoted: msg });
+    }
+
+    if (command.botAdminOnly && !isBotAdmin) {
+      return king.sendMessage(fromJid, {
+        text: '⚠️ I need to be admin to run this command.'
+      }, { quoted: msg });
+    }
+
     try {
-      await command.execute({
-        king,
-        msg,
-        args,
-        from: fromJid,
-        sender: senderJid,
-        senderNumber,
-        pushName,
-        isDev,
-        isSelf,
-        isGroup: isGroupJid(fromJid),
-        commands,
-        aliases,
-        conf,
-        db,
-        messageStore,
-      });
+      await command.execute(king, msg, args, fromJid, allCommands);
     } catch (err) {
-      console.error(`Error executing command ${cmdName}:`, err);
+      console.error('Command error:', err);
+      king.sendMessage(fromJid, {
+        text: '⚠️ Something went wrong while executing the command.'
+      }).catch(() => {});
     }
   });
 
-  return king;
+  king.ev.on('creds.update', saveState);
 }
 
 startBot();
