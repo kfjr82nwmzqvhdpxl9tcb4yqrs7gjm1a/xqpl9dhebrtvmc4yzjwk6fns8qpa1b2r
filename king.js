@@ -215,7 +215,7 @@ The following message was deleted:`,
     messageStore.set(msg.key.id, msg);
 
    const isFromMe = msg.key.fromMe;
-const fromJid = msg.key.remoteJid;
+//const fromJid = msg.key.remoteJid;
 const isGroup = isGroupJid(fromJid);
 
 let senderJidRaw;
