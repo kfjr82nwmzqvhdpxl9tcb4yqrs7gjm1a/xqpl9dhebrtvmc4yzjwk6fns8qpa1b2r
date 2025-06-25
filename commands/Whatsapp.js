@@ -414,108 +414,46 @@ module.exports = [
         }
     }
   }, 
- /* {
-    name: 'save',
-      get flashOnly() {
-  return franceking();
-},
-    aliases: [],
-    description: 'Saves and resends the replied media message.',
-    category: 'User',
-      ownerOnly: true, 
-    execute: async (king, msg, args, fromJid) => {
-        const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-
-        if (!quoted) {
-            return king.sendMessage(fromJid, { text: 'Mention the message you want to save.' }, { quoted: msg });
-        }
-
-        let forwardMsg;
-
-        try {
-            if (quoted.imageMessage) {
-                const buffer = await getMediaBuffer(quoted.imageMessage, 'image');
-                forwardMsg = {
-                    image: buffer,
-                    caption: quoted.imageMessage.caption || ''
-                };
-            } else if (quoted.videoMessage) {
-                const buffer = await getMediaBuffer(quoted.videoMessage, 'video');
-                forwardMsg = {
-                    video: buffer,
-                    caption: quoted.videoMessage.caption || ''
-                };
-            } else if (quoted.audioMessage) {
-                const buffer = await getMediaBuffer(quoted.audioMessage, 'audio');
-                forwardMsg = {
-                    audio: buffer,
-                    mimetype: 'audio/mp4'
-                };
-            } else if (quoted.stickerMessage) {
-                const buffer = await getMediaBuffer(quoted.stickerMessage, 'sticker');
-                forwardMsg = {
-                    sticker: buffer
-                };
-            } else if (quoted.conversation || quoted.extendedTextMessage?.text) {
-                const text = quoted.conversation || quoted.extendedTextMessage.text;
-                forwardMsg = { text };
-            }
-
-            if (forwardMsg) {
-                const botJid = king.user?.id;
-                await king.sendMessage(botJid, forwardMsg);
-            } else {
-                await king.sendMessage(fromJid, { text: 'Unsupported or empty message.' }, { quoted: msg });
-            }
-        } catch (error) {
-            await king.sendMessage(fromJid, { text: 'Failed to save or resend the message.' }, { quoted: msg });
-        }
-    }
-  },*/
-{
+    
+   {
   name: 'save',
   aliases: [],
-  description: 'Saves a replied message and sends it back to the original sender.',
+  description: 'Saves a replied message and sends it back to the current chat.',
   category: 'User',
-  execute: async (king, msg, args, fromJid) => {
-    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const quotedParticipant = msg.message?.extendedTextMessage?.contextInfo?.participant;
-    const author = msg.key.participant || msg.key.remoteJid;
+  execute: async (king, msg, args, fromJid, sock) => {
+    const quotedMessage = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-    if (!author) {
-      return await king.sendMessage(fromJid, { text: 'Only mods can use this command.' }, { quoted: msg });
-    }
-
-    if (!quoted || !quotedParticipant) {
-      return await king.sendMessage(fromJid, { text: 'Mention the message that you want to save.' }, { quoted: msg });
+    if (!quotedMessage) {
+      return await king.sendMessage(fromJid, { text: '❗ Please reply to a message you want to save.' }, { quoted: msg });
     }
 
     try {
-      let contentToSend;
+      let content;
 
-      if (quoted.imageMessage) {
-        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
-        contentToSend = {
+      if (quotedMessage.imageMessage) {
+        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
+        content = {
           image: { url: media },
-          caption: quoted.imageMessage.caption || ''
+          caption: quotedMessage.imageMessage.caption || ''
         };
 
-      } else if (quoted.videoMessage) {
-        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
-        contentToSend = {
+      } else if (quotedMessage.videoMessage) {
+        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
+        content = {
           video: { url: media },
-          caption: quoted.videoMessage.caption || ''
+          caption: quotedMessage.videoMessage.caption || ''
         };
 
-      } else if (quoted.audioMessage) {
-        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
-        contentToSend = {
+      } else if (quotedMessage.audioMessage) {
+        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
+        content = {
           audio: { url: media },
           mimetype: 'audio/mp4'
         };
 
-      } else if (quoted.stickerMessage) {
-        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
+      } else if (quotedMessage.stickerMessage) {
+        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
+
         const sticker = new Sticker(media, {
           pack: 'FLASH-MD',
           type: StickerTypes.CROPPED,
@@ -525,24 +463,22 @@ module.exports = [
           background: "transparent"
         });
 
-        const stickerBuffer = await sticker.toBuffer();
-        contentToSend = { sticker: stickerBuffer };
+        const buffer = await sticker.toBuffer();
+        content = { sticker: buffer };
 
       } else {
-        const text = quoted?.conversation || quoted?.extendedTextMessage?.text || 'No text found.';
-        contentToSend = { text };
+        const text = quotedMessage?.conversation || quotedMessage?.extendedTextMessage?.text || 'No text found.';
+        content = { text };
       }
 
-      await king.sendMessage(quotedParticipant, contentToSend);
-      await king.sendMessage(fromJid, { text: '✅ Message saved and sent back to the user.' }, { quoted: msg });
+      await sock.sendMessage(fromJid, content, { quoted: msg });
 
     } catch (err) {
       console.error('❌ Error in save command:', err);
       await king.sendMessage(fromJid, { text: 'An error occurred while saving the message.' }, { quoted: msg });
     }
   }
-}, 
-    
+} 
   {
     name: 'archive',
         get flashOnly() {
