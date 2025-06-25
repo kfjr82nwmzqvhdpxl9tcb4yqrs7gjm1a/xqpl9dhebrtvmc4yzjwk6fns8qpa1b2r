@@ -330,7 +330,7 @@ The following message was deleted:`,
     if (!command) return;
 
     try {
-      await command.run({
+      await command.execute({
         king,
         msg,
         args,
