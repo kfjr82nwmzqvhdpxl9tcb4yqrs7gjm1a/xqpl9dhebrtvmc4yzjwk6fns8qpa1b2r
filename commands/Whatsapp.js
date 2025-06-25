@@ -478,7 +478,7 @@ module.exports = [
       await king.sendMessage(fromJid, { text: 'An error occurred while saving the message.' }, { quoted: msg });
     }
   }
-} 
+}, 
   {
     name: 'archive',
         get flashOnly() {
