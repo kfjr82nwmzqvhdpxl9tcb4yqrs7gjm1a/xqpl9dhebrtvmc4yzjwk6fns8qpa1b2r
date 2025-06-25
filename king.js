@@ -216,7 +216,7 @@ The following message was deleted:`,
 
    const isFromMe = msg.key.fromMe;
 //const fromJid = msg.key.remoteJid;
-const isGroup = isGroupJid(fromJid);
+//const isGroup = isGroupJid(fromJid);
 
 let senderJidRaw;
 if (isFromMe) {
