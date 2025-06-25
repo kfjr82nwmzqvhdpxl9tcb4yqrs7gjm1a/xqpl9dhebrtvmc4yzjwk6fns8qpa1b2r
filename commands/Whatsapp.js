@@ -414,71 +414,64 @@ module.exports = [
         }
     }
   }, 
-    
-   {
-  name: 'save',
-  aliases: [],
-  description: 'Saves a replied message and sends it back to the current chat.',
-  category: 'User',
-  execute: async (king, msg, args, fromJid, sock) => {
-    const quotedMessage = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+  {
+    name: 'save',
+      get flashOnly() {
+  return franceking();
+},
+    aliases: [],
+    description: 'Saves and resends the replied media message.',
+    category: 'User',
+      ownerOnly: true, 
+    execute: async (king, msg, args, fromJid) => {
+        const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-    if (!quotedMessage) {
-      return await king.sendMessage(fromJid, { text: '❗ Please reply to a message you want to save.' }, { quoted: msg });
+        if (!quoted) {
+            return king.sendMessage(fromJid, { text: 'Mention the message you want to save.' }, { quoted: msg });
+        }
+
+        let forwardMsg;
+
+        try {
+            if (quoted.imageMessage) {
+                const buffer = await getMediaBuffer(quoted.imageMessage, 'image');
+                forwardMsg = {
+                    image: buffer,
+                    caption: quoted.imageMessage.caption || ''
+                };
+            } else if (quoted.videoMessage) {
+                const buffer = await getMediaBuffer(quoted.videoMessage, 'video');
+                forwardMsg = {
+                    video: buffer,
+                    caption: quoted.videoMessage.caption || ''
+                };
+            } else if (quoted.audioMessage) {
+                const buffer = await getMediaBuffer(quoted.audioMessage, 'audio');
+                forwardMsg = {
+                    audio: buffer,
+                    mimetype: 'audio/mp4'
+                };
+            } else if (quoted.stickerMessage) {
+                const buffer = await getMediaBuffer(quoted.stickerMessage, 'sticker');
+                forwardMsg = {
+                    sticker: buffer
+                };
+            } else if (quoted.conversation || quoted.extendedTextMessage?.text) {
+                const text = quoted.conversation || quoted.extendedTextMessage.text;
+                forwardMsg = { text };
+            }
+
+            if (forwardMsg) {
+                const botJid = king.user?.id;
+                await king.sendMessage(botJid, forwardMsg);
+            } else {
+                await king.sendMessage(fromJid, { text: 'Unsupported or empty message.' }, { quoted: msg });
+            }
+        } catch (error) {
+            await king.sendMessage(fromJid, { text: 'Failed to save or resend the message.' }, { quoted: msg });
+        }
     }
-
-    try {
-      let content;
-
-      if (quotedMessage.imageMessage) {
-        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
-        content = {
-          image: { url: media },
-          caption: quotedMessage.imageMessage.caption || ''
-        };
-
-      } else if (quotedMessage.videoMessage) {
-        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
-        content = {
-          video: { url: media },
-          caption: quotedMessage.videoMessage.caption || ''
-        };
-
-      } else if (quotedMessage.audioMessage) {
-        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
-        content = {
-          audio: { url: media },
-          mimetype: 'audio/mp4'
-        };
-
-      } else if (quotedMessage.stickerMessage) {
-        const media = await sock.downloadAndSaveMediaMessage({ message: quotedMessage });
-
-        const sticker = new Sticker(media, {
-          pack: 'FLASH-MD',
-          type: StickerTypes.CROPPED,
-          categories: ["🤩", "🎉"],
-          id: "12345",
-          quality: 70,
-          background: "transparent"
-        });
-
-        const buffer = await sticker.toBuffer();
-        content = { sticker: buffer };
-
-      } else {
-        const text = quotedMessage?.conversation || quotedMessage?.extendedTextMessage?.text || 'No text found.';
-        content = { text };
-      }
-
-      await sock.sendMessage(fromJid, content, { quoted: msg });
-
-    } catch (err) {
-      console.error('❌ Error in save command:', err);
-      await king.sendMessage(fromJid, { text: 'An error occurred while saving the message.' }, { quoted: msg });
-    }
-  }
-}, 
+  },
   {
     name: 'archive',
         get flashOnly() {
