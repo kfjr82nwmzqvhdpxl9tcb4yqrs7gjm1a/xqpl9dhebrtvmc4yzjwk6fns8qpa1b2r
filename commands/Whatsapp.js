@@ -414,7 +414,7 @@ module.exports = [
         }
     }
   }, 
-  {
+ /* {
     name: 'save',
       get flashOnly() {
   return franceking();
@@ -471,7 +471,78 @@ module.exports = [
             await king.sendMessage(fromJid, { text: 'Failed to save or resend the message.' }, { quoted: msg });
         }
     }
-  },
+  },*/
+{
+  name: 'save',
+  aliases: [],
+  description: 'Saves a replied message and sends it back to the original sender.',
+  category: 'User',
+  execute: async (king, msg, args, fromJid) => {
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedParticipant = msg.message?.extendedTextMessage?.contextInfo?.participant;
+    const author = msg.key.participant || msg.key.remoteJid;
+
+    if (!author) {
+      return await king.sendMessage(fromJid, { text: 'Only mods can use this command.' }, { quoted: msg });
+    }
+
+    if (!quoted || !quotedParticipant) {
+      return await king.sendMessage(fromJid, { text: 'Mention the message that you want to save.' }, { quoted: msg });
+    }
+
+    try {
+      let contentToSend;
+
+      if (quoted.imageMessage) {
+        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
+        contentToSend = {
+          image: { url: media },
+          caption: quoted.imageMessage.caption || ''
+        };
+
+      } else if (quoted.videoMessage) {
+        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
+        contentToSend = {
+          video: { url: media },
+          caption: quoted.videoMessage.caption || ''
+        };
+
+      } else if (quoted.audioMessage) {
+        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
+        contentToSend = {
+          audio: { url: media },
+          mimetype: 'audio/mp4'
+        };
+
+      } else if (quoted.stickerMessage) {
+        const media = await king.downloadAndSaveMediaMessage({ message: quoted });
+        const sticker = new Sticker(media, {
+          pack: 'FLASH-MD',
+          type: StickerTypes.CROPPED,
+          categories: ["🤩", "🎉"],
+          id: "12345",
+          quality: 70,
+          background: "transparent"
+        });
+
+        const stickerBuffer = await sticker.toBuffer();
+        contentToSend = { sticker: stickerBuffer };
+
+      } else {
+        const text = quoted?.conversation || quoted?.extendedTextMessage?.text || 'No text found.';
+        contentToSend = { text };
+      }
+
+      await king.sendMessage(quotedParticipant, contentToSend);
+      await king.sendMessage(fromJid, { text: '✅ Message saved and sent back to the user.' }, { quoted: msg });
+
+    } catch (err) {
+      console.error('❌ Error in save command:', err);
+      await king.sendMessage(fromJid, { text: 'An error occurred while saving the message.' }, { quoted: msg });
+    }
+  }
+}, 
+    
   {
     name: 'archive',
         get flashOnly() {
