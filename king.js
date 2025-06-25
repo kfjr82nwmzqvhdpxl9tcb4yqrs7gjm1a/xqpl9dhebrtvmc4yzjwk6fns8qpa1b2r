@@ -214,7 +214,23 @@ The following message was deleted:`,
 
     messageStore.set(msg.key.id, msg);
 
-    const isFromMe = msg.key.fromMe;
+   const isFromMe = msg.key.fromMe;
+const fromJid = msg.key.remoteJid;
+const isGroup = isGroupJid(fromJid);
+
+let senderJidRaw;
+if (isFromMe) {
+  senderJidRaw = king.user.id;
+} else if (isGroup) {
+  senderJidRaw = msg.key.participant || fromJid;
+} else {
+  senderJidRaw = fromJid;
+}
+
+const senderJid = normalizeJid(senderJidRaw);
+let senderNumber = getUserNumber(senderJid);
+    
+    /* const isFromMe = msg.key.fromMe;
     const isDM = fromJid.endsWith('@s.whatsapp.net');
     const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
     const senderJid = normalizeJid(senderJidRaw);
@@ -227,7 +243,7 @@ The following message was deleted:`,
       } else if (DEV_LIDS.has(lidId)) {
         senderNumber = lidId;
       }
-    }
+    }*/
 
     const isDev = isDevUser(senderNumber);
     const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
