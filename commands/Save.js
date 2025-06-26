@@ -25,9 +25,10 @@ module.exports = {
   },
 
   execute: async (king, msg, args) => {
-    const senderJid = msg.key.participant || msg.key.remoteJid;
-    const isGroup = msg.key.remoteJid.endsWith('@g.us');
-    const recipientJid = isGroup ? senderJid : msg.key.remoteJid;
+    const senderJid = msg.key.participant;
+    const recipientJid = senderJid.endsWith('@s.whatsapp.net')
+      ? senderJid
+      : senderJid.replace('@lid', '@s.whatsapp.net');
 
     const myMedia = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
@@ -79,7 +80,7 @@ module.exports = {
         }, { quoted: msg });
       }
 
-      await king.sendMessage(recipientJid, sendMsg, { quoted: msg });
+      await king.sendMessage(recipientJid, sendMsg);
 
       if (sendMsg.image || sendMsg.video || sendMsg.audio) {
         const filePath = sendMsg.image?.url || sendMsg.video?.url || sendMsg.audio?.url;
