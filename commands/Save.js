@@ -25,13 +25,14 @@ module.exports = {
   },
 
   execute: async (king, msg, args) => {
-    const fromJid = msg.key.remoteJid;
-    const myMedia = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const flashV2 = msg.pushName;
+    const senderJid = msg.key.participant || msg.key.remoteJid;
+    const isGroup = msg.key.remoteJid.endsWith('@g.us');
+    const recipientJid = isGroup ? senderJid : msg.key.remoteJid;
 
-    
+    const myMedia = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+
     if (!myMedia) {
-      return king.sendMessage(fromJid, {
+      return king.sendMessage(recipientJid, {
         text: 'Reply to the message you want to save.'
       }, { quoted: msg });
     }
@@ -43,13 +44,13 @@ module.exports = {
         const mediaPath = await saveMedia({ message: { imageMessage: myMedia.imageMessage } }, 'image');
         sendMsg = {
           image: { url: mediaPath },
-          caption: myMedia.imageMessage.caption || ''
+          caption: myMedia.imageMessage?.caption ?? ''
         };
       } else if (myMedia.videoMessage) {
         const mediaPath = await saveMedia({ message: { videoMessage: myMedia.videoMessage } }, 'video');
         sendMsg = {
           video: { url: mediaPath },
-          caption: myMedia.videoMessage.caption || ''
+          caption: myMedia.videoMessage?.caption ?? ''
         };
       } else if (myMedia.audioMessage) {
         const mediaPath = await saveMedia({ message: { audioMessage: myMedia.audioMessage } }, 'audio');
@@ -73,25 +74,28 @@ module.exports = {
         const textContent = myMedia.conversation || myMedia.extendedTextMessage?.text || 'Saved message';
         sendMsg = { text: textContent };
       } else {
-        return king.sendMessage(fromJid, {
+        return king.sendMessage(recipientJid, {
           text: 'Unsupported message type.'
         }, { quoted: msg });
       }
 
-      await king.sendMessage(fromJid, sendMsg, { quoted: msg });
+      await king.sendMessage(recipientJid, sendMsg, { quoted: msg });
 
       if (sendMsg.image || sendMsg.video || sendMsg.audio) {
         const filePath = sendMsg.image?.url || sendMsg.video?.url || sendMsg.audio?.url;
-        fs.unlink(filePath, err => {
-          if (err) console.error('Failed to delete file:', filePath);
-        });
+        try {
+          await fs.promises.unlink(filePath);
+        } catch (err) {
+          console.error('Failed to delete file:', filePath, err);
+        }
       }
 
     } catch (err) {
       console.error('[SAVE COMMAND ERROR]', err);
-      await king.sendMessage(fromJid, {
+      await king.sendMessage(recipientJid, {
         text: 'An error occurred while saving the message.'
       }, { quoted: msg });
     }
   }
 };
+
