@@ -25,11 +25,7 @@ module.exports = {
   },
 
   execute: async (king, msg, args) => {
-    const senderJid = msg.key.participant || msg.key.remoteJid;
-    const recipientJid = senderJid.endsWith('@s.whatsapp.net')
-      ? senderJid
-      : senderJid.replace('@lid', '@s.whatsapp.net');
-
+    const recipientJid = king.user.id;
     const myMedia = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
     if (!myMedia) {
@@ -99,5 +95,4 @@ module.exports = {
     }
   }
 };
-
 
