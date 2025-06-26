@@ -1,4 +1,4 @@
-const { normalizeJid } = require('../main');
+const { normalizeJid } = require('../king');
 const { saveSudoList } = require('../utils/sudoStore');
 
 module.exports = {
