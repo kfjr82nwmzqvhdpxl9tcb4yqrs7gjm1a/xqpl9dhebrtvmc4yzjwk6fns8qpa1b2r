@@ -12,7 +12,10 @@ const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
 const db = require('./db');
+const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
+// Load allowed users
+global.ALLOWED_USERS = loadSudoList();
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
