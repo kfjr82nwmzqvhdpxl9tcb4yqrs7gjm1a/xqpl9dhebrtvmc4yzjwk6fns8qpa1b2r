@@ -1,11 +1,24 @@
 const fs = require('fs');
 const path = require('path');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const { franceking } = require('../main');
 
+const tempDir = path.join(__dirname, '..', 'temp');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir);
+}
+
+async function saveMedia(msgContent, type = 'file') {
+  const buffer = await downloadMediaMessage(msgContent, 'buffer', {}, { logger: console });
+  const filename = path.join(tempDir, `${Date.now()}-${type}.bin`);
+  fs.writeFileSync(filename, buffer);
+  return filename;
+}
+
 module.exports = {
-  name: 'send',
-  description: 'Save and forward a replied message (media/text/sticker) to its author.',
+  name: 'save',
+  description: 'Save and resend a replied message (media/text/sticker).',
   category: 'User',
   get flashOnly() {
     return franceking();
@@ -14,7 +27,6 @@ module.exports = {
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
     const msgRepondu = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const auteurMessage = msg.message?.extendedTextMessage?.contextInfo?.participant || null;
     const nomAuteurMessage = msg.pushName || null;
 
     if (!nomAuteurMessage) {
@@ -23,42 +35,35 @@ module.exports = {
       }, { quoted: msg });
     }
 
-    if (!msgRepondu || !auteurMessage) {
+    if (!msgRepondu) {
       return king.sendMessage(fromJid, {
-        text: 'Mention the message you want to save by replying to it.'
+        text: 'Reply to the message you want to save.'
       }, { quoted: msg });
     }
 
     let sendMsg;
 
     try {
-      // IMAGE
       if (msgRepondu.imageMessage) {
-        const mediaPath = await king.downloadAndSaveMediaMessage({ message: { imageMessage: msgRepondu.imageMessage } });
+        const mediaPath = await saveMedia({ message: { imageMessage: msgRepondu.imageMessage } }, 'image');
         sendMsg = {
           image: { url: mediaPath },
           caption: msgRepondu.imageMessage.caption || ''
         };
-
-      // VIDEO
       } else if (msgRepondu.videoMessage) {
-        const mediaPath = await king.downloadAndSaveMediaMessage({ message: { videoMessage: msgRepondu.videoMessage } });
+        const mediaPath = await saveMedia({ message: { videoMessage: msgRepondu.videoMessage } }, 'video');
         sendMsg = {
           video: { url: mediaPath },
           caption: msgRepondu.videoMessage.caption || ''
         };
-
-      // AUDIO
       } else if (msgRepondu.audioMessage) {
-        const mediaPath = await king.downloadAndSaveMediaMessage({ message: { audioMessage: msgRepondu.audioMessage } });
+        const mediaPath = await saveMedia({ message: { audioMessage: msgRepondu.audioMessage } }, 'audio');
         sendMsg = {
           audio: { url: mediaPath },
           mimetype: 'audio/mp4'
         };
-
-      // STICKER
       } else if (msgRepondu.stickerMessage) {
-        const mediaPath = await king.downloadAndSaveMediaMessage({ message: { stickerMessage: msgRepondu.stickerMessage } });
+        const mediaPath = await saveMedia({ message: { stickerMessage: msgRepondu.stickerMessage } }, 'sticker');
         const sticker = new Sticker(mediaPath, {
           pack: 'FLASH-MD',
           type: StickerTypes.CROPPED,
@@ -69,21 +74,17 @@ module.exports = {
         });
         const stickerBuffer = await sticker.toBuffer();
         sendMsg = { sticker: stickerBuffer };
-
-      // TEXT
       } else if (msgRepondu?.conversation || msgRepondu?.extendedTextMessage) {
         const textContent = msgRepondu.conversation || msgRepondu.extendedTextMessage?.text || 'Saved message';
         sendMsg = { text: textContent };
-
       } else {
         return king.sendMessage(fromJid, {
           text: 'Unsupported message type.'
         }, { quoted: msg });
       }
 
-      await king.sendMessage(auteurMessage, sendMsg);
+      await king.sendMessage(fromJid, sendMsg, { quoted: msg });
 
-      // Optional: Clean up file if saved
       if (sendMsg.image || sendMsg.video || sendMsg.audio) {
         const filePath = sendMsg.image?.url || sendMsg.video?.url || sendMsg.audio?.url;
         fs.unlink(filePath, err => {
