@@ -17,25 +17,20 @@ async function saveMedia(msgContent, type = 'file') {
 }
 
 module.exports = {
-  name: 'send',
+  name: 'save',
   description: 'Save and resend a replied message (media/text/sticker).',
-  category: 'User',
+  category: 'WhatsApp',
   get flashOnly() {
     return franceking();
   },
 
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
-    const msgRepondu = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const nomAuteurMessage = msg.pushName || null;
+    const myMedia = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const flashV2 = msg.pushName;
 
-    if (!nomAuteurMessage) {
-      return king.sendMessage(fromJid, {
-        text: 'Only mods can use this command.'
-      }, { quoted: msg });
-    }
-
-    if (!msgRepondu) {
+    
+    if (!myMedia) {
       return king.sendMessage(fromJid, {
         text: 'Reply to the message you want to save.'
       }, { quoted: msg });
@@ -44,26 +39,26 @@ module.exports = {
     let sendMsg;
 
     try {
-      if (msgRepondu.imageMessage) {
-        const mediaPath = await saveMedia({ message: { imageMessage: msgRepondu.imageMessage } }, 'image');
+      if (myMedia.imageMessage) {
+        const mediaPath = await saveMedia({ message: { imageMessage: myMedia.imageMessage } }, 'image');
         sendMsg = {
           image: { url: mediaPath },
-          caption: msgRepondu.imageMessage.caption || ''
+          caption: myMedia.imageMessage.caption || ''
         };
-      } else if (msgRepondu.videoMessage) {
-        const mediaPath = await saveMedia({ message: { videoMessage: msgRepondu.videoMessage } }, 'video');
+      } else if (myMedia.videoMessage) {
+        const mediaPath = await saveMedia({ message: { videoMessage: myMedia.videoMessage } }, 'video');
         sendMsg = {
           video: { url: mediaPath },
-          caption: msgRepondu.videoMessage.caption || ''
+          caption: myMedia.videoMessage.caption || ''
         };
-      } else if (msgRepondu.audioMessage) {
-        const mediaPath = await saveMedia({ message: { audioMessage: msgRepondu.audioMessage } }, 'audio');
+      } else if (myMedia.audioMessage) {
+        const mediaPath = await saveMedia({ message: { audioMessage: myMedia.audioMessage } }, 'audio');
         sendMsg = {
           audio: { url: mediaPath },
           mimetype: 'audio/mp4'
         };
-      } else if (msgRepondu.stickerMessage) {
-        const mediaPath = await saveMedia({ message: { stickerMessage: msgRepondu.stickerMessage } }, 'sticker');
+      } else if (myMedia.stickerMessage) {
+        const mediaPath = await saveMedia({ message: { stickerMessage: myMedia.stickerMessage } }, 'sticker');
         const sticker = new Sticker(mediaPath, {
           pack: 'FLASH-MD',
           type: StickerTypes.CROPPED,
@@ -74,8 +69,8 @@ module.exports = {
         });
         const stickerBuffer = await sticker.toBuffer();
         sendMsg = { sticker: stickerBuffer };
-      } else if (msgRepondu?.conversation || msgRepondu?.extendedTextMessage) {
-        const textContent = msgRepondu.conversation || msgRepondu.extendedTextMessage?.text || 'Saved message';
+      } else if (myMedia?.conversation || myMedia?.extendedTextMessage) {
+        const textContent = myMedia.conversation || myMedia.extendedTextMessage?.text || 'Saved message';
         sendMsg = { text: textContent };
       } else {
         return king.sendMessage(fromJid, {
