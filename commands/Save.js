@@ -25,7 +25,7 @@ module.exports = {
   },
 
   execute: async (king, msg, args) => {
-    const senderJid = msg.key.participant;
+    const senderJid = msg.key.participant || msg.key.remoteJid;
     const recipientJid = senderJid.endsWith('@s.whatsapp.net')
       ? senderJid
       : senderJid.replace('@lid', '@s.whatsapp.net');
@@ -99,4 +99,5 @@ module.exports = {
     }
   }
 };
+
 
