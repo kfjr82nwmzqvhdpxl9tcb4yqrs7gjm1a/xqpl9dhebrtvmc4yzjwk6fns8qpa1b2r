@@ -19,8 +19,8 @@ const aliases = new Map();
 const messageStore = new Map();
 
 const PRESENCE = {
-  DM: conf.PRESENCE_DM || 'available',
-  GROUP: conf.PRESENCE_GROUP || 'available'
+  DM: conf.PRESENCE_DM || 'paused',
+  GROUP: conf.PRESENCE_GROUP || 'paused'
 };
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
