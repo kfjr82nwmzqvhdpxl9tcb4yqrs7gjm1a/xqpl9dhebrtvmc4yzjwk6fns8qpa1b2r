@@ -1,4 +1,5 @@
-const { normalizeJid } = require('../king');
+
+const { normalizeJid, getUserNumber, isGroupJid } = require('../utils/helpers');
 const { saveSudoList } = require('../utils/sudoStore');
 
 module.exports = {
