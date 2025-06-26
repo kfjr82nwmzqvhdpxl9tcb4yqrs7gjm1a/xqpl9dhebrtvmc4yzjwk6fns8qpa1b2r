@@ -17,7 +17,7 @@ async function saveMedia(msgContent, type = 'file') {
 }
 
 module.exports = {
-  name: 'save',
+  name: 'send',
   description: 'Save and resend a replied message (media/text/sticker).',
   category: 'User',
   get flashOnly() {
