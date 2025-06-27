@@ -14,12 +14,20 @@ module.exports = {
 
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
-    const mime = (msg.message || msg.msg)?.mimetype || '';
-    const quoted = msg.quoted || msg;
 
-    if (!/audio|video/.test(mime)) {
+    // Determine if the message is a reply
+    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const messageContent = quotedMsg || msg.message;
+
+    // Get mime type
+    const mime =
+      messageContent?.audioMessage ? 'audio' :
+      messageContent?.videoMessage ? 'video' :
+      '';
+
+    if (!mime) {
       return king.sendMessage(fromJid, {
-        text: '🎵 *Tag a short audio or video for me to identify the song.*',
+        text: '🎵 *Reply to a short audio or video to identify the song.*',
         contextInfo: {
           forwardingScore: 1,
           isForwarded: true,
@@ -33,7 +41,8 @@ module.exports = {
     }
 
     try {
-      const buffer = await quoted.download();
+      // Download the media
+      const buffer = await king.downloadMediaMessage({ message: quotedMsg || msg.message });
 
       const acr = new acrcloud({
         host: 'identify-ap-southeast-1.acrcloud.com',
@@ -51,7 +60,6 @@ module.exports = {
       const music = metadata.music[0];
       const { title, artists, album, genres, release_date } = music;
 
-      // Optional YouTube search
       const query = `${title} ${artists?.[0]?.name || ''}`;
       const search = await yts(query);
       const video = search.videos[0];
@@ -78,7 +86,7 @@ module.exports = {
       }, { quoted: msg });
 
     } catch (err) {
-      console.error('[IDENTIFY] Error:', err);
+      console.error('[SHZ] Error:', err);
       return king.sendMessage(fromJid, {
         text: '⚠️ Could not recognize the song. Try again with a clearer or shorter audio.',
         contextInfo: {
