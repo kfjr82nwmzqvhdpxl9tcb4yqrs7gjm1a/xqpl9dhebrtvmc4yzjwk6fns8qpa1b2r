@@ -71,7 +71,7 @@ async function startBot() {
       keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
     },
     markOnlineOnConnect: false,
-    printQRInTerminal: false,
+    printQRInTerminal: true,
     logger,
     browser: Browsers.macOS('Safari'),
     version
