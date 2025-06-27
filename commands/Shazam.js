@@ -1,15 +1,17 @@
-const { franceking } = require('../main');
 const acrcloud = require("acrcloud");
 const yts = require("yt-search");
+const { franceking } = require('../main');
 
-{
-  name: 'Shazam',
-  get flashOnly() {
-    return franceking();
-  },
+module.exports = {
+  name: 'shazam',
   aliases: ['whatsong', 'findsong'],
   description: 'Identify a song from a short audio or video and show details.',
   category: 'Search',
+
+  get flashOnly() {
+    return franceking();
+  },
+
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
     const mime = (msg.message || msg.msg)?.mimetype || '';
@@ -40,12 +42,16 @@ const yts = require("yt-search");
       });
 
       const { status, metadata } = await acr.identify(buffer);
-      if (status.code !== 0) return king.sendMessage(fromJid, { text: `❌ ${status.msg}` }, { quoted: msg });
+      if (status.code !== 0) {
+        return king.sendMessage(fromJid, {
+          text: `❌ ${status.msg}`
+        }, { quoted: msg });
+      }
 
       const music = metadata.music[0];
       const { title, artists, album, genres, release_date } = music;
 
-      // Optional: Search on YouTube
+      // Optional YouTube search
       const query = `${title} ${artists?.[0]?.name || ''}`;
       const search = await yts(query);
       const video = search.videos[0];
@@ -87,4 +93,4 @@ const yts = require("yt-search");
       }, { quoted: msg });
     }
   }
-}
+};
