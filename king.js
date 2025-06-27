@@ -15,7 +15,7 @@ const db = require('./db');
 const { loadSudoList } = require('./utils/sudoStore');
 
 global.ALLOWED_USERS = loadSudoList();
-const logger = pino({ level: 'fatal' });
+const logger = pino({ level: 'info' });
 const commands = new Map();
 const aliases = new Map();
 const messageStore = new Map();
@@ -54,34 +54,16 @@ function getUserNumber(jid) {
   return cleanJid.split('@')[0];
 }
 
-function getChatCategory(jid) {
-  if (jid === 'status@broadcast') return '🟡 Status Update';
-  if (jid.endsWith('@newsletter')) return '📢 Channel Post';
-  if (jid.endsWith('@s.whatsapp.net')) return '💬 Private Chat';
-  if (jid.endsWith('@g.us') || jid.endsWith('@lid')) return '👥 Group Chat';
-  return '❔ Unknown Chat Type';
-}
-
 async function getGroupContext(king, msg) {
   const fromJid = msg.key.remoteJid;
-  const senderJid = msg.key.participant || msg.key.remoteJid;
-  const groupMetadata = await king.groupMetadata(fromJid);
-  const participants = groupMetadata.participants || [];
-
-  const groupAdmins = participants
-    .filter(p => p.admin)
-    .map(p => normalizeJid(p.id));
-
-  const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-  const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-
+  const senderJid = normalizeJid(msg.key.participant || msg.key.remoteJid);
+  const metadata = await king.groupMetadata(fromJid);
+  const admins = metadata.participants.filter(p => p.admin).map(p => normalizeJid(p.id));
   return {
-    groupMetadata,
-    participants,
-    groupAdmins,
-    isAdmin,
-    isBotAdmin,
-    groupName: groupMetadata.subject || 'Unknown Group'
+    groupAdmins: admins,
+    isAdmin: admins.includes(senderJid),
+    isBotAdmin: admins.includes(normalizeJid(king.user.id)),
+    groupMetadata: metadata
   };
 }
 
@@ -94,52 +76,35 @@ async function startBot() {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
     },
-    markOnlineOnConnect: false,
-    printQRInTerminal: true,
     logger,
     browser: Browsers.macOS('Safari'),
     version
   });
 
-  global.KING_LID = null;
-
   king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
     if (connection === 'close') {
-      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      if (shouldReconnect) {
-        try {
-          king.ev.removeAllListeners();
-          king.ws.close();
-        } catch {}
+      const retry = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      if (retry) {
+        king.ev.removeAllListeners();
+        king.ws.close();
         startBot();
       }
     }
-
     if (connection === 'open') {
-      global.KING_LID = king.user.id;
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-      const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-      const totalCmds = commands.size;
-      const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*\n\n*✅ Using Version 2.5!*\n*📌 Commands:* ${totalCmds}\n*⚙️ ${prefixInfo}*\n*🗓️ Date:* ${date}`;
-      await king.sendMessage(king.user.id, {
-        text: connInfo,
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        }
-      }).catch(() => {});
+      const prefixDesc = conf.prefixes.length ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
+      const info = `*BOT CONNECTED*\nCommands: ${commands.size}\n${prefixDesc}\nDate: ${date}`;
+      king.sendMessage(king.user.id, { text: info }).catch(() => {});
     }
   });
 
   king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
-    if (messageStore.has(msg.key.id)) return;
+    const msgId = msg.key.id;
+    if (messageStore.has(msgId)) return;
+
+    messageStore.set(msgId, msg);
 
     const fromJid = msg.key.remoteJid;
     const senderJid = normalizeJid(msg.key.participant || msg.key.remoteJid);
@@ -148,75 +113,57 @@ async function startBot() {
     const isDM = fromJid.endsWith('@s.whatsapp.net');
     const m = msg.message;
 
+    const content = m.conversation || m.extendedTextMessage?.text || m.imageMessage?.caption || '';
+    if (!content) return;
+
+    logger.info({ sender: senderNumber, chat: fromJid, message: content });
+
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
       king.readMessages([msg.key]).catch(() => {});
     }
 
-    const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
-    if (!text) return;
-
-    const prefixes = [...conf.prefixes];
-    const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
+    const usedPrefix = conf.prefixes.find(p => content.toLowerCase().startsWith(p));
     if (!usedPrefix) return;
 
-    const cmdText = text.slice(usedPrefix.length).trim();
-    const args = cmdText.split(/\s+/);
-    const cmdName = args.shift()?.toLowerCase();
+    const text = content.slice(usedPrefix.length).trim();
+    const parts = text.split(/\s+/);
+    const cmdName = parts.shift().toLowerCase();
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
     if (!command) return;
 
-    const isOwnerUser = isOwner(senderJid);
-    const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
-    const isAllowed = isOwnerUser || isSelf || global.ALLOWED_USERS.has(senderNumber);
+    const args = parts;
+    const isOwn = isOwner(senderJid);
+    const isSelf = senderJid === normalizeJid(king.user.id);
+    const isAllowed = isOwn || isSelf || global.ALLOWED_USERS.has(senderNumber);
 
+    let isAdmin = false, isBotAdmin = false, groupMetadata = null;
     const isGroup = isGroupJid(fromJid);
-    let groupAdmins = [], isAdmin = false, isBotAdmin = false, groupMetadata = null;
     if (isGroup) {
-      const context = await getGroupContext(king, msg);
-      groupAdmins = context.groupAdmins;
-      isAdmin = context.isAdmin;
-      isBotAdmin = context.isBotAdmin;
-      groupMetadata = context.groupMetadata;
+      const ctx = await getGroupContext(king, msg);
+      ({ isAdmin, isBotAdmin, groupMetadata } = ctx);
     }
+
+    logger.info({ command: cmdName, fromGroup: isGroup, isAdmin, isOwner: isOwn, isAllowed });
 
     if (command.ownerOnly && !isAllowed) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ This command is restricted to the bot owner.',
-      }, { quoted: msg });
+      return king.sendMessage(fromJid, { text: '⛔ Owner only.' }, { quoted: msg });
     }
-
-    if (command.flashOnly && !isAllowed) {
-      return;
-    }
-
     if (command.groupOnly && !isGroup) {
-      return king.sendMessage(fromJid, {
-        text: '❌ This command only works in groups.'
-      }, { quoted: msg });
+      return king.sendMessage(fromJid, { text: '❌ Group only.' }, { quoted: msg });
     }
-
     if (command.adminOnly && !isAdmin && !isAllowed) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ This command is restricted to group admins.'
-      }, { quoted: msg });
+      return king.sendMessage(fromJid, { text: '⛔ Admin only.' }, { quoted: msg });
     }
-
     if (command.botAdminOnly && !isBotAdmin) {
-      return king.sendMessage(fromJid, {
-        text: '⚠️ I need to be admin to run this command.'
-      }, { quoted: msg });
+      return king.sendMessage(fromJid, { text: '⚠️ Bot must be admin.' }, { quoted: msg });
     }
 
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
-    } catch (err) {
-      console.error('Command error:', err);
-      king.sendMessage(fromJid, {
-        text: '⚠️ Something went wrong while executing the command.'
-      }).catch(() => {});
+    } catch (e) {
+      logger.error('Command error', e);
+      king.sendMessage(fromJid, { text: '⚠️ Something went wrong.' }).catch(() => {});
     }
-
-    messageStore.set(msg.key.id, msg);
   });
 
   king.ev.on('creds.update', saveState);
