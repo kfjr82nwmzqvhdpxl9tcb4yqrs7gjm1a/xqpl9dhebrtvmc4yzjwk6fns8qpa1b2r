@@ -3,6 +3,36 @@ const yts = require("yt-search");
 const { franceking } = require('../main');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegPath = require("ffmpeg-static");
+const path = require("path");
+
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+function trimTo15Seconds(inputBuffer, outputPath) {
+  return new Promise((resolve, reject) => {
+    const tempDir = path.join(__dirname, '..', 'temp');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+    const inputFile = path.join(tempDir, `input-${Date.now()}.mp4`);
+    const outputFile = outputPath;
+
+    fs.writeFileSync(inputFile, inputBuffer);
+
+    ffmpeg(inputFile)
+      .setStartTime(0)
+      .duration(15)
+      .output(outputFile)
+      .on('end', () => {
+        const trimmed = fs.readFileSync(outputFile);
+        fs.unlinkSync(inputFile);
+        fs.unlinkSync(outputFile);
+        resolve(trimmed);
+      })
+      .on('error', (err) => reject(err))
+      .run();
+  });
+}
 
 module.exports = {
   name: 'shazam',
@@ -20,7 +50,7 @@ module.exports = {
 
     if (!quoted || (!quoted.audioMessage && !quoted.videoMessage)) {
       return king.sendMessage(fromJid, {
-        text: '🎵 *Reply to a short audio or video to identify the song.*'
+        text: '🎵 *Reply to a short audio or video (10–15s) to identify the song.*'
       }, { quoted: msg });
     }
 
@@ -32,20 +62,22 @@ module.exports = {
         { logger: console }
       );
 
+      const trimmedBuffer = await trimTo15Seconds(buffer, path.join(__dirname, '..', 'temp', `trimmed-${Date.now()}.mp4`));
+
       const acr = new acrcloud({
         host: 'identify-ap-southeast-1.acrcloud.com',
         access_key: '26afd4eec96b0f5e5ab16a7e6e05ab37',
         access_secret: 'wXOZIqdMNZmaHJP1YDWVyeQLg579uK2CfY6hWMN8'
       });
 
-      const { status, metadata } = await acr.identify(buffer);
+      const { status, metadata } = await acr.identify(trimmedBuffer);
 
       console.log('[ACRCloud Debug]', JSON.stringify({ status, metadata }, null, 2));
       fs.writeFileSync('./acr-result.json', JSON.stringify({ status, metadata }, null, 2));
 
       if (status.code !== 0 || !metadata?.music?.length) {
         return king.sendMessage(fromJid, {
-          text: '❌ Could not recognize the song. Try again.'
+          text: '❌ Could not recognize the song. Try again with a clearer 10–15 second clip.'
         }, { quoted: msg });
       }
 
@@ -73,9 +105,8 @@ module.exports = {
     } catch (err) {
       console.error('[SHZ ERROR]', err);
       return king.sendMessage(fromJid, {
-        text: '⚠️ Song not recognizable. Try again with clearer or shorter audio.'
+        text: '⚠️ Song not recognizable. Try again with a clearer or shorter clip.'
       }, { quoted: msg });
     }
   }
 };
-
