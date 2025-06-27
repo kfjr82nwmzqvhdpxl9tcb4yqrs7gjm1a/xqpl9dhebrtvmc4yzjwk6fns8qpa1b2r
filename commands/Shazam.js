@@ -1,8 +1,9 @@
+const { franceking } = require('../main');
 const acrcloud = require("acrcloud");
 const yts = require("yt-search");
 
 {
-  name: 'identify',
+  name: 'Shazam',
   get flashOnly() {
     return franceking();
   },
