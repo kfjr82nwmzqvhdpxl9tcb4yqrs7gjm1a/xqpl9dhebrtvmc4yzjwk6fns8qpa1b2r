@@ -72,9 +72,6 @@ module.exports = {
 
       const { status, metadata } = await acr.identify(trimmedBuffer);
 
-      console.log('[ACRCloud Debug]', JSON.stringify({ status, metadata }, null, 2));
-      fs.writeFileSync('./acr-result.json', JSON.stringify({ status, metadata }, null, 2));
-
       if (status.code !== 0 || !metadata?.music?.length) {
         return king.sendMessage(fromJid, {
           text: '❌ Could not recognize the song. Try again with a clearer 10–15 second clip.'
@@ -87,9 +84,6 @@ module.exports = {
       const query = `${title} ${artists?.[0]?.name || ''}`;
       const search = await yts(query);
 
-      console.log('[YouTube Search]', JSON.stringify(search.videos?.[0], null, 2));
-      fs.writeFileSync('./yt-search.json', JSON.stringify(search.videos?.[0], null, 2));
-
       let result = `🎶 *Song Identified!*\n`;
       result += `\n🎧 *Title:* ${title}`;
       if (artists) result += `\n👤 *Artist(s):* ${artists.map(a => a.name).join(', ')}`;
@@ -99,7 +93,16 @@ module.exports = {
       if (search?.videos?.[0]?.url) result += `\n🔗 *YouTube:* ${search.videos[0].url}`;
 
       return king.sendMessage(fromJid, {
-        text: result.trim()
+        text: result.trim(),
+        contextInfo: {
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+          }
+        }
       }, { quoted: msg });
 
     } catch (err) {
