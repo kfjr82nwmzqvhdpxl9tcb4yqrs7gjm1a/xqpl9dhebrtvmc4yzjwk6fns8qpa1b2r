@@ -133,7 +133,8 @@ async function startBot() {
 
     const args = parts;
     const isOwn = isOwner(senderJid);
-    const isSelf = senderJid === normalizeJid(king.user.id);
+    const botJid = normalizeJid(king.user.id);
+    const isSelf = normalizeJid(senderJid) === botJid;
     const isAllowed = isOwn || isSelf || global.ALLOWED_USERS.has(senderNumber);
 
     let isAdmin = false, isBotAdmin = false, groupMetadata = null;
@@ -143,7 +144,7 @@ async function startBot() {
       ({ isAdmin, isBotAdmin, groupMetadata } = ctx);
     }
 
-    logger.info({ command: cmdName, fromGroup: isGroup, isAdmin, isOwner: isOwn, isAllowed });
+    logger.info({ command: cmdName, fromGroup: isGroup, isAdmin, isOwner: isOwn, isSelf, isAllowed });
 
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, { text: '⛔ Owner only.' }, { quoted: msg });
