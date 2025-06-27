@@ -2,6 +2,7 @@ const acrcloud = require("acrcloud");
 const yts = require("yt-search");
 const { franceking } = require('../main');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const fs = require("fs");
 
 module.exports = {
   name: 'shazam',
@@ -16,7 +17,6 @@ module.exports = {
   execute: async (king, msg) => {
     const fromJid = msg.key.remoteJid;
     const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
 
     if (!quoted || (!quoted.audioMessage && !quoted.videoMessage)) {
       return king.sendMessage(fromJid, {
@@ -39,14 +39,24 @@ module.exports = {
       });
 
       const { status, metadata } = await acr.identify(buffer);
+
+      console.log('[ACRCloud Debug]', JSON.stringify({ status, metadata }, null, 2));
+      fs.writeFileSync('./acr-result.json', JSON.stringify({ status, metadata }, null, 2));
+
       if (status.code !== 0 || !metadata?.music?.length) {
         return king.sendMessage(fromJid, {
-          text: `❌ Could not recognize the song. Try again.`
+          text: '❌ Could not recognize the song. Try again.'
         }, { quoted: msg });
       }
 
       const music = metadata.music[0];
       const { title, artists, album, genres, release_date } = music;
+
+      const query = `${title} ${artists?.[0]?.name || ''}`;
+      const search = await yts(query);
+
+      console.log('[YouTube Search]', JSON.stringify(search.videos?.[0], null, 2));
+      fs.writeFileSync('./yt-search.json', JSON.stringify(search.videos?.[0], null, 2));
 
       let result = `🎶 *Song Identified!*\n`;
       result += `\n🎧 *Title:* ${title}`;
@@ -54,12 +64,7 @@ module.exports = {
       if (album) result += `\n💿 *Album:* ${album.name}`;
       if (genres) result += `\n🎼 *Genre:* ${genres.map(g => g.name).join(', ')}`;
       if (release_date) result += `\n📅 *Released:* ${release_date}`;
-
-      // YouTube optional
-      const search = await yts(`${title} ${artists?.[0]?.name || ''}`);
-      if (search?.videos?.length) {
-        result += `\n🔗 *YouTube:* ${search.videos[0].url}`;
-      }
+      if (search?.videos?.[0]?.url) result += `\n🔗 *YouTube:* ${search.videos[0].url}`;
 
       return king.sendMessage(fromJid, {
         text: result.trim()
@@ -73,3 +78,4 @@ module.exports = {
     }
   }
 };
+
