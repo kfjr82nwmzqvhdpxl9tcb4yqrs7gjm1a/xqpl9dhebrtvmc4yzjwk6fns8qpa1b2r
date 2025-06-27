@@ -1,6 +1,7 @@
 const acrcloud = require("acrcloud");
 const yts = require("yt-search");
 const { franceking } = require('../main');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 
 module.exports = {
   name: 'shazam',
@@ -15,17 +16,18 @@ module.exports = {
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
 
-    // Determine if the message is a reply
+    // Check if it's a quoted message
     const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const messageContent = quotedMsg || msg.message;
+    const quotedContent = msg.message?.extendedTextMessage?.contextInfo;
 
-    // Get mime type
-    const mime =
-      messageContent?.audioMessage ? 'audio' :
-      messageContent?.videoMessage ? 'video' :
-      '';
+    const messageToAnalyze = quotedMsg
+      ? { message: quotedMsg }
+      : { message: msg.message };
 
-    if (!mime) {
+    const isAudio = quotedMsg?.audioMessage || msg.message?.audioMessage;
+    const isVideo = quotedMsg?.videoMessage || msg.message?.videoMessage;
+
+    if (!isAudio && !isVideo) {
       return king.sendMessage(fromJid, {
         text: '🎵 *Reply to a short audio or video to identify the song.*',
         contextInfo: {
@@ -41,8 +43,7 @@ module.exports = {
     }
 
     try {
-      // Download the media
-      const buffer = await king.downloadMediaMessage({ message: quotedMsg || msg.message });
+      const buffer = await downloadMediaMessage(messageToAnalyze, 'buffer', {}, { logger: console });
 
       const acr = new acrcloud({
         host: 'identify-ap-southeast-1.acrcloud.com',
