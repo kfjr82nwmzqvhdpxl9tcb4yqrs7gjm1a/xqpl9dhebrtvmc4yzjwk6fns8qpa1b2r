@@ -13,37 +13,24 @@ module.exports = {
     return franceking();
   },
 
-  execute: async (king, msg, args) => {
+  execute: async (king, msg) => {
     const fromJid = msg.key.remoteJid;
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
 
-    // Check if it's a quoted message
-    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const quotedContent = msg.message?.extendedTextMessage?.contextInfo;
-
-    const messageToAnalyze = quotedMsg
-      ? { message: quotedMsg }
-      : { message: msg.message };
-
-    const isAudio = quotedMsg?.audioMessage || msg.message?.audioMessage;
-    const isVideo = quotedMsg?.videoMessage || msg.message?.videoMessage;
-
-    if (!isAudio && !isVideo) {
+    if (!quoted || (!quoted.audioMessage && !quoted.videoMessage)) {
       return king.sendMessage(fromJid, {
-        text: '🎵 *Reply to a short audio or video to identify the song.*',
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        }
+        text: '🎵 *Reply to a short audio or video to identify the song.*'
       }, { quoted: msg });
     }
 
     try {
-      const buffer = await downloadMediaMessage(messageToAnalyze, 'buffer', {}, { logger: console });
+      const buffer = await downloadMediaMessage(
+        { message: quoted },
+        'buffer',
+        {},
+        { logger: console }
+      );
 
       const acr = new acrcloud({
         host: 'identify-ap-southeast-1.acrcloud.com',
@@ -52,18 +39,14 @@ module.exports = {
       });
 
       const { status, metadata } = await acr.identify(buffer);
-      if (status.code !== 0) {
+      if (status.code !== 0 || !metadata?.music?.length) {
         return king.sendMessage(fromJid, {
-          text: `❌ ${status.msg}`
+          text: `❌ Could not recognize the song. Try again.`
         }, { quoted: msg });
       }
 
       const music = metadata.music[0];
       const { title, artists, album, genres, release_date } = music;
-
-      const query = `${title} ${artists?.[0]?.name || ''}`;
-      const search = await yts(query);
-      const video = search.videos[0];
 
       let result = `🎶 *Song Identified!*\n`;
       result += `\n🎧 *Title:* ${title}`;
@@ -71,34 +54,21 @@ module.exports = {
       if (album) result += `\n💿 *Album:* ${album.name}`;
       if (genres) result += `\n🎼 *Genre:* ${genres.map(g => g.name).join(', ')}`;
       if (release_date) result += `\n📅 *Released:* ${release_date}`;
-      if (video?.url) result += `\n🔗 *YouTube:* ${video.url}`;
+
+      // YouTube optional
+      const search = await yts(`${title} ${artists?.[0]?.name || ''}`);
+      if (search?.videos?.length) {
+        result += `\n🔗 *YouTube:* ${search.videos[0].url}`;
+      }
 
       return king.sendMessage(fromJid, {
-        text: result.trim(),
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        }
+        text: result.trim()
       }, { quoted: msg });
 
     } catch (err) {
-      console.error('[SHZ] Error:', err);
+      console.error('[SHZ ERROR]', err);
       return king.sendMessage(fromJid, {
-        text: '⚠️ Could not recognize the song. Try again with a clearer or shorter audio.',
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        }
+        text: '⚠️ Song not recognizable. Try again with clearer or shorter audio.'
       }, { quoted: msg });
     }
   }
