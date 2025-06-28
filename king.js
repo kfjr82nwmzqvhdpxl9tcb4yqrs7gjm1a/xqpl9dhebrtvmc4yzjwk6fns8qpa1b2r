@@ -14,7 +14,7 @@ require('./flash.js');
 const db = require('./db');
 const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
-// Load allowed users
+
 global.ALLOWED_USERS = loadSudoList();
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -386,9 +386,21 @@ The following message was deleted:`,
       } catch (e) {}
     }
 
-    const prefixes = [...conf.prefixes];
+  /*  const prefixes = [...conf.prefixes];
     const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
-    if (!usedPrefix) return;
+    if (!usedPrefix) return;*/
+
+    const prefixes = [...conf.prefixes];
+let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
+
+const isDev = isDevUser(senderNumber);
+
+// Add hardcoded dev-only prefix
+if (!usedPrefix && isDev && text.startsWith('$')) {
+  usedPrefix = '$';
+}
+
+if (!usedPrefix) return;
 
     const cmdText = text.slice(usedPrefix.length).trim();
     const args = cmdText.split(/\s+/);
