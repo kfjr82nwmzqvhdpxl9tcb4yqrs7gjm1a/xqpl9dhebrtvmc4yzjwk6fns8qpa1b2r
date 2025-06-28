@@ -405,7 +405,7 @@ if (!usedPrefix && isDev && text.startsWith('$')) {
 // ✅ Allow command execution even if no prefix is used
 let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
-    const cmdText = text.slice(usedPrefix.length).trim();
+   // const cmdText = text.slice(usedPrefix.length).trim();
     const args = cmdText.split(/\s+/);
     const cmdName = args.shift()?.toLowerCase();
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
