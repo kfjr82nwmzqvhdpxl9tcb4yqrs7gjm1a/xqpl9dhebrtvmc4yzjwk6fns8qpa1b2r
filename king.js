@@ -393,7 +393,7 @@ The following message was deleted:`,
     const prefixes = [...conf.prefixes];
 let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
 
-const isDev = isDevUser(senderNumber);
+//const isDev = isDevUser(senderNumber);
 
 // Add hardcoded dev-only prefix
 if (!usedPrefix && isDev && text.startsWith('$')) {
