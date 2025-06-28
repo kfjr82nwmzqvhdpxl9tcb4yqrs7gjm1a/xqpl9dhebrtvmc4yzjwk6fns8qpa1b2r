@@ -386,6 +386,15 @@ The following message was deleted:`,
       } catch (e) {}
     }
 
+   /* const prefixes = [...conf.prefixes];
+let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
+
+if (!usedPrefix && isDev && text.startsWith('$')) {
+  usedPrefix = '$';
+}
+
+if (!usedPrefix) return;*/
+
     const prefixes = [...conf.prefixes];
 let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
 
@@ -393,7 +402,8 @@ if (!usedPrefix && isDev && text.startsWith('$')) {
   usedPrefix = '$';
 }
 
-if (!usedPrefix) return;
+// ✅ Allow command execution even if no prefix is used
+let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
     const cmdText = text.slice(usedPrefix.length).trim();
     const args = cmdText.split(/\s+/);
