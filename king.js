@@ -386,16 +386,9 @@ The following message was deleted:`,
       } catch (e) {}
     }
 
-  /*  const prefixes = [...conf.prefixes];
-    const usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
-    if (!usedPrefix) return;*/
-
     const prefixes = [...conf.prefixes];
 let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
 
-//const isDev = isDevUser(senderNumber);
-
-// Add hardcoded dev-only prefix
 if (!usedPrefix && isDev && text.startsWith('$')) {
   usedPrefix = '$';
 }
