@@ -68,7 +68,7 @@ async function startBot() {
   const king = makeWASocket({
     auth: {
       creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'info' }))
+      keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
     },
     markOnlineOnConnect: false,
     printQRInTerminal: true,
@@ -232,9 +232,8 @@ The following message was deleted:`,
       }
     }
 
-   const isDev = isDevUser(senderNumber);
-   const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
-const isAllowed = isDevUser(senderNumber) || isSelf || global.ALLOWED_USERS.has(senderNumber);   // const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+    const isDev = isDevUser(senderNumber);
+    const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
     const m = msg.message;
 
     const chatType = getChatCategory(fromJid);
@@ -387,6 +386,7 @@ const isAllowed = isDevUser(senderNumber) || isSelf || global.ALLOWED_USERS.has(
       } catch (e) {}
     }
 
+   
 
     const prefixes = [...conf.prefixes];
 let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
@@ -395,10 +395,9 @@ if (!usedPrefix && isDev && text.startsWith('$')) {
   usedPrefix = '$';
 }
 
-// ✅ Allow command execution even if no prefix is used
+
 let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
-   // const cmdText = text.slice(usedPrefix.length).trim();
     const args = cmdText.split(/\s+/);
     const cmdName = args.shift()?.toLowerCase();
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
@@ -417,7 +416,7 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-  //  const isAllowed = isDev || isSelf || global.ALLOWED_USERS.has(senderNumber);
+    const isAllowed = isDev || isSelf || global.ALLOWED_USERS.has(senderNumber);
 
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
