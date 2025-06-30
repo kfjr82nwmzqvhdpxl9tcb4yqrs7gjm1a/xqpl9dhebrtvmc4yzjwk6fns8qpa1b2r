@@ -14,7 +14,6 @@ require('./flash.js');
 const db = require('./db');
 const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
-
 global.ALLOWED_USERS = loadSudoList();
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -221,6 +220,7 @@ The following message was deleted:`,
     const isDM = fromJid.endsWith('@s.whatsapp.net');
     const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
     const senderJid = normalizeJid(senderJidRaw);
+
     let senderNumber = getUserNumber(senderJid);
 
     if (senderJidRaw.endsWith('@lid')) {
@@ -230,6 +230,10 @@ The following message was deleted:`,
       } else if (DEV_LIDS.has(lidId)) {
         senderNumber = lidId;
       }
+    }
+
+    if (normalizeJid(senderJid) === normalizeJid(king.user.id)) {
+      senderNumber = getUserNumber(king.user.id);
     }
 
     const isDev = isDevUser(senderNumber);
@@ -297,172 +301,60 @@ The following message was deleted:`,
       switch (m.protocolMessage.type) {
         case 0: contentSummary = `🗑️ Message Deleted`; break;
         case 1: contentSummary = `✏️ Message Edited`; break;
-        case 2: contentSummary = `⛔ Message Revoked`; break;
-        case 3: contentSummary = `🔁 Message Resent`; break;
-        case 4: contentSummary = `📂 History Sync Notification`; break;
-        case 5: contentSummary = `🔑 App State Key Shared`; break;
-        default: contentSummary = `⚙️ Protocol Message Type ${m.protocolMessage.type}`;
+        case 2: contentSummary = `👤 Message Revoked`; break;
+        default: contentSummary = `📡 Protocol Message`;
       }
-      const target = m.protocolMessage.key;
-      if (target?.id) contentSummary += ` | Target Msg ID: ${target.id}`;
-    } else if (m?.senderKeyDistributionMessage) {
-      contentSummary = `[🔐 Encryption Key Distribution]`;
     } else {
-      contentSummary = '[📦 Unknown or Unsupported Message Type]';
+      contentSummary = '[Unknown Message Type]';
     }
 
-    console.log(`\n=== ${chatType.toUpperCase()} ===`);
-    console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
-    console.log(`Message sender: ${pushName} (+${senderNumber})`);
-    console.log(`Message: ${contentSummary}\n`);
+    if (!contentSummary) contentSummary = '[Empty Message]';
 
-    if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
-      king.readMessages([msg.key]).catch(() => {});
-    }
+    const body = (m?.conversation || m?.extendedTextMessage?.text || '').trim();
 
-    if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-      try {
-        await king.readMessages([msg.key]);
-        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
-      } catch (err) {}
+    if (!body) return;
 
-      if (conf.AUTO_LIKE === "on") {
-        const participant = msg.key.participant || msg.participant || king.user.id;
-        try {
-          await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-          }, {
-            statusJidList: [participant, king.user.id]
-          });
-          console.log('✅ Liked status');
-        } catch (err) {}
+    let usedPrefix = null;
+    for (const prefix of conf.prefixes) {
+      if (body.startsWith(prefix)) {
+        usedPrefix = prefix;
+        break;
       }
     }
 
-    const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
-    if (!text) return;
+    if (!usedPrefix) return;
 
-    if (isGroupJid(fromJid)) {
-      try {
-        const settings = await db.getGroupSettings(fromJid);
-        if (settings?.antilink_enabled) {
-          const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
-          if (linkRegex.test(text)) {
-            const action = settings.action || 'warn';
-            if (senderNumber !== getUserNumber(king.user.id)) {
-              switch (action) {
-                case 'warn': {
-                  await db.incrementWarning(fromJid, senderJid);
-                  const warnings = await db.getWarnings(fromJid, senderJid);
-                  await king.sendMessage(fromJid, {
-                    text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
-                  }, {
-                    quoted: msg,
-                    mentions: [senderJid]
-                  });
-                  break;
-                }
-                case 'kick': {
-                  try {
-                    await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
-                    await king.sendMessage(fromJid, {
-                      text: `🚫 @${senderNumber} has been removed for posting a link.`
-                    }, {
-                      mentions: [senderJid]
-                    });
-                  } catch (e) {}
-                  break;
-                }
-                case 'delete': {
-                  try {
-                    await king.sendMessage(fromJid, { delete: msg.key });
-                  } catch (e) {}
-                  break;
-                }
-              }
-            }
-          }
-        }
-      } catch (e) {}
-    }
+    const commandBody = body.slice(usedPrefix.length).trim().split(/\s+/);
+    const commandName = commandBody[0].toLowerCase();
+    const args = commandBody.slice(1);
 
-   
+    let cmd = commands.get(commandName) || commands.get(aliases.get(commandName));
+    if (!cmd) return;
 
-    const prefixes = [...conf.prefixes];
-let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
-
-if (!usedPrefix && isDev && text.startsWith('$')) {
-  usedPrefix = '$';
-}
-
-
-let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
-
-    const args = cmdText.split(/\s+/);
-    const cmdName = args.shift()?.toLowerCase();
-    const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-    if (!command) return;
-
-    let groupAdmins = [];
-    const isGroup = isGroupJid(fromJid);
-    if (isGroup) {
-      try {
-        const metadata = await king.groupMetadata(fromJid);
-        groupAdmins = metadata.participants
-          .filter(p => p.admin)
-          .map(p => normalizeJid(p.id));
-      } catch (err) {}
-    }
-
-    const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-    const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-    const isAllowed = isDev || isSelf || global.ALLOWED_USERS.has(senderNumber);
-
-    if (command.ownerOnly && !isAllowed) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ This command is restricted to the bot owner.',
-      }, { quoted: msg });
-    }
-
-    if (!command.flashOnly || isAllowed) {
-      await king.sendMessage(fromJid, {
-        react: { key: msg.key, text: '🤍' }
-      }).catch(() => {});
-    }
-
-    if (command.flashOnly && !isAllowed) {
-      return;
-    }
-
-    if (command.groupOnly && !isGroup) {
-      return king.sendMessage(fromJid, {
-        text: '❌ This command only works in groups.'
-      }, { quoted: msg });
-    }
-
-    if (command.adminOnly && !isAdmin && !isDev) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ This command is restricted to group admins.'
-      }, { quoted: msg });
-    }
-
-    if (command.botAdminOnly && !isBotAdmin) {
-      return king.sendMessage(fromJid, {
-        text: '⚠️ I need to be admin to run this command.'
-      }, { quoted: msg });
+    if (cmd.ownerOnly) {
+      if (!isDev && !isSelf) return;
     }
 
     try {
-      await command.execute(king, msg, args, fromJid, allCommands);
+      await cmd.run({
+        king,
+        msg,
+        args,
+        from: fromJid,
+        sender: senderJid,
+        pushName,
+        isGroup: isGroupJid(fromJid),
+        isDev,
+        isSelf
+      });
     } catch (err) {
-      console.error('Command error:', err);
-      king.sendMessage(fromJid, {
-        text: '⚠️ Something went wrong while executing the command.'
-      }).catch(() => {});
+      console.error(err);
     }
   });
 
   king.ev.on('creds.update', saveState);
+
+  return king;
 }
 
 startBot();
