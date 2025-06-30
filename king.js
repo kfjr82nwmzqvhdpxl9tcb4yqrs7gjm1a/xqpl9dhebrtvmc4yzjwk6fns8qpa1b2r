@@ -233,7 +233,8 @@ The following message was deleted:`,
     }
 
     const isDev = isDevUser(senderNumber);
-    const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+   const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
+const isAllowed = isDevUser(senderNumber) || isSelf || global.ALLOWED_USERS.has(senderNumber);   // const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
     const m = msg.message;
 
     const chatType = getChatCategory(fromJid);
