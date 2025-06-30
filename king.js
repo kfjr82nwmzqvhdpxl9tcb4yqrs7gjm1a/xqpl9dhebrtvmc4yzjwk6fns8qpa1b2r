@@ -232,7 +232,7 @@ The following message was deleted:`,
       }
     }
 
-    const isDev = isDevUser(senderNumber);
+   // const isDev = isDevUser(senderNumber);
    const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
 const isAllowed = isDevUser(senderNumber) || isSelf || global.ALLOWED_USERS.has(senderNumber);   // const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
     const m = msg.message;
@@ -387,14 +387,6 @@ const isAllowed = isDevUser(senderNumber) || isSelf || global.ALLOWED_USERS.has(
       } catch (e) {}
     }
 
-   /* const prefixes = [...conf.prefixes];
-let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
-
-if (!usedPrefix && isDev && text.startsWith('$')) {
-  usedPrefix = '$';
-}
-
-if (!usedPrefix) return;*/
 
     const prefixes = [...conf.prefixes];
 let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
