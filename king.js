@@ -140,46 +140,7 @@ async function startBot() {
       }
     }
 
-  if (connection === 'open') {
-  global.KING_LID = king.user.id;
-  lidToNumberMap.set(king.user.id, getUserNumber(king.user.id)); // map the bot's own ID to number
-
-  const USER_LID = conf.USER_LID || null;
-  if (USER_LID) {
-    const cleanLid = USER_LID.replace('@lid', '');
-
-    // ✅ Store allowed LID for later access control
-    global.ALLOWED_LIDS = global.ALLOWED_LIDS || new Set();
-    global.ALLOWED_LIDS.add(cleanLid);
-
-    // ✅ Dynamically associate the user LID with bot's number
-    lidToNumberMap.set(USER_LID, getUserNumber(king.user.id));
-  }
-
-  const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-  const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-  const totalCmds = commands.size;
-
-  const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
-
-*✅ Using Version 2.5!*
-*📌 Commands:* ${totalCmds}
-*⚙️ ${prefixInfo}*
-*🗓️ Date:* ${date}`;
-
-  await king.sendMessage(king.user.id, {
-    text: connInfo,
-    contextInfo: {
-      forwardingScore: 1,
-      isForwarded: true,
-      forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363238139244263@newsletter',
-        newsletterName: 'FLASH-MD',
-        serverMessageId: -1
-      }
-    }
-  }).catch(() => {});
-   /*if (connection === 'open') {
+    if (connection === 'open') {
       global.KING_LID = king.user.id;
       lidToNumberMap.set(king.user.id, '254742063632');
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
@@ -204,7 +165,7 @@ async function startBot() {
             serverMessageId: -1
           }
         }
-      }).catch(() => {});*/
+      }).catch(() => {});
     }
   });
 
@@ -225,7 +186,7 @@ async function startBot() {
     if (messageStore.has(msg.key.id)) return;
 
     const isFromMe = msg.key.fromMe;
-    const senderJidRaw = isFromMe ? king.user.id : msg.key.participant;
+    const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
     let metadata = null;
 
     if (isGroup) {
@@ -355,11 +316,7 @@ async function startBot() {
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJidRaw));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
- const isAllowed =
-  isDev ||
-  isSelf ||
-  global.ALLOWED_USERS.has(senderNumber) ||
-  global.ALLOWED_LIDS?.has(senderJidRaw.replace('@lid', ''));  // const isAllowed = isDev || isSelf || global.ALLOWED_USERS.has(senderNumber);
+    const isAllowed = isDev || isSelf || global.ALLOWED_USERS.has(senderNumber);
 
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
