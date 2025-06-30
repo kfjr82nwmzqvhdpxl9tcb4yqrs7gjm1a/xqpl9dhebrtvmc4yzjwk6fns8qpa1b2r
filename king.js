@@ -68,7 +68,7 @@ async function startBot() {
   const king = makeWASocket({
     auth: {
       creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
+      keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'info' }))
     },
     markOnlineOnConnect: false,
     printQRInTerminal: true,
