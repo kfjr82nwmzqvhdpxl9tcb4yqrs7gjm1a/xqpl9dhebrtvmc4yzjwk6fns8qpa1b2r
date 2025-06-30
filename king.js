@@ -225,7 +225,7 @@ async function startBot() {
     if (messageStore.has(msg.key.id)) return;
 
     const isFromMe = msg.key.fromMe;
-    const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+    const senderJidRaw = isFromMe ? king.user.id : msg.key.participant;
     let metadata = null;
 
     if (isGroup) {
