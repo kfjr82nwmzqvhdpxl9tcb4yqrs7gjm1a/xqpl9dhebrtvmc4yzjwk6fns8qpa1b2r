@@ -232,7 +232,7 @@ The following message was deleted:`,
       }
     }
 
-   // const isDev = isDevUser(senderNumber);
+   const isDev = isDevUser(senderNumber);
    const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
 const isAllowed = isDevUser(senderNumber) || isSelf || global.ALLOWED_USERS.has(senderNumber);   // const isSelf = normalizeJid(senderJid) === normalizeJid(king.user.id);
     const m = msg.message;
@@ -417,7 +417,7 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-    const isAllowed = isDev || isSelf || global.ALLOWED_USERS.has(senderNumber);
+  //  const isAllowed = isDev || isSelf || global.ALLOWED_USERS.has(senderNumber);
 
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
