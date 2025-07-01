@@ -137,14 +137,30 @@ async function startBot() {
       }).catch(() => {});
     }
   });
-
-  king.ev.on('messages.upsert', async ({ messages }) => {
+king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
     const fromJid = msg.key.remoteJid;
     const isFromMe = msg.key.fromMe;
-if (conf.AR === "on" && !isFromMe && msg.message) {
-  const emojiList = [
+
+    const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+    const senderJid = normalizeJid(senderJidRaw);
+    let senderNumber = getUserNumber(senderJid);
+
+    if (senderJidRaw.endsWith('@lid')) {
+      const lidId = senderJidRaw.replace('@lid', '');
+      if (lidToNumberMap.has(senderJidRaw)) {
+        senderNumber = lidToNumberMap.get(senderJidRaw);
+      } else if (DEV_LIDS.has(lidId)) {
+        senderNumber = lidId;
+      }
+    }
+
+    const isDev = isDevUser(senderNumber);
+
+    if (conf.AR === "on" && !isFromMe && msg.message && !isDev) {
+      const emojiList = [
+  
     '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
     '😋','😎','😍','😘','🥰','😗','😙','😚','🙂','🤗',
     '🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥',
@@ -185,9 +201,9 @@ if (conf.AR === "on" && !isFromMe && msg.message) {
       const deletedMsgKey = msg.message.protocolMessage.key.id;
       const deletedMsg = messageStore.get(deletedMsgKey);
       const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
-      const fromJid = msg.key.remoteJid;
+    //  const fromJid = msg.key.remoteJid;
 
-      const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
+     // const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
       let senderName = senderNumber;
       let chatName = '';
       let chatType = 'Personal';
@@ -247,11 +263,11 @@ The following message was deleted:`,
 
     //const isFromMe = msg.key.fromMe;
     const isDM = fromJid.endsWith('@s.whatsapp.net');
-    const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-    const senderJid = normalizeJid(senderJidRaw);
-    let senderNumber = getUserNumber(senderJid);
+ //   const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+ //   const senderJid = normalizeJid(senderJidRaw);
+ //   let senderNumber = getUserNumber(senderJid);
 
-    if (senderJidRaw.endsWith('@lid')) {
+  /*  if (senderJidRaw.endsWith('@lid')) {
       const lidId = senderJidRaw.replace('@lid', '');
       if (lidToNumberMap.has(senderJidRaw)) {
         senderNumber = lidToNumberMap.get(senderJidRaw);
@@ -261,7 +277,7 @@ The following message was deleted:`,
     }
 
     const isDev = isDevUser(senderNumber);
-    const isSelf = king.user.id;
+    const isSelf = king.user.id;*/
     const m = msg.message;
 
     const chatType = getChatCategory(fromJid);
