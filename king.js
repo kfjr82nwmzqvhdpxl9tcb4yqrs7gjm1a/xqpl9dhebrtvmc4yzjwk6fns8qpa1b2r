@@ -201,9 +201,8 @@ king.ev.on('messages.upsert', async ({ messages }) => {
       const deletedMsgKey = msg.message.protocolMessage.key.id;
       const deletedMsg = messageStore.get(deletedMsgKey);
       const deletedSenderJid = msg.message.protocolMessage.key.participant || msg.key.participant || msg.key.remoteJid;
-    //  const fromJid = msg.key.remoteJid;
+    
 
-     // const senderNumber = deletedSenderJid.replace(/@s\.whatsapp\.net$/, '');
       let senderName = senderNumber;
       let chatName = '';
       let chatType = 'Personal';
@@ -261,23 +260,9 @@ The following message was deleted:`,
 
     messageStore.set(msg.key.id, msg);
 
-    //const isFromMe = msg.key.fromMe;
+    
     const isDM = fromJid.endsWith('@s.whatsapp.net');
- //   const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
- //   const senderJid = normalizeJid(senderJidRaw);
- //   let senderNumber = getUserNumber(senderJid);
 
-  /*  if (senderJidRaw.endsWith('@lid')) {
-      const lidId = senderJidRaw.replace('@lid', '');
-      if (lidToNumberMap.has(senderJidRaw)) {
-        senderNumber = lidToNumberMap.get(senderJidRaw);
-      } else if (DEV_LIDS.has(lidId)) {
-        senderNumber = lidId;
-      }
-    }
-
-    const isDev = isDevUser(senderNumber);
-    const isSelf = king.user.id;*/
     const m = msg.message;
 
     const chatType = getChatCategory(fromJid);
@@ -430,14 +415,7 @@ The following message was deleted:`,
       } catch (e) {}
     }
 
-   /* const prefixes = [...conf.prefixes];
-let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
 
-if (!usedPrefix && isDev && text.startsWith('$')) {
-  usedPrefix = '$';
-}
-
-if (!usedPrefix) return;*/
 
     const prefixes = [...conf.prefixes];
 let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
@@ -446,10 +424,9 @@ if (!usedPrefix && isDev && text.startsWith('$')) {
   usedPrefix = '$';
 }
 
-// ✅ Allow command execution even if no prefix is used
+
 let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
-   // const cmdText = text.slice(usedPrefix.length).trim();
     const args = cmdText.split(/\s+/);
     const cmdName = args.shift()?.toLowerCase();
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
