@@ -349,10 +349,10 @@ The following message was deleted:`,
       king.readMessages([msg.key]).catch(() => {});
     }
 
- if (fromJid === 'status@broadcast') {
-  // 👀 Log the full structure of the status message
-  console.dir(msg, { depth: null });
+if (fromJid === 'status@broadcast') {
+  console.dir(msg, { depth: null }); // Log message structure
 
+  // ✅ View the status if enabled
   if (conf.AUTO_VIEW_STATUS) {
     try {
       await king.readMessages([msg.key]);
@@ -362,20 +362,16 @@ The following message was deleted:`,
     }
   }
 
+  // 🤍 React (like) to the status if enabled
   if (conf.AUTO_LIKE === 'on') {
     try {
-      const participant = msg.key.participant || msg.participant;
-      if (!participant) {
-        console.warn('⚠️ Could not identify status participant, skipping like.');
-      } else {
-        await king.sendMessage('status@broadcast', {
-          react: {
-            text: '🤍',
-            key: msg.key
-          }
-        });
-        console.log('✅ Reacted to status with 🤍');
-      }
+      await king.sendMessage('status@broadcast', {
+        react: {
+          text: '🤍',
+          key: msg.key
+        }
+      });
+      console.log('✅ Reacted to status with 🤍');
     } catch (err) {
       console.error('❌ Failed to react to status:', err);
     }
