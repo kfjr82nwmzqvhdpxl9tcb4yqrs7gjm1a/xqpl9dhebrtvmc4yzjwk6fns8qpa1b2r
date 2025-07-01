@@ -78,7 +78,7 @@ async function startBot() {
         try {
           king.ev.removeAllListeners();
           king.ws.close();
-        } catch (err) {}
+        } catch {}
         startBot();
       }
     }
@@ -98,9 +98,7 @@ async function startBot() {
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-      await king.sendMessage(king.user.id, {
-        text: connInfo
-      }).catch(() => {});
+      await king.sendMessage(king.user.id, { text: connInfo }).catch(() => {});
     }
   });
 
@@ -115,14 +113,15 @@ async function startBot() {
     let senderNumber = getUserNumber(senderJid);
     const isDev = isDevUser(senderNumber);
 
-    const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || msg.message?.imageMessage?.caption || msg.message?.videoMessage?.caption || '';
+    const text = msg.message?.conversation ||
+                 msg.message?.extendedTextMessage?.text ||
+                 msg.message?.imageMessage?.caption ||
+                 msg.message?.videoMessage?.caption || '';
     if (!text) return;
 
     const prefixes = [...conf.prefixes];
     let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
-    if (!usedPrefix && isDev && text.startsWith('$')) {
-      usedPrefix = '$';
-    }
+    if (!usedPrefix && isDev && text.startsWith('$')) usedPrefix = '$';
 
     let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const args = cmdText.split(/\s+/);
@@ -144,43 +143,29 @@ async function startBot() {
 
         isAdmin = groupAdmins.includes(senderJid);
         isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-      } catch (e) {}
+      } catch {}
     }
 
-    const isSudo = global.ALLOWED_USERS.includes(senderNumber);
+    const isSudo = global.ALLOWED_USERS.has(senderNumber);
     const isAllowed = isDev || isFromMe || isSudo;
 
-    if (command.ownerOnly && !isAllowed) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ This command is restricted to the bot owner.'
-      }, { quoted: msg });
-    }
+    if (command.ownerOnly && !isAllowed)
+      return king.sendMessage(fromJid, { text: '⛔ This command is restricted to the bot owner.' }, { quoted: msg });
 
-    if (command.groupOnly && !isGroup) {
-      return king.sendMessage(fromJid, {
-        text: '❌ This command only works in groups.'
-      }, { quoted: msg });
-    }
+    if (command.groupOnly && !isGroup)
+      return king.sendMessage(fromJid, { text: '❌ This command only works in groups.' }, { quoted: msg });
 
-    if (command.adminOnly && !(isAdmin || isDev || isSudo)) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ This command is restricted to group admins.'
-      }, { quoted: msg });
-    }
+    if (command.adminOnly && !(isAdmin || isDev || isSudo))
+      return king.sendMessage(fromJid, { text: '⛔ This command is restricted to group admins.' }, { quoted: msg });
 
-    if (command.botAdminOnly && !isBotAdmin) {
-      return king.sendMessage(fromJid, {
-        text: '⚠️ I need to be admin to run this command.'
-      }, { quoted: msg });
-    }
+    if (command.botAdminOnly && !isBotAdmin)
+      return king.sendMessage(fromJid, { text: '⚠️ I need to be admin to run this command.' }, { quoted: msg });
 
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
     } catch (err) {
       console.error('Command error:', err);
-      king.sendMessage(fromJid, {
-        text: '⚠️ Something went wrong while executing the command.'
-      }).catch(() => {});
+      king.sendMessage(fromJid, { text: '⚠️ Something went wrong while executing the command.' }).catch(() => {});
     }
   });
 
