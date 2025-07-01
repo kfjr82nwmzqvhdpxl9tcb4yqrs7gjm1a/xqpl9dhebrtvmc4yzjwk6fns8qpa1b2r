@@ -350,19 +350,19 @@ The following message was deleted:`,
     }
 
 if (fromJid === 'status@broadcast') {
-  console.dir(msg, { depth: null }); // Log message structure
+  console.dir(msg, { depth: null });
 
-  // ✅ View the status if enabled
+  // ✅ View status
   if (conf.AUTO_VIEW_STATUS) {
     try {
       await king.readMessages([msg.key]);
-      console.log('✅ Viewed status from:', msg.key.participant || msg.participant || 'Unknown');
+      console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
     } catch (err) {
       console.error('❌ Failed to view status:', err);
     }
   }
 
-  // 🤍 React (like) to the status if enabled
+  // 🤍 React to status
   if (conf.AUTO_LIKE === 'on') {
     try {
       await king.sendMessage('status@broadcast', {
