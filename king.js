@@ -142,6 +142,7 @@ async function startBot() {
     const msg = messages[0];
     if (!msg || !msg.message) return;
     const fromJid = msg.key.remoteJid;
+    const isFromMe = msg.key.fromMe;
 if (conf.AR === "on" && !isFromMe && msg.message) {
   const emojiList = [
     '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
@@ -244,7 +245,7 @@ The following message was deleted:`,
 
     messageStore.set(msg.key.id, msg);
 
-    const isFromMe = msg.key.fromMe;
+    //const isFromMe = msg.key.fromMe;
     const isDM = fromJid.endsWith('@s.whatsapp.net');
     const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
     const senderJid = normalizeJid(senderJidRaw);
