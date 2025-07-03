@@ -436,7 +436,20 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const isGroup = isGroupJid(fromJid);
     if (isGroup) {
       try {
-        const metadata = await king.groupMetadata(fromJid);
+      const metadata = await king.groupMetadata(fromJid);
+const participants = metadata.participants;
+
+const senderData = participants.find(p => normalizeJid(p.id) === normalizeJid(senderJid));
+
+const isGroupAdmin = senderData?.admin === 'admin' || senderData?.admin === 'superadmin';
+const isGroupSuperAdmin = senderData?.admin === 'superadmin' || senderData?.isSuperAdmin === true;
+    const isAdminOrSuperAdmin = isGroupAdmin || isGroupSuperAdmin;  
+       if (command.adminOnly && !isAdminOrSuperAdmin && !isDev) {
+  return king.sendMessage(fromJid, {
+    text: '⛔ This command is restricted to group admins.',
+  }, { quoted: msg });
+}
+        /* const metadata = await king.groupMetadata(fromJid);
         groupAdmins = metadata.participants
           .filter(p => p.admin)
           .map(p => normalizeJid(p.id));
@@ -444,7 +457,7 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     }
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-    const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
+    const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));*/
     const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
 
     if (command.ownerOnly && !isAllowed) {
