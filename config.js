@@ -22,7 +22,7 @@ module.exports = {
     ON: process.env.YOUR_NAME || 'FLASH-MD',
     ANTICALL: process.env.ANTICALL || 'on',
     ADM: process.env.ANTIDELETE || 'on',
-    AR: process.env.AUTO_REACTION || 'on',
+    AR: process.env.AUTO_REACTION || 'off',
 
     AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS === 'on',
     AUTO_LIKE: process.env.AUTO_LIKE === 'on',
