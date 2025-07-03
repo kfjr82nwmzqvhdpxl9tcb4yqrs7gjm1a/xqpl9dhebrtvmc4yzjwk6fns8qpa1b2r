@@ -174,7 +174,7 @@ if (isBot) {
 console.log(`🔎 Sender: +${senderNumber}`);
 console.log(`📛 Role: ${role}`);
   
-    const isDev = isDevUser(senderNumber);
+  //  const isDev = isDevUser(senderNumber);
 
     if (conf.AR === "on" && !isFromMe && msg.message && !isDev) {
       const emojiList = [
