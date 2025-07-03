@@ -156,6 +156,24 @@ king.ev.on('messages.upsert', async ({ messages }) => {
       }
     }
 
+// Check user role
+const isDev = isDevUser(senderNumber);
+const isSudo = global.ALLOWED_USERS.has(senderNumber);
+const isBot = isFromMe;
+
+// Log role
+let role = '❌ Normal User';
+if (isBot) {
+  role = '🤖 Bot (Self)';
+} else if (isDev) {
+  role = '👑 Dev';
+} else if (isSudo) {
+  role = '🔐 Sudo User';
+}
+
+console.log(`🔎 Sender: +${senderNumber}`);
+console.log(`📛 Role: ${role}`);
+  
     const isDev = isDevUser(senderNumber);
 
     if (conf.AR === "on" && !isFromMe && msg.message && !isDev) {
@@ -445,7 +463,7 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-    const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
+    const isAllowed = isDev || isFromMe; || global.ALLOWED_USERS.has(senderNumber);
 
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
