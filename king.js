@@ -14,7 +14,6 @@ require('./flash.js');
 const db = require('./db');
 const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
-
 global.ALLOWED_USERS = loadSudoList();
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -138,9 +137,14 @@ async function startBot() {
       }).catch(() => {});
     }
   });
-king.ev.on('messages.upsert', async ({ messages }) => {
+
+  king.ev.on('messages.upsert', async ({ messages }) => {
+    console.log('📥 NEW MESSAGE(S):', JSON.stringify(messages, null, 2));
     const msg = messages[0];
     if (!msg || !msg.message) return;
+    
+    
+
     const fromJid = msg.key.remoteJid;
     const isFromMe = msg.key.fromMe;
 
