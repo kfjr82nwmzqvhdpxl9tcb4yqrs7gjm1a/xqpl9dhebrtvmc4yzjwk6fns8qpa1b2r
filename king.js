@@ -58,7 +58,7 @@ function getChatCategory(jid) {
   if (jid === 'status@broadcast') return '🟡 Status Update';
   if (jid.endsWith('@newsletter')) return '📢 Channel Post';
   if (jid.endsWith('@s.whatsapp.net')) return '💬 Private Chat';
-  if (jid.endsWith('@g.us') || jid.endsWith('@lid')) return '👥 Group Chat';
+  if (jid.endsWith('@g.us')) return '👥 Group Chat';
   return '❔ Unknown Chat Type';
 }
 
