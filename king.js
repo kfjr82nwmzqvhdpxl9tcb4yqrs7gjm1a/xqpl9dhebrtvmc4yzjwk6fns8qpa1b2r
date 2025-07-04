@@ -158,7 +158,7 @@ king.ev.on('messages.upsert', async ({ messages }) => {
 
     const isDev = isDevUser(senderNumber);
 
-    const isGroup = isGroupJid(fromJid);
+  //  const isGroup = isGroupJid(fromJid);
 const arSetting = (conf.AR || '').toLowerCase().trim(); // Normalize case and whitespace
 
 const shouldAutoReact =
