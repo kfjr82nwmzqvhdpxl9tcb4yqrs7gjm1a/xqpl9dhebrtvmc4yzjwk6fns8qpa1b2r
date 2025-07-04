@@ -37,11 +37,12 @@ allCommands.forEach(cmd => {
 });
 
 function isGroupJid(jid) {
-  return jid.endsWith('@g.us') || jid.endsWith('@lid');
+  return jid.endsWith('@g.us');
 }
 
 function normalizeJid(jid) {
-  return jid.replace(/@lid$/, '@s.whatsapp.net');
+  if (jid.endsWith('@lid')) return jid.replace('@lid', '@s.whatsapp.net');
+  return jid;
 }
 
 function isDevUser(numberOrLid) {
