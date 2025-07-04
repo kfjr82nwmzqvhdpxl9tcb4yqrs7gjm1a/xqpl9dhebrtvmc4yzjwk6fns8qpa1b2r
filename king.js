@@ -158,7 +158,7 @@ king.ev.on('messages.upsert', async ({ messages }) => {
 
     const isDev = isDevUser(senderNumber);
 
-  //  const isGroup = isGroupJid(fromJid);
+const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); // Normalize case and whitespace
 
 const shouldAutoReact =
@@ -167,8 +167,8 @@ const shouldAutoReact =
   !isDev &&
   (
     arSetting === 'on both' ||
-    (arSetting === 'on dm' && !isGroup) ||
-    (arSetting === 'on group' && isGroup)
+    (arSetting === 'on dm' && !gc) ||
+    (arSetting === 'on group' && gc)
   );
 
 if (shouldAutoReact) {
