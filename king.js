@@ -158,9 +158,21 @@ king.ev.on('messages.upsert', async ({ messages }) => {
 
     const isDev = isDevUser(senderNumber);
 
-    if (conf.AR === "on" && !isFromMe && msg.message && !isDev) {
-      const emojiList = [
-  
+    const isGroup = isGroupJid(fromJid);
+const arSetting = (conf.AR || '').toLowerCase().trim(); // Normalize case and whitespace
+
+const shouldAutoReact =
+  !isFromMe &&
+  msg.message &&
+  !isDev &&
+  (
+    arSetting === 'on both' ||
+    (arSetting === 'on dm' && !isGroup) ||
+    (arSetting === 'on group' && isGroup)
+  );
+
+if (shouldAutoReact) {
+  const emojiList = [
     '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
     '😋','😎','😍','😘','🥰','😗','😙','😚','🙂','🤗',
     '🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥',
@@ -185,8 +197,6 @@ king.ev.on('messages.upsert', async ({ messages }) => {
     }
   }).catch(() => {});
 }
-    
-    
     const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
 
     if (presenceToSend) {
