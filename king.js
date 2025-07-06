@@ -456,7 +456,8 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-    const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
+const isOwner = isDevUser(senderNumber) || normalizeJid(senderJid) === normalizeJid(king.user.id);
+const isAllowed = isOwner || isFromMe;  //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
 
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
