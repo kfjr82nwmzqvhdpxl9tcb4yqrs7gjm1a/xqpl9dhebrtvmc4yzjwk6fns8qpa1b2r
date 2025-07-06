@@ -141,11 +141,16 @@ async function startBot() {
 king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
-    const fromJid = msg.key.remoteJid;
+  const rawFromJid = msg.key.remoteJid;
+const fromJid = normalizeJid(rawFromJid);  // normalize the chat JID too
+const isFromMe = msg.key.fromMe;
+
+const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+const senderJid = normalizeJid(senderJidRaw); /* const fromJid = msg.key.remoteJid;
     const isFromMe = msg.key.fromMe;
 
     const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-    const senderJid = normalizeJid(senderJidRaw);
+    const senderJid = normalizeJid(senderJidRaw);*/
     let senderNumber = getUserNumber(senderJid);
 
     if (senderJidRaw.endsWith('@lid')) {
