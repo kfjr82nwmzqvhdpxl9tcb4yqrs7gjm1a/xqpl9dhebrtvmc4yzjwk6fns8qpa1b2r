@@ -84,23 +84,7 @@ async function startBot() {
   global.KING_LID = null;
   const lidToNumberMap = new Map();
 
-  king.ev.on('call', async (call) => {
-    if (conf.ANTICALL === "on") {
-      const callId = call[0].id;
-      const callerId = call[0].from;
-      const superUsers = [
-        '254742063632@s.whatsapp.net',
-        '254757835036@s.whatsapp.net',
-        '254751284190@s.whatsapp.net'
-      ];
-      if (!superUsers.includes(callerId)) {
-        try {
-          await king.sendCallResult(callId, { type: 'reject' });
-        } catch (err) {}
-      }
-    }
-  });
-
+  
   king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -141,19 +125,40 @@ async function startBot() {
       }).catch(() => {});
     }
   });
+
+  king.ev.on('call', async (call) => {
+  console.log('📞 Call event received:', call);
+
+  if (conf.ANTICALL === "on") {
+    const callId = call[0].id;
+    const callerId = call[0].from;
+    console.log(`Call from: ${callerId}, Call ID: ${callId}`);
+
+    const superUsers = [
+      '254742063632@s.whatsapp.net',
+      '254757835036@s.whatsapp.net',
+      '254751284190@s.whatsapp.net'
+    ];
+
+    if (!superUsers.includes(callerId)) {
+      try {
+        await king.sendCallResult(callId, { type: 'reject' });
+        console.log(`❌ Rejected call from ${callerId}`);
+      } catch (err) {
+        console.error('❗ Error rejecting call:', err);
+      }
+    }
+  }
+});
 king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
   const rawFromJid = msg.key.remoteJid;
-const fromJid = normalizeJid(rawFromJid);  // normalize the chat JID too
+const fromJid = normalizeJid(rawFromJid);  
 const isFromMe = msg.key.fromMe;
 
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-const senderJid = normalizeJid(senderJidRaw); /* const fromJid = msg.key.remoteJid;
-    const isFromMe = msg.key.fromMe;
-
-    const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-    const senderJid = normalizeJid(senderJidRaw);*/
+const senderJid = normalizeJid(senderJidRaw); 
     let senderNumber = getUserNumber(senderJid);
 
     if (senderJidRaw.endsWith('@lid')) {
