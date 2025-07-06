@@ -66,17 +66,20 @@ async function startBot() {
   const { state, saveState } = await loadSessionFromBase64();
   const { version } = await fetchLatestBaileysVersion();
 
-  const king = makeWASocket({
-    auth: {
-      creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, logger.child({ level: 'fatal' }))
-    },
-    markOnlineOnConnect: false,
-    printQRInTerminal: true,
-    logger,
-    browser: Browsers.macOS('Safari'),
-    version
-  });
+  king = makeWASocket({
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(
+                state.keys,
+                pino({ level: "fatal" }).child({ level: "fatal" })
+            ),
+        },
+        markOnlineOnConnect: true,
+        printQRInTerminal: true,
+        logger: pino({ level: "fatal" }).child({ level: "fatal" }),
+        browser: Browsers.macOS("Safari"),
+    });
+
 
   global.KING_LID = null;
   const lidToNumberMap = new Map();
