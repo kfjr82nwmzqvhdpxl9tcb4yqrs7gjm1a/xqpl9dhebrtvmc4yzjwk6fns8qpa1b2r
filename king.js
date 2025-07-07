@@ -46,13 +46,8 @@ function normalizeJid(jid) {
 }
 
 function isDevUser(numberOrLid) {
-  const match = DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
-  if (!match) {
-    console.log(`⛔ isDevUser(${numberOrLid}) → false`);
-    console.log('✅ DEV_NUMBERS:', [...DEV_NUMBERS]);
-    console.log('✅ DEV_LIDS:', [...DEV_LIDS]);
-  }
-  return match;
+  console.log('⛔ isDevUser check for:', numberOrLid);
+  return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
 }
 
 function getUserNumber(jid) {
