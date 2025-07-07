@@ -27,6 +27,7 @@ const PRESENCE = {
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 const DEV_LIDS = new Set(['41391036067990', '20397286285438', conf.USER_LID]);
 
+
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
   if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
