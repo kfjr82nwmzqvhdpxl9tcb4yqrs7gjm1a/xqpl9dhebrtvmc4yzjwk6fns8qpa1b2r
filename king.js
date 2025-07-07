@@ -385,7 +385,7 @@ The following message was deleted:`,
 
     console.log(`\n=== ${chatType.toUpperCase()} ===`);
     console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
-    console.log(`Message sender: ${pushName} (+${senderNumber})`);
+    console.log(`Message sender: ${pushName} (+${senderNum})`);
     console.log(`Message: ${contentSummary}\n`);
 
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
