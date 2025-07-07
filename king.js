@@ -125,13 +125,20 @@ async function startBot() {
       }).catch(() => {});
     }
   });
+
+  const handledCalls = new Set();
+
 king.ev.on('call', async (call) => {
-  console.log('📞 Call event received:', call);
+//  console.log('📞 Call event received:', call);
 
   if (conf.ANTICALL === "on") {
     const callId = call[0].id;
     const callerId = call[0].from;
-    console.log(`Call from: ${callerId}, Call ID: ${callId}`);
+  //  console.log(`Call from: ${callerId}, Call ID: ${callId}`);
+
+    if (handledCalls.has(callId)) return;
+    handledCalls.add(callId);
+    setTimeout(() => handledCalls.delete(callId), 5 * 60 * 1000);
 
     const superUsers = [
       '254742063432@s.whatsapp.net',
@@ -141,20 +148,18 @@ king.ev.on('call', async (call) => {
 
     if (!superUsers.includes(callerId)) {
       try {
-        await king.rejectCall(callId, callerId); // ✅ This is the correct method
+        await king.rejectCall(callId, callerId);
         console.log(`❌ Rejected call from ${callerId}`);
 
         await king.sendMessage(callerId, {
-          text: '🚫 Please do not call this bot. You may be blocked.'
+          text: '- *🚫 Your call has been declined by FLASH-MD-V2*.'
         });
-
       } catch (err) {
         console.error('❗ Error rejecting call:', err);
       }
     }
   }
 });
-  
 king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
