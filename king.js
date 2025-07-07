@@ -24,9 +24,18 @@ const PRESENCE = {
   DM: conf.PRESENCE_DM || 'paused',
   GROUP: conf.PRESENCE_GROUP || 'paused'
 };
-const DEV_NUMBERS = new Set(['254742063632', '254757835036', conf.NUMBER]);
-const DEV_LIDS = new Set(['41391036067990', '20397286285438', conf.USER_LID]);
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
+const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
 
+if (conf.NUMBER && typeof conf.NUMBER === 'string' && conf.NUMBER.trim()) {
+  DEV_NUMBERS.add(conf.NUMBER.trim());
+}
+
+if (conf.USER_LID && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
+  const normalizedUserLid = conf.USER_LID.replace('@lid', '').trim();
+  DEV_LIDS.add(normalizedUserLid);
+  global.ALLOWED_USERS.add(normalizedUserLid);
+}
 const USER_LID = conf.USER_LID || null;
 if (USER_LID) {
   const normalizedUserLid = USER_LID.replace('@lid', '');
