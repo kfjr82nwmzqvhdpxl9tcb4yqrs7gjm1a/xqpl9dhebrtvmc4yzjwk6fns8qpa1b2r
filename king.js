@@ -25,7 +25,7 @@ const PRESENCE = {
   GROUP: conf.PRESENCE_GROUP || 'paused'
 };
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
-const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
+const DEV_LIDS = new Set(['41391036067990', '20397286285438', conf.USER_LID]);
 
 const USER_LID = conf.USER_LID || null;
 if (USER_LID) {
@@ -174,22 +174,12 @@ const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
 const isOwner = isDev || senderJid === normalizeJid(king.user.id); //const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
 const isAllowed = isOwner || isFromMe || isSudo;
 
-//console.log('Command parsed:', cmdName);
 console.log('Sender JID:', senderJid);
 console.log('Sender Number:', senderNum);
 console.log('LID ID:', lidId);
 console.log('ALLOWED_USERS:', Array.from(global.ALLOWED_USERS));
 console.log('Is allowed:', isAllowed, '| isFromMe:', isFromMe, '| isSudo:', isSudo, '| isDev:', isDev);
-  /*  if (senderJidRaw.endsWith('@lid')) {
-      const lidId = senderJidRaw.replace('@lid', '');
-      if (lidToNumberMap.has(senderJidRaw)) {
-        senderNumber = lidToNumberMap.get(senderJidRaw);
-      } else if (DEV_LIDS.has(lidId)) {
-        senderNumber = lidId;
-      }
-    }
-
-    const isDev = isDevUser(senderNumber);*/
+  
 
 const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); 
