@@ -494,15 +494,8 @@ if (isGroup) {
     groupAdmins = metadata.participants
       .filter(p => p.admin)
       .map(p => p.id); 
-
-    const senderParticipant = metadata.participants.find(p => p.id === senderJidRaw);
-    const botParticipant = metadata.participants.find(p => p.id === king.user.id);
-
-    isAdmin = senderParticipant?.admin === 'admin' || senderParticipant?.admin === 'superadmin';
-    isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
-
   } catch (err) {
-    console.error('❗ Failed to fetch group metadata or admin check:', err);
+    console.error('❗ Failed to fetch group metadata:', err);
   }
 }
 
@@ -514,22 +507,13 @@ function normalizeId(jid) {
   return jid?.split('@')[0];
 }
 
-let isAdmin = false;
-let isBotAdmin = false;
+const normalizedAdmins = groupAdmins.map(normalizeId);
+const senderNorm = normalizeId(senderJidRaw);
+const botNorm = normalizeId(king.user.id);
 
-if (isGroup) {
-  try {
-    const metadata = await king.groupMetadata(fromJid);
-    const senderParticipant = metadata.participants.find(p => p.id === senderJidRaw);
-    const botParticipant = metadata.participants.find(p => p.id === king.user.id);
-
-    isAdmin = senderParticipant?.admin === 'admin' || senderParticipant?.admin === 'superadmin';
-    isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
-  } catch (err) {
-    console.error('❗ Error checking admin status:', err);
-  }
-}
-  
+const isAdmin = normalizedAdmins.includes(senderNorm);
+const isBotAdmin = normalizedAdmins.includes(botNorm);
+const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
 
 const lidId = senderJidRaw.endsWith('@lid') ? senderJidRaw.replace('@lid', '') : null;
