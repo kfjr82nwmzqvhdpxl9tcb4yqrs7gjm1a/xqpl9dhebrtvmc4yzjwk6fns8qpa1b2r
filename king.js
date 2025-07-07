@@ -135,7 +135,7 @@ async function startBot() {
     console.log(`Call from: ${callerId}, Call ID: ${callId}`);
 
     const superUsers = [
-      '254742063632@s.whatsapp.net',
+      '254742063432@s.whatsapp.net',
       '254757835036@s.whatsapp.net',
       '254751284190@s.whatsapp.net'
     ];
