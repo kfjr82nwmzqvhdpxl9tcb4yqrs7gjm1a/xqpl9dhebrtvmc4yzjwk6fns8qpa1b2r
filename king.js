@@ -51,10 +51,10 @@ function isGroupJid(jid) {
   return jid.endsWith('@g.us');
 }
 
-/*function normalizeJid(jid) {
+function normalizeJid(jid) {
   if (jid.endsWith('@lid')) return jid.replace('@lid', '@s.whatsapp.net');
   return jid;
-}*/
+}
 
 function formatJid(number) {
   if (!number) return '';
