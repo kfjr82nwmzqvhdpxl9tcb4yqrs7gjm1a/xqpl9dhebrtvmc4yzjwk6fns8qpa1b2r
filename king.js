@@ -30,6 +30,8 @@ console.log('conf.USER_LID:', conf.USER_LID);
 
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
+const USER_LID = conf.USER_LID;
+
 
 if (conf.USER_LID && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
   const cleanId = conf.USER_LID.replace(/@.*/, '').trim();
