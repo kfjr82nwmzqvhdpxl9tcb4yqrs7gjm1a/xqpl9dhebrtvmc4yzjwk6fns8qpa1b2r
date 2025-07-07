@@ -170,8 +170,19 @@ const fromJid = normalizeJid(rawFromJid);
 const isFromMe = msg.key.fromMe;
 
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
+const senderJid = normalizeJid(senderJidRaw);
+let senderNumber = getUserNumber(senderJid);
+
+// Add this block:
+let lidId = null;
+if (senderJidRaw.endsWith('@lid')) {
+  lidId = senderJidRaw.replace('@lid', '');
+}
+
+// Now enhance isDev detection:
+const isDev = isDevUser(senderNumber) || (lidId && isDevUser(lidId)); /*const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
 const senderJid = normalizeJid(senderJidRaw); 
-    let senderNumber = getUserNumber(senderJid);
+    let senderNumber = getUserNumber(senderJid);*/
 
     if (senderJidRaw.endsWith('@lid')) {
       const lidId = senderJidRaw.replace('@lid', '');
@@ -182,7 +193,7 @@ const senderJid = normalizeJid(senderJidRaw);
       }
     }
 
-    const isDev = isDevUser(senderNumber);
+   // const isDev = isDevUser(senderNumber);
 
 const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); // Normalize case and whitespace
