@@ -523,12 +523,7 @@ if (isGroup) {
     const senderParticipant = metadata.participants.find(p => p.id === senderJidRaw);
     const botParticipant = metadata.participants.find(p => p.id === king.user.id);
 
-    isAdmin = senderParticipant?.admin === 'admin' || senderParticipant?.admin === 'superadmin';
-    isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
-  } catch (err) {
-    console.error('❗ Error checking admin status:', err);
-  }
-}
+   
   
 const botIdNormalized = normalizeJid(king.user.id);
 
