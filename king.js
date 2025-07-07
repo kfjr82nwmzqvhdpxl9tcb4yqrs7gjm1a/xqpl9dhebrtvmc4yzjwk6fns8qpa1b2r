@@ -476,10 +476,14 @@ const botIdNormalized = normalizeJid(king.user.id);
   const lidId = senderJidRaw.endsWith('@lid') ? senderJidRaw.replace('@lid', '') : null;
 const isSudo = global.ALLOWED_USERS.has(senderNumber) || (lidId && global.ALLOWED_USERS.has(lidId));
 
-const isOwner = isDevUser(senderNumber) || normalizeJid(senderJid) === normalizeJid(king.user.id);
-const isAllowed = isOwner || isFromMe || isSudo; /*const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized;
-const isAllowed = isOwner || isFromMe; //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
-*/
+const isOwner = isDevUser(senderNumber) || senderIdNormalized === normalizeJid(king.user.id) || senderNumber === conf.USER_LID;
+const isAllowed = isOwner || isFromMe || isSudo;
+  
+console.log('✅ Bot LID:', king.user.id);
+console.log('✅ USER_LID from config:', conf.USER_LID);
+console.log('✅ Allowed Users:', global.ALLOWED_USERS);
+
+  
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
