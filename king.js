@@ -19,28 +19,19 @@ const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 const messageStore = new Map();
-const lidToNumberMap = new Map(); 
+
 const PRESENCE = {
   DM: conf.PRESENCE_DM || 'paused',
   GROUP: conf.PRESENCE_GROUP || 'paused'
 };
-
-console.log('conf.NUMBER:', conf.NUMBER);
-console.log('conf.USER_LID:', conf.USER_LID);
-
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
 
-if (conf.USER_LID && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
-  const cleanId = conf.USER_LID.replace(/@.*/, '').trim();
-  const formatted = formatJid(cleanId);
-  const isLid = formatted.endsWith('@lid');
-  const id = cleanId;
-
-  if (isLid) DEV_LIDS.add(id);
-  else DEV_NUMBERS.add(id);
-
-  global.ALLOWED_USERS.add(id);
+const USER_LID = conf.USER_LID || null;
+if (USER_LID) {
+  const normalizedUserLid = USER_LID.replace('@lid', '');
+  DEV_LIDS.add(normalizedUserLid);
+  global.ALLOWED_USERS.add(normalizedUserLid); 
 }
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
@@ -56,28 +47,13 @@ function normalizeJid(jid) {
   return jid;
 }
 
-function formatJid(number) {
-  if (!number) return '';
-  const num = number.toString().replace(/\D/g, '');
-  return num.length > 13 ? `${num}@lid` : `${num}@s.whatsapp.net`;
+function isDevUser(numberOrLid) {
+  return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
 }
-
-
 
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
-  const baseId = cleanJid.split('@')[0];
-
-  if (baseId.length > 13 && lidToNumberMap.has(jid)) {
-    return lidToNumberMap.get(jid); // mapped number
-  }
-
-  return baseId;
-}
-
-function isDevUser(jid) {
-  const number = getUserNumber(jid); // uses mapped number if it's a lid
-  return DEV_NUMBERS.has(number) || DEV_LIDS.has(number);
+  return cleanJid.split('@')[0];
 }
 
 function getChatCategory(jid) {
@@ -108,7 +84,7 @@ async function startBot() {
 
 
   global.KING_LID = null;
-  
+  const lidToNumberMap = new Map();
 
   
   king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
@@ -155,30 +131,25 @@ async function startBot() {
   const handledCalls = new Set();
 
 king.ev.on('call', async (call) => {
-  console.log('📞 Call event received:', call);
-
   if (conf.ANTICALL === "on") {
     const callId = call[0].id;
     const callerId = call[0].from;
-   console.log(`Call from: ${callerId}, Call ID: ${callId}`);
-
-    if (handledCalls.has(callId)) return;
+   
+  if (handledCalls.has(callId)) return;
     handledCalls.add(callId);
     setTimeout(() => handledCalls.delete(callId), 5 * 60 * 1000);
 
     const superUsers = [
-  formatJid('254742063432'),
-  formatJid('254757835036'),
-  formatJid('254751284190')
-];
+      '254742063632@s.whatsapp.net',
+      '254757835036@s.whatsapp.net',
+      '254751284190@s.whatsapp.net'
+    ];
 
     if (!superUsers.includes(callerId)) {
       try {
         await king.rejectCall(callId, callerId);
-        console.log(`❌ Rejected call from ${callerId}`);
-
         await king.sendMessage(callerId, {
-          text: '- *🚫 Your call has been declined by FLASH-MD-V2*.'
+          text: '*🚫 Your call has been declined by FLASH-MD-V2*.'
         });
       } catch (err) {
         console.error('❗ Error rejecting call:', err);
@@ -189,27 +160,27 @@ king.ev.on('call', async (call) => {
 king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
-  const rawFromJid = normalizeJid;
-const fromJid = msg.key.remoteJid;
+  const rawFromJid = msg.key.remoteJid;
+const fromJid = normalizeJid(rawFromJid);  
 const isFromMe = msg.key.fromMe;
 
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
 const senderJid = normalizeJid(senderJidRaw); 
     let senderNumber = getUserNumber(senderJid);
 
-    const idStripped = senderJidRaw.split('@')[0];
-if (idStripped.length > 13) {
-  if (lidToNumberMap.has(senderJidRaw)) {
-    senderNumber = lidToNumberMap.get(senderJidRaw);
-  } else if (DEV_LIDS.has(idStripped)) {
-    senderNumber = idStripped;
-  }
-}
+    if (senderJidRaw.endsWith('@lid')) {
+      const lidId = senderJidRaw.replace('@lid', '');
+      if (lidToNumberMap.has(senderJidRaw)) {
+        senderNumber = lidToNumberMap.get(senderJidRaw);
+      } else if (DEV_LIDS.has(lidId)) {
+        senderNumber = lidId;
+      }
+    }
 
     const isDev = isDevUser(senderNumber);
 
 const gc = fromJid.endsWith('@g.us');
-const arSetting = (conf.AR || '').toLowerCase().trim(); // Normalize case and whitespace
+const arSetting = (conf.AR || '').toLowerCase().trim(); 
 
 const shouldAutoReact =
   !isFromMe &&
@@ -507,8 +478,13 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
-const isOwner = isDevUser || botIdNormalized;
-const isAllowed = isOwner || isFromMe;
+  const lidId = senderJidRaw.endsWith('@lid') ? senderJidRaw.replace('@lid', '') : null;
+const isSudo = global.ALLOWED_USERS.has(senderNumber) || (lidId && global.ALLOWED_USERS.has(lidId));
+
+const isOwner = isDevUser(senderNumber) || normalizeJid(senderJid) === normalizeJid(king.user.id);
+const isAllowed = isOwner || isFromMe || isSudo; /*const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized;
+const isAllowed = isOwner || isFromMe; //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
+*/
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
