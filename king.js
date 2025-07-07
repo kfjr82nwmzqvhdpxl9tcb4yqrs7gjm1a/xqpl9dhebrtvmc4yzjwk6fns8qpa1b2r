@@ -101,7 +101,7 @@ async function startBot() {
 
     if (connection === 'open') {
       global.KING_LID = king.user.id;
-      lidToNumberMap.set(king.user.id, '254742063632');
+      lidToNumberMap.set(king.user.id, conf.USER_LID);
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
       const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
       const totalCmds = commands.size;
