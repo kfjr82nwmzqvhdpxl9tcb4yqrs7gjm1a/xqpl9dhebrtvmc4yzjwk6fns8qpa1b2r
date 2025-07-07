@@ -174,7 +174,7 @@ const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
 const isOwner = isDev || senderJid === normalizeJid(king.user.id); //const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
 const isAllowed = isOwner || isFromMe || isSudo;
 
-console.log('Command parsed:', cmdName);
+//console.log('Command parsed:', cmdName);
 console.log('Sender JID:', senderJid);
 console.log('Sender Number:', senderNum);
 console.log('LID ID:', lidId);
