@@ -493,21 +493,26 @@ if (isGroup) {
     const metadata = await king.groupMetadata(fromJid);
     groupAdmins = metadata.participants
       .filter(p => p.admin)
-      .map(p => p.id); // Use raw participant JIDs (no normalization)
+      .map(p => p.id); 
   } catch (err) {
     console.error('❗ Failed to fetch group metadata:', err);
   }
 }
 
-// ✅ Compare raw senderJidRaw directly
+
 console.log('👑 Group Admins:', groupAdmins);
 console.log('🙋 SenderJidRaw:', senderJidRaw);
 
-const isAdmin = groupAdmins.includes(senderJidRaw);
+function normalizeId(jid) {
+  return jid?.split('@')[0];
+}
 
-// ✅ Bot admin can still use normalized, because `king.user.id` is not a LID
-const isBotAdmin = groupAdmins.includes(king.user.id);
+const normalizedAdmins = groupAdmins.map(normalizeId);
+const senderNorm = normalizeId(senderJidRaw);
+const botNorm = normalizeId(king.user.id);
 
+const isAdmin = normalizedAdmins.includes(senderNorm);
+const isBotAdmin = normalizedAdmins.includes(botNorm);
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
 
@@ -519,31 +524,7 @@ const isAllowed = isOwner || isFromMe || isSudo;
 
 console.log('✅ Bot LID:', king.user.id);
 console.log('✅ USER_LID from config:', conf.USER_LID);
-console.log('✅ Allowed Users:', global.ALLOWED_USERS); /* let groupAdmins = [];
-    const isGroup = isGroupJid(fromJid);
-    if (isGroup) {
-      try {
-        const metadata = await king.groupMetadata(fromJid);
-        groupAdmins = metadata.participants
-          .filter(p => p.admin)
-          .map(p => normalizeJid(p.id));
-      } catch (err) {}
-    }
-
-    const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
-    const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-const senderIdNormalized = normalizeJid(senderJid);
-const botIdNormalized = normalizeJid(king.user.id);
-  const lidId = senderJidRaw.endsWith('@lid') ? senderJidRaw.replace('@lid', '') : null;
-const isSudo = global.ALLOWED_USERS.has(senderNumber) || (lidId && global.ALLOWED_USERS.has(lidId));
-
-const isOwner = isDevUser(senderNumber) || senderIdNormalized === normalizeJid(king.user.id) || senderNumber === conf.USER_LID;
-const isAllowed = isOwner || isFromMe || isSudo;
-  
-console.log('✅ Bot LID:', king.user.id);
-console.log('✅ USER_LID from config:', conf.USER_LID);
-console.log('✅ Allowed Users:', global.ALLOWED_USERS);
-*/
+console.log('✅ Allowed Users:', global.ALLOWED_USERS); 
   
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
@@ -567,17 +548,18 @@ console.log('✅ Allowed Users:', global.ALLOWED_USERS);
       }, { quoted: msg });
     }
 
-    if (command.adminOnly && !isAdmin && !isDev) {
-      return king.sendMessage(fromJid, {
-        text: '⛔ This command is restricted to group admins.'
-      }, { quoted: msg });
-    }
-
-    if (command.botAdminOnly && !isBotAdmin) {
-      return king.sendMessage(fromJid, {
-        text: '⚠️ I need to be admin to run this command.'
-      }, { quoted: msg });
-    }
+if (command.adminOnly || command.botAdminOnly) {
+  if (!isBotAdmin) {
+    return king.sendMessage(fromJid, {
+      text: '❗ I need to be admin to run this command.',
+    }, { quoted: msg });
+  }
+  if (!isAdmin) {
+    return king.sendMessage(fromJid, {
+      text: '⛔ This command is restricted to group admins.',
+    }, { quoted: msg });
+  }
+}
 
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
