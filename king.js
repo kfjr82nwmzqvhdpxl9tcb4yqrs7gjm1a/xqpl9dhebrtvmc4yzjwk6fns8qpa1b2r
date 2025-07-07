@@ -14,7 +14,6 @@ require('./flash.js');
 const db = require('./db');
 const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
-
 global.ALLOWED_USERS = loadSudoList();
 const logger = pino({ level: 'fatal' });
 const commands = new Map();
@@ -29,8 +28,11 @@ const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
 
 const USER_LID = conf.USER_LID || null;
-if (USER_LID) DEV_LIDS.add(USER_LID.replace('@lid', ''));
-
+if (USER_LID) {
+  const normalizedUserLid = USER_LID.replace('@lid', '');
+  DEV_LIDS.add(normalizedUserLid);
+  global.ALLOWED_USERS.add(normalizedUserLid); // Add USER_LID to allowed users
+}
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
   if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
