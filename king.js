@@ -31,14 +31,16 @@ console.log('conf.USER_LID:', conf.USER_LID);
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
 
-if (conf.NUMBER && typeof conf.NUMBER === 'string' && conf.NUMBER.trim()) {
-  DEV_NUMBERS.add(conf.NUMBER.trim());
-}
-
 if (conf.USER_LID && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
-  const normalizedUserLid = conf.USER_LID.replace('@lid', '').trim();
-  DEV_LIDS.add(normalizedUserLid);
-  global.ALLOWED_USERS.add(normalizedUserLid);
+  const cleanId = conf.USER_LID.replace(/@.*/, '').trim();
+  const formatted = formatJid(cleanId);
+  const isLid = formatted.endsWith('@lid');
+  const id = cleanId;
+
+  if (isLid) DEV_LIDS.add(id);
+  else DEV_NUMBERS.add(id);
+
+  global.ALLOWED_USERS.add(id);
 }
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
@@ -49,9 +51,15 @@ function isGroupJid(jid) {
   return jid.endsWith('@g.us');
 }
 
-function normalizeJid(jid) {
+/*function normalizeJid(jid) {
   if (jid.endsWith('@lid')) return jid.replace('@lid', '@s.whatsapp.net');
   return jid;
+}*/
+
+function formatJid(number) {
+  if (!number) return '';
+  const num = number.toString().replace(/\D/g, '');
+  return num.length > 13 ? `${num}@lid` : `${num}@s.whatsapp.net`;
 }
 
 function isDevUser(numberOrLid) {
@@ -150,10 +158,10 @@ king.ev.on('call', async (call) => {
     setTimeout(() => handledCalls.delete(callId), 5 * 60 * 1000);
 
     const superUsers = [
-      '254742063432@s.whatsapp.net',
-      '254757835036@s.whatsapp.net',
-      '254751284190@s.whatsapp.net'
-    ];
+  formatJid('254742063432'),
+  formatJid('254757835036'),
+  formatJid('254751284190')
+];
 
     if (!superUsers.includes(callerId)) {
       try {
@@ -180,14 +188,14 @@ const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.r
 const senderJid = normalizeJid(senderJidRaw); 
     let senderNumber = getUserNumber(senderJid);
 
-    if (senderJidRaw.endsWith('@lid')) {
-      const lidId = senderJidRaw.replace('@lid', '');
-      if (lidToNumberMap.has(senderJidRaw)) {
-        senderNumber = lidToNumberMap.get(senderJidRaw);
-      } else if (DEV_LIDS.has(lidId)) {
-        senderNumber = lidId;
-      }
-    }
+    const idStripped = senderJidRaw.split('@')[0];
+if (idStripped.length > 13) {
+  if (lidToNumberMap.has(senderJidRaw)) {
+    senderNumber = lidToNumberMap.get(senderJidRaw);
+  } else if (DEV_LIDS.has(idStripped)) {
+    senderNumber = idStripped;
+  }
+}
 
     const isDev = isDevUser(senderNumber);
 
