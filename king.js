@@ -316,7 +316,7 @@ The following message was deleted:`,
 
     
     const isDM = fromJid.endsWith('@s.whatsapp.net');
-
+     const isGroup = fromJid.endsWith('g.us');
     const m = msg.message;
 
     const chatType = getChatCategory(fromJid);
