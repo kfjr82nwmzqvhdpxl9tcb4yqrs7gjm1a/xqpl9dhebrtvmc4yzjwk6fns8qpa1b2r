@@ -549,13 +549,12 @@ console.log('✅ Allowed Users:', global.ALLOWED_USERS);
     }
 
 if (command.adminOnly || command.botAdminOnly) {
-  if (!isBotAdmin && !isOwner) {
+  if (!isBotAdmin) {
     return king.sendMessage(fromJid, {
       text: '❗ I need to be admin to run this command.',
     }, { quoted: msg });
   }
-
-  if (!isAdmin && !isOwner) {
+  if (!isAdmin) {
     return king.sendMessage(fromJid, {
       text: '⛔ This command is restricted to group admins.',
     }, { quoted: msg });
