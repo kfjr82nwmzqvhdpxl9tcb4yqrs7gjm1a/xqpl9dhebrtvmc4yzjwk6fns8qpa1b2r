@@ -69,14 +69,14 @@ function getUserNumber(jid) {
   const baseId = cleanJid.split('@')[0];
 
   if (baseId.length > 13 && lidToNumberMap.has(jid)) {
-    return lidToNumberMap.get(jid); 
+    return lidToNumberMap.get(jid); // mapped number
   }
 
   return baseId;
 }
 
 function isDevUser(jid) {
-  const number = getUserNumber(jid); 
+  const number = getUserNumber(jid); // uses mapped number if it's a lid
   return DEV_NUMBERS.has(number) || DEV_LIDS.has(number);
 }
 
@@ -125,7 +125,7 @@ async function startBot() {
 
     if (connection === 'open') {
       global.KING_LID = king.user.id;
-      lidToNumberMap.set(king.user.id, getUserNumber(king.user.id));
+      lidToNumberMap.set(king.user.id, conf.NUMBER);
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
       const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
       const totalCmds = commands.size;
