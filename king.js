@@ -479,9 +479,11 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
 const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized;
-const isAllowed = isOwner || isFromMe; //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
 
-    if (command.ownerOnly && !isAllowed) {
+const allowedByNumber = DEV_NUMBERS.has(senderNumber) || global.ALLOWED_USERS.has(senderNumber);
+const allowedByLid = DEV_LIDS.has(senderNumber);
+const isAllowed = isOwner || isDev || allowedByNumber || allowedByLid || isFromMe;
+  if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
       }, { quoted: msg });
