@@ -478,9 +478,13 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
-const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized;
-const isAllowed = isOwner || isFromMe; //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
+  const lidId = senderJidRaw.endsWith('@lid') ? senderJidRaw.replace('@lid', '') : null;
+const isSudo = global.ALLOWED_USERS.has(senderNumber) || (lidId && global.ALLOWED_USERS.has(lidId));
 
+const isOwner = isDevUser(senderNumber) || normalizeJid(senderJid) === normalizeJid(king.user.id);
+const isAllowed = isOwner || isFromMe || isSudo; /*const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized;
+const isAllowed = isOwner || isFromMe; //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
+*/
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
