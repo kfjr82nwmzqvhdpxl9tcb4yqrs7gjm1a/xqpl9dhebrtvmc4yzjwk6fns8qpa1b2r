@@ -167,8 +167,20 @@ const isFromMe = msg.key.fromMe;
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
 const senderJid = normalizeJid(senderJidRaw); 
     let senderNumber = getUserNumber(senderJid);
+const senderIdNormalized = normalizeJid(senderJid);
+const botIdNormalized = normalizeJid(king.user.id);
+  const rawSender = msg.key.participant || msg.key.remoteJid || king.user.id;
 
-    if (senderJidRaw.endsWith('@lid')) {
+const isLid = rawSender.endsWith('@lid');
+const lidId = isLid ? rawSender.replace('@lid', '') : null;
+const senderNum = getUserNumber(rawSender); // returns numeric part
+const senderJidNorm = normalizeJid(rawSender);
+
+const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
+//const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
+const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
+const isAllowed = isOwner || isFromMe || isSudo;
+  /*  if (senderJidRaw.endsWith('@lid')) {
       const lidId = senderJidRaw.replace('@lid', '');
       if (lidToNumberMap.has(senderJidRaw)) {
         senderNumber = lidToNumberMap.get(senderJidRaw);
@@ -177,7 +189,7 @@ const senderJid = normalizeJid(senderJidRaw);
       }
     }
 
-    const isDev = isDevUser(senderNumber);
+    const isDev = isDevUser(senderNumber);*/
 
 const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); 
@@ -476,19 +488,7 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
-const senderIdNormalized = normalizeJid(senderJid);
-const botIdNormalized = normalizeJid(king.user.id);
-  const rawSender = msg.key.participant || msg.key.remoteJid || king.user.id;
 
-const isLid = rawSender.endsWith('@lid');
-const lidId = isLid ? rawSender.replace('@lid', '') : null;
-const senderNum = getUserNumber(rawSender); // returns numeric part
-const senderJidNorm = normalizeJid(rawSender);
-
-const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
-const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
-const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
-const isAllowed = isOwner || isFromMe || isSudo;
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
