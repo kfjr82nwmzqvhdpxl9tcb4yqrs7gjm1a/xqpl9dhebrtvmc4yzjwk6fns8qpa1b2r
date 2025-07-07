@@ -181,7 +181,7 @@ king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
   const rawFromJid = msg.key.remoteJid;
-const fromJid = normalizeJid(rawFromJid);  
+const fromJid = msg.key.remoteJid;
 const isFromMe = msg.key.fromMe;
 
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
