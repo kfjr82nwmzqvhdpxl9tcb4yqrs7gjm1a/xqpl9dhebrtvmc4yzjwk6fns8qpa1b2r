@@ -171,7 +171,7 @@ let isLidSender = senderJidRaw.endsWith('@lid');      // ✅ correct variable
 let lidId = isLidSender ? senderJidRaw.replace('@lid', '') : null; 
 const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
 const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
-const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
+const isOwner = isDev || senderJid === normalizeJid(king.user.id); //const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
 const isAllowed = isOwner || isFromMe || isSudo;
 
 console.log('Command parsed:', cmdName);
