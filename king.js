@@ -166,20 +166,21 @@ const isFromMe = msg.key.fromMe;
 
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
 const senderJid = normalizeJid(senderJidRaw); 
-    let senderNumber = getUserNumber(senderJid);
-const senderIdNormalized = normalizeJid(senderJid);
-const botIdNormalized = normalizeJid(king.user.id);
-  const rawSender = msg.key.participant || msg.key.remoteJid || king.user.id;
-
-const isLid = rawSender.endsWith('@lid');
-const lidId = isLid ? rawSender.replace('@lid', '') : null;
-const senderNum = getUserNumber(rawSender); // returns numeric part
-const senderJidNorm = normalizeJid(rawSender);
+    let senderNum = getUserNumber(senderJid); // normalized
+let isLidSender = rawSender.endsWith('@lid');
+let lidId = isLidSender ? rawSender.replace('@lid', '') : null;
 
 const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
 const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
 const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
 const isAllowed = isOwner || isFromMe || isSudo;
+
+console.log('Command parsed:', cmdName);
+console.log('Sender JID:', senderJid);
+console.log('Sender Number:', senderNum);
+console.log('LID ID:', lidId);
+console.log('ALLOWED_USERS:', Array.from(global.ALLOWED_USERS));
+console.log('Is allowed:', isAllowed, '| isFromMe:', isFromMe, '| isSudo:', isSudo, '| isDev:', isDev);
   /*  if (senderJidRaw.endsWith('@lid')) {
       const lidId = senderJidRaw.replace('@lid', '');
       if (lidToNumberMap.has(senderJidRaw)) {
