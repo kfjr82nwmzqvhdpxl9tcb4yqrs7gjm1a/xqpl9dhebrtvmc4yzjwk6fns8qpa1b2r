@@ -35,9 +35,9 @@ if (conf.NUMBER && typeof conf.NUMBER === 'string' && conf.NUMBER.trim()) {
   DEV_NUMBERS.add(conf.NUMBER.trim());
 }
 
-if (conf.USER_LID && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
+if (conf.USER_LIDS && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
   
-  DEV_LID.add(conf.USER_LID.trim());
+  DEV_LID.add(conf.USER_LIDS.trim());
   
   const normalizedUserLid = conf.USER_LID.replace('@lid', '').trim();
   DEV_LIDS.add(normalizedUserLid);
