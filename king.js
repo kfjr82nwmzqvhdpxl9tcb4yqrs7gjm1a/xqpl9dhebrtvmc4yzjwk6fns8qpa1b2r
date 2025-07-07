@@ -25,8 +25,11 @@ const PRESENCE = {
   GROUP: conf.PRESENCE_GROUP || 'paused'
 };
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
-const DEV_LIDS = new Set(['41391036067990', '20397286285438', conf.USER_LID]);
-
+const DEV_LIDS = new Set([
+  '41391036067990',
+  '20397286285438',
+  conf.USER_LID?.replace('@lid', '') // Strip @lid if present
+]);
 
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
@@ -43,7 +46,13 @@ function normalizeJid(jid) {
 }
 
 function isDevUser(numberOrLid) {
-  return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
+  const match = DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
+  if (!match) {
+    console.log(`⛔ isDevUser(${numberOrLid}) → false`);
+    console.log('✅ DEV_NUMBERS:', [...DEV_NUMBERS]);
+    console.log('✅ DEV_LIDS:', [...DEV_LIDS]);
+  }
+  return match;
 }
 
 function getUserNumber(jid) {
@@ -96,14 +105,18 @@ async function startBot() {
 
     if (connection === 'open') {
       global.KING_LID = king.user.id;
-      lidToNumberMap.set(king.user.id, conf.USER_LID);
-      // Ensure bot user is treated as a developer
-  const botNumber = getUserNumber(king.user.id);
-  DEV_NUMBERS.add(botNumber);
 
-  if (conf.USER_LID) {
-    DEV_LIDS.add(conf.USER_LID);
-  }
+const lidRaw = king.user.id.replace('@lid', '');
+const userLidRaw = conf.USER_LID?.replace('@lid', '');
+
+if (userLidRaw) {
+  lidToNumberMap.set(king.user.id, userLidRaw); // Map bot LID to number
+  DEV_LIDS.add(userLidRaw); // Ensure it's treated as dev
+  console.log('✅ Added USER_LID to DEV_LIDS:', userLidRaw);
+}
+
+const botNumber = getUserNumber(king.user.id);
+DEV_NUMBERS.add(botNumber); // Add bot's number to DEV_NUMBERS
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
       const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
       const totalCmds = commands.size;
@@ -171,16 +184,19 @@ const senderJid = normalizeJid(senderJidRaw);
     let senderNumber = getUserNumber(senderJid);
 
     if (senderJidRaw.endsWith('@lid')) {
-      const lidId = senderJidRaw.replace('@lid', '');
-      if (lidToNumberMap.has(senderJidRaw)) {
-        senderNumber = lidToNumberMap.get(senderJidRaw);
-      } else if (DEV_LIDS.has(lidId)) {
-        senderNumber = lidId;
-      }
-    }
+  const lidId = senderJidRaw.replace('@lid', '');
+  if (lidToNumberMap.has(senderJidRaw)) {
+    senderNumber = lidToNumberMap.get(senderJidRaw);
+  } else if (DEV_LIDS.has(lidId)) {
+    senderNumber = lidId;
+  }
+}
 
     const isDev = isDevUser(senderNumber);
-
+  
+console.log('🔍 Sender Number:', senderNumber);
+console.log('🔍 isDev:', isDevUser(senderNumber));
+  
 const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); 
 
