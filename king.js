@@ -35,19 +35,10 @@ if (conf.NUMBER && typeof conf.NUMBER === 'string' && conf.NUMBER.trim()) {
   DEV_NUMBERS.add(conf.NUMBER.trim());
 }
 
-if (conf.USER_LIDS && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
-  
-  DEV_LID.add(conf.USER_LIDS.trim());
-  
+if (conf.USER_LID && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
   const normalizedUserLid = conf.USER_LID.replace('@lid', '').trim();
   DEV_LIDS.add(normalizedUserLid);
   global.ALLOWED_USERS.add(normalizedUserLid);
-}
-const USER_LID = conf.USER_LID || null;
-if (USER_LID) {
-  const normalizedUserLid = USER_LID.replace('@lid', '');
-  DEV_LIDS.add(normalizedUserLid);
-  global.ALLOWED_USERS.add(normalizedUserLid); // Add USER_LID to allowed users
 }
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
