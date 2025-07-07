@@ -19,7 +19,7 @@ const logger = pino({ level: 'fatal' });
 const commands = new Map();
 const aliases = new Map();
 const messageStore = new Map();
-
+const lidToNumberMap = new Map(); 
 const PRESENCE = {
   DM: conf.PRESENCE_DM || 'paused',
   GROUP: conf.PRESENCE_GROUP || 'paused'
@@ -108,7 +108,7 @@ async function startBot() {
 
 
   global.KING_LID = null;
-  const lidToNumberMap = new Map();
+  
 
   
   king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
