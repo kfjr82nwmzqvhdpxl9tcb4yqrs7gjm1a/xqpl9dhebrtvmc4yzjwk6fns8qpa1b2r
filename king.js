@@ -52,9 +52,9 @@ function isDevUser(numberOrLid) {
 
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
-  return cleanJid.split('@')[0];
+  // Return full identifier before @
+  return cleanJid.split('@')[0]; // This already includes ':14' for LIDs
 }
-
 function getChatCategory(jid) {
   if (jid === 'status@broadcast') return '🟡 Status Update';
   if (jid.endsWith('@newsletter')) return '📢 Channel Post';
