@@ -507,8 +507,9 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
-const isOwner = isDevUser || botIdNormalized;
-const isAllowed = isOwner || isFromMe;
+const isOwner = isDevUser(senderJid);
+const isAllowed = isOwner || isFromMe || senderJid === king.user.id;
+  
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
