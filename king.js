@@ -30,8 +30,6 @@ console.log('conf.USER_LID:', conf.USER_LID);
 
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
 const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
-const USER_LID = conf.USER_LID;
-
 
 if (conf.USER_LID && typeof conf.USER_LID === 'string' && conf.USER_LID.trim()) {
   const cleanId = conf.USER_LID.replace(/@.*/, '').trim();
@@ -127,7 +125,7 @@ async function startBot() {
 
     if (connection === 'open') {
       global.KING_LID = king.user.id;
-    
+      lidToNumberMap.set(king.user.id, '254742063632');
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
       const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
       const totalCmds = commands.size;
@@ -194,7 +192,7 @@ king.ev.on('messages.upsert', async ({ messages }) => {
   const rawFromJid = normalizeJid;
 const fromJid = msg.key.remoteJid;
 const isFromMe = msg.key.fromMe;
- lidToNumberMap.set(king.user.id, conf.NUMBER);
+
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
 const senderJid = normalizeJid(senderJidRaw); 
     let senderNumber = getUserNumber(senderJid);
@@ -203,7 +201,7 @@ const senderJid = normalizeJid(senderJidRaw);
 if (idStripped.length > 13) {
   if (lidToNumberMap.has(senderJidRaw)) {
     senderNumber = lidToNumberMap.get(senderJidRaw);
-  } else if (USER_LIDS.has(idStripped)) {
+  } else if (DEV_LIDS.has(idStripped)) {
     senderNumber = idStripped;
   }
 }
@@ -509,9 +507,8 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
-const isOwner = isDevUser(senderJid);
-const isAllowed = isOwner || isFromMe || senderJid === king.user.id;
-  
+const isOwner = isDevUser || botIdNormalized;
+const isAllowed = isOwner || isFromMe;
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
