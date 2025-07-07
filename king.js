@@ -24,10 +24,15 @@ const PRESENCE = {
   DM: conf.PRESENCE_DM || 'paused',
   GROUP: conf.PRESENCE_GROUP || 'paused'
 };
-const DEV_NUMBERS = new Set(['254742063632', '254757835036', conf.NUMBER]);
-const DEV_LIDS = new Set(['41391036067990', '20397286285438', conf.USER_LID]);
+const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
+const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
 
-
+const USER_LID = conf.USER_LID || null;
+if (USER_LID) {
+  const normalizedUserLid = USER_LID.replace('@lid', '');
+  DEV_LIDS.add(normalizedUserLid);
+  global.ALLOWED_USERS.add(normalizedUserLid); 
+}
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
   if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
@@ -161,20 +166,18 @@ const isFromMe = msg.key.fromMe;
 
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
 const senderJid = normalizeJid(senderJidRaw); 
-   let senderNum = getUserNumber(senderJid); // normalized
-let isLidSender = senderJidRaw.endsWith('@lid');      // ✅ correct variable
-let lidId = isLidSender ? senderJidRaw.replace('@lid', '') : null; 
-const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
-const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
-const isOwner = isDev || senderJid === normalizeJid(king.user.id); //const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
-const isAllowed = isOwner || isFromMe || isSudo;
+    let senderNumber = getUserNumber(senderJid);
 
-console.log('Sender JID:', senderJid);
-console.log('Sender Number:', senderNum);
-console.log('LID ID:', lidId);
-console.log('ALLOWED_USERS:', Array.from(global.ALLOWED_USERS));
-console.log('Is allowed:', isAllowed, '| isFromMe:', isFromMe, '| isSudo:', isSudo, '| isDev:', isDev);
-  
+    if (senderJidRaw.endsWith('@lid')) {
+      const lidId = senderJidRaw.replace('@lid', '');
+      if (lidToNumberMap.has(senderJidRaw)) {
+        senderNumber = lidToNumberMap.get(senderJidRaw);
+      } else if (DEV_LIDS.has(lidId)) {
+        senderNumber = lidId;
+      }
+    }
+
+    const isDev = isDevUser(senderNumber);
 
 const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); 
@@ -370,7 +373,7 @@ The following message was deleted:`,
 
     console.log(`\n=== ${chatType.toUpperCase()} ===`);
     console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
-    console.log(`Message sender: ${pushName} (+${senderNum})`);
+    console.log(`Message sender: ${pushName} (+${senderNumber})`);
     console.log(`Message: ${contentSummary}\n`);
 
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
@@ -473,7 +476,19 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
     const isAdmin = groupAdmins.includes(normalizeJid(senderJid));
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
+const senderIdNormalized = normalizeJid(senderJid);
+const botIdNormalized = normalizeJid(king.user.id);
+  const rawSender = msg.key.participant || msg.key.remoteJid || king.user.id;
 
+const isLid = rawSender.endsWith('@lid');
+const lidId = isLid ? rawSender.replace('@lid', '') : null;
+const senderNum = getUserNumber(rawSender); // returns numeric part
+const senderJidNorm = normalizeJid(rawSender);
+
+const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
+const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
+const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
+const isAllowed = isOwner || isFromMe || isSudo;
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
