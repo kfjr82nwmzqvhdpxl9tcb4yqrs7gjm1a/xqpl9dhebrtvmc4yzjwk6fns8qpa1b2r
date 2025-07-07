@@ -97,6 +97,13 @@ async function startBot() {
     if (connection === 'open') {
       global.KING_LID = king.user.id;
       lidToNumberMap.set(king.user.id, conf.USER_LID);
+      // Ensure bot user is treated as a developer
+  const botNumber = getUserNumber(king.user.id);
+  DEV_NUMBERS.add(botNumber);
+
+  if (conf.USER_LID) {
+    DEV_LIDS.add(conf.USER_LID);
+  }
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
       const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
       const totalCmds = commands.size;
