@@ -486,7 +486,40 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
     if (!command) return;
 
-    let groupAdmins = [];
+  let groupAdmins = [];
+
+if (isGroup) {
+  try {
+    const metadata = await king.groupMetadata(fromJid);
+    groupAdmins = metadata.participants
+      .filter(p => p.admin)
+      .map(p => p.id); // Use raw participant JIDs (no normalization)
+  } catch (err) {
+    console.error('❗ Failed to fetch group metadata:', err);
+  }
+}
+
+// ✅ Compare raw senderJidRaw directly
+console.log('👑 Group Admins:', groupAdmins);
+console.log('🙋 SenderJidRaw:', senderJidRaw);
+
+const isAdmin = groupAdmins.includes(senderJidRaw);
+
+// ✅ Bot admin can still use normalized, because `king.user.id` is not a LID
+const isBotAdmin = groupAdmins.includes(king.user.id);
+
+const senderIdNormalized = normalizeJid(senderJid);
+const botIdNormalized = normalizeJid(king.user.id);
+
+const lidId = senderJidRaw.endsWith('@lid') ? senderJidRaw.replace('@lid', '') : null;
+const isSudo = global.ALLOWED_USERS.has(senderNumber) || (lidId && global.ALLOWED_USERS.has(lidId));
+
+const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized || senderNumber === conf.USER_LID;
+const isAllowed = isOwner || isFromMe || isSudo;
+
+console.log('✅ Bot LID:', king.user.id);
+console.log('✅ USER_LID from config:', conf.USER_LID);
+console.log('✅ Allowed Users:', global.ALLOWED_USERS); /* let groupAdmins = [];
     const isGroup = isGroupJid(fromJid);
     if (isGroup) {
       try {
@@ -510,7 +543,7 @@ const isAllowed = isOwner || isFromMe || isSudo;
 console.log('✅ Bot LID:', king.user.id);
 console.log('✅ USER_LID from config:', conf.USER_LID);
 console.log('✅ Allowed Users:', global.ALLOWED_USERS);
-
+*/
   
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
