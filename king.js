@@ -129,12 +129,12 @@ async function startBot() {
   const handledCalls = new Set();
 
 king.ev.on('call', async (call) => {
-//  console.log('📞 Call event received:', call);
+  console.log('📞 Call event received:', call);
 
   if (conf.ANTICALL === "on") {
     const callId = call[0].id;
     const callerId = call[0].from;
-  //  console.log(`Call from: ${callerId}, Call ID: ${callId}`);
+   console.log(`Call from: ${callerId}, Call ID: ${callId}`);
 
     if (handledCalls.has(callId)) return;
     handledCalls.add(callId);
