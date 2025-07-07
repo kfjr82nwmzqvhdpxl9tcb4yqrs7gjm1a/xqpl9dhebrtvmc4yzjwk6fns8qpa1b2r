@@ -177,7 +177,7 @@ const senderNum = getUserNumber(rawSender); // returns numeric part
 const senderJidNorm = normalizeJid(rawSender);
 
 const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
-//const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
+const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
 const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
 const isAllowed = isOwner || isFromMe || isSudo;
   /*  if (senderJidRaw.endsWith('@lid')) {
