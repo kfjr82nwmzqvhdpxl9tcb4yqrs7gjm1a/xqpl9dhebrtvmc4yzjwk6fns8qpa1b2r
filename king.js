@@ -125,8 +125,7 @@ async function startBot() {
       }).catch(() => {});
     }
   });
-
-  king.ev.on('call', async (call) => {
+king.ev.on('call', async (call) => {
   console.log('📞 Call event received:', call);
 
   if (conf.ANTICALL === "on") {
@@ -142,14 +141,20 @@ async function startBot() {
 
     if (!superUsers.includes(callerId)) {
       try {
-        await king.sendCallResult(callId, { type: 'reject' });
+        await king.rejectCall(callId, callerId); // ✅ This is the correct method
         console.log(`❌ Rejected call from ${callerId}`);
+
+        await king.sendMessage(callerId, {
+          text: '🚫 Please do not call this bot. You may be blocked.'
+        });
+
       } catch (err) {
         console.error('❗ Error rejecting call:', err);
       }
     }
   }
 });
+  
 king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
