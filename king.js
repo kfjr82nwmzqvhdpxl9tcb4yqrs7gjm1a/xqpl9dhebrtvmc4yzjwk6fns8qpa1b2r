@@ -166,10 +166,9 @@ const isFromMe = msg.key.fromMe;
 
 const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
 const senderJid = normalizeJid(senderJidRaw); 
-    let senderNum = getUserNumber(senderJid); // normalized
-let isLidSender = rawSender.endsWith('@lid');
-let lidId = isLidSender ? rawSender.replace('@lid', '') : null;
-
+   let senderNum = getUserNumber(senderJid); // normalized
+let isLidSender = senderJidRaw.endsWith('@lid');      // ✅ correct variable
+let lidId = isLidSender ? senderJidRaw.replace('@lid', '') : null; 
 const isSudo = global.ALLOWED_USERS.has(senderNum) || (lidId && global.ALLOWED_USERS.has(lidId));
 const isDev = DEV_NUMBERS.has(senderNum) || DEV_LIDS.has(lidId);
 const isOwner = isDev || senderJidNorm === normalizeJid(king.user.id);
