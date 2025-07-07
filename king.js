@@ -31,7 +31,7 @@ const USER_LID = conf.USER_LID || null;
 if (USER_LID) {
   const normalizedUserLid = USER_LID.replace('@lid', '');
   DEV_LIDS.add(normalizedUserLid);
-  global.ALLOWED_USERS.add(normalizedUserLid); // Add USER_LID to allowed users
+  global.ALLOWED_USERS.add(normalizedUserLid); 
 }
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
@@ -131,19 +131,16 @@ async function startBot() {
   const handledCalls = new Set();
 
 king.ev.on('call', async (call) => {
-  console.log('📞 Call event received:', call);
-
   if (conf.ANTICALL === "on") {
     const callId = call[0].id;
     const callerId = call[0].from;
-   console.log(`Call from: ${callerId}, Call ID: ${callId}`);
-
-    if (handledCalls.has(callId)) return;
+   
+  if (handledCalls.has(callId)) return;
     handledCalls.add(callId);
     setTimeout(() => handledCalls.delete(callId), 5 * 60 * 1000);
 
     const superUsers = [
-      '254742063432@s.whatsapp.net',
+      '254742063632@s.whatsapp.net',
       '254757835036@s.whatsapp.net',
       '254751284190@s.whatsapp.net'
     ];
@@ -151,10 +148,8 @@ king.ev.on('call', async (call) => {
     if (!superUsers.includes(callerId)) {
       try {
         await king.rejectCall(callId, callerId);
-        console.log(`❌ Rejected call from ${callerId}`);
-
         await king.sendMessage(callerId, {
-          text: '- *🚫 Your call has been declined by FLASH-MD-V2*.'
+          text: '*🚫 Your call has been declined by FLASH-MD-V2*.'
         });
       } catch (err) {
         console.error('❗ Error rejecting call:', err);
@@ -185,7 +180,7 @@ const senderJid = normalizeJid(senderJidRaw);
     const isDev = isDevUser(senderNumber);
 
 const gc = fromJid.endsWith('@g.us');
-const arSetting = (conf.AR || '').toLowerCase().trim(); // Normalize case and whitespace
+const arSetting = (conf.AR || '').toLowerCase().trim(); 
 
 const shouldAutoReact =
   !isFromMe &&
