@@ -180,7 +180,7 @@ king.ev.on('call', async (call) => {
 king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
-  const rawFromJid = msg.key.remoteJid;
+  const rawFromJid = normalizeJid;
 const fromJid = msg.key.remoteJid;
 const isFromMe = msg.key.fromMe;
 
