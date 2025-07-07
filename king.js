@@ -62,13 +62,22 @@ function formatJid(number) {
   return num.length > 13 ? `${num}@lid` : `${num}@s.whatsapp.net`;
 }
 
-function isDevUser(numberOrLid) {
-  return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
-}
+
 
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
-  return cleanJid.split('@')[0];
+  const baseId = cleanJid.split('@')[0];
+
+  if (baseId.length > 13 && lidToNumberMap.has(jid)) {
+    return lidToNumberMap.get(jid); // mapped number
+  }
+
+  return baseId;
+}
+
+function isDevUser(jid) {
+  const number = getUserNumber(jid); // uses mapped number if it's a lid
+  return DEV_NUMBERS.has(number) || DEV_LIDS.has(number);
 }
 
 function getChatCategory(jid) {
@@ -498,9 +507,8 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
     const isBotAdmin = groupAdmins.includes(normalizeJid(king.user.id));
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
-const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized;
-const isAllowed = isOwner || isFromMe; //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
-
+const isOwner = isDevUser(senderJid) || normalizeJid(senderJid) === normalizeJid(king.user.id);
+const isAllowed = isOwner || isFromMe;
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
