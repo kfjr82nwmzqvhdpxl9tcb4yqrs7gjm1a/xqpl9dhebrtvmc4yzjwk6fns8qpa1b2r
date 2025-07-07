@@ -25,9 +25,14 @@ const PRESENCE = {
   GROUP: conf.PRESENCE_GROUP || 'paused'
 };
 const DEV_NUMBERS = new Set(['254742063632', '254757835036']);
-const DEV_LIDS = new Set(['41391036067990', '20397286285438', conf.USER_LID]);
+const DEV_LIDS = new Set(['41391036067990', '20397286285438']);
 
-
+const USER_LID = conf.USER_LID || null;
+if (USER_LID) {
+  const normalizedUserLid = USER_LID.replace('@lid', '');
+  DEV_LIDS.add(normalizedUserLid);
+  global.ALLOWED_USERS.add(normalizedUserLid); // Add USER_LID to allowed users
+}
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
   if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
@@ -479,11 +484,9 @@ let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
 const isOwner = isDevUser(senderNumber) || senderIdNormalized === botIdNormalized;
+const isAllowed = isOwner || isFromMe; //  const isAllowed = isDev || isFromMe; // || global.ALLOWED_USERS.has(senderNumber);
 
-const allowedByNumber = DEV_NUMBERS.has(senderNumber) || global.ALLOWED_USERS.has(senderNumber);
-const allowedByLid = DEV_LIDS.has(senderNumber);
-const isAllowed = isOwner || isDev || allowedByNumber || allowedByLid || isFromMe;
-  if (command.ownerOnly && !isAllowed) {
+    if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
         text: '⛔ This command is restricted to the bot owner.',
       }, { quoted: msg });
