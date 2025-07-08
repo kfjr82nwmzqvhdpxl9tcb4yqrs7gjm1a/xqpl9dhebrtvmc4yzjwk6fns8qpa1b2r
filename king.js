@@ -472,19 +472,29 @@ The following message was deleted:`,
 
 
     const prefixes = [...conf.prefixes];
-let usedPrefix = prefixes.find(p => text.toLowerCase().startsWith(p));
+const hasNoPrefix = prefixes.includes('');
+const isDevCommand = isDev && text.startsWith('$');
 
-if (!usedPrefix && isDev && text.startsWith('$')) {
+let usedPrefix = prefixes.find(p => p && text.toLowerCase().startsWith(p));
+let cmdText = '';
+
+if (usedPrefix) {
+  cmdText = text.slice(usedPrefix.length).trim();
+} else if (isDevCommand) {
   usedPrefix = '$';
+  cmdText = text.slice(1).trim();
+} else if (hasNoPrefix) {
+  cmdText = text.trim();
+} else {
+  return;
 }
 
+const args = cmdText.split(/\s+/);
+const cmdName = args.shift()?.toLowerCase();
+const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
+if (!command) return;
 
-let cmdText = usedPrefix ? text.slice(usedPrefix.length).trim() : text.trim();
 
-    const args = cmdText.split(/\s+/);
-    const cmdName = args.shift()?.toLowerCase();
-    const command = commands.get(cmdName) || commands.get(aliases.get(cmdName));
-    if (!command) return;
 
   let groupAdmins = [];
 
