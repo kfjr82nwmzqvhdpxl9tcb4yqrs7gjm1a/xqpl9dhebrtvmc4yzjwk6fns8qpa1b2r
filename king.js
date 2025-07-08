@@ -436,19 +436,19 @@ The following message was deleted:`,
             if (senderNumber !== getUserNumber(king.user.id)) {
               switch (action) {
                 case 'warn': {
-                  await db.incrementWarning(fromJid, senderJid);
-                  const warnings = await db.getWarnings(fromJid, senderJid);
+                  await db.incrementWarning(fromJid, senderNumber);
+                  const warnings = await db.getWarnings(fromJid, senderNumber);
                   await king.sendMessage(fromJid, {
                     text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
                   }, {
                     quoted: msg,
-                    mentions: [senderJid]
+                    mentions: [senderNumber]
                   });
                   break;
                 }
                 case 'kick': {
                   try {
-                    await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
+                    await king.groupParticipantsUpdate(fromJid, [senderNumber], 'remove');
                     await king.sendMessage(fromJid, {
                       text: `🚫 @${senderNumber} has been removed for posting a link.`
                     }, {
