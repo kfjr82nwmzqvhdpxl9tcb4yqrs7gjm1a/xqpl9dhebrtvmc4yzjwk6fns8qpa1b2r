@@ -12,10 +12,6 @@ const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
 const db = require('./db');
-
-if (typeof db.__forceReload === 'function') {
-  db.__forceReload();
-}
 const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
 global.ALLOWED_USERS = loadSudoList();
@@ -32,7 +28,7 @@ const DEV_NUMBERS = new Set(['254742063632', '254757835036', conf.NUMBER]);
 const DEV_LIDS = new Set([
   '41391036067990',
   '20397286285438',
-  conf.USER_LID?.replace('@lid', '') 
+  conf.USER_LID?.replace('@lid', '') // Strip @lid if present
 ]);
 
 allCommands.forEach(cmd => {
@@ -104,16 +100,7 @@ async function startBot() {
 
     if (connection === 'open') {
       global.KING_LID = king.user.id;
-      
-// Replace this with one of your actual group IDs
-const testGroupId = '120363412785077434@g.us';
 
-try {
-  const settings = await db.getGroupSettings(testGroupId);
-  console.log('✅ Loaded group settings after restart:', settings);
-} catch (err) {
-  console.error('❌ Failed to load group settings:', err);
-}
 const lidRaw = king.user.id.replace('@lid', '');
 const userLidRaw = conf.USER_LID?.replace('@lid', '');
 
@@ -408,24 +395,11 @@ The following message was deleted:`,
       contentSummary = '[📦 Unknown or Unsupported Message Type]';
     }
 
-    let groupName = '';
-if (chatType === '👥 Group Chat') {
-  try {
-    const metadata = await king.groupMetadata(fromJid);
-    groupName = metadata.subject || 'Unknown Group Name';
-  } catch (e) {
-    groupName = 'Failed to fetch name';
-  }
-}
+    console.log(`\n=== ${chatType.toUpperCase()} ===`);
+    console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
+    console.log(`Message sender: ${pushName} (+${senderNumber})`);
+    console.log(`Message: ${contentSummary}\n`);
 
-console.log(`\n=== ${chatType.toUpperCase()} ===`);
-console.log(`Chat name: ${chatType === '👥 Group Chat' ? groupName : 'Private Chat'}`);
-if (chatType === '👥 Group Chat') {
-  console.log(`Group JID: ${fromJid}`);
-}
-console.log(`Message sender: ${pushName} (+${senderNumber})`);
-console.log(`Message: ${contentSummary}\n`);
-  
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
       king.readMessages([msg.key]).catch(() => {});
     }
