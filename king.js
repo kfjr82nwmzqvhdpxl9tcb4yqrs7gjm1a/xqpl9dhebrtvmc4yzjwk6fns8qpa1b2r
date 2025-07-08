@@ -106,8 +106,9 @@ const userLidRaw = conf.USER_LID?.replace('@lid', '');
 
 if (userLidRaw) {
   lidToNumberMap.set(king.user.id, userLidRaw); // Map bot LID to number
-  DEV_LIDS.add(userLidRaw); // Ensure it's treated as dev
-  console.log('✅ Added USER_LID to DEV_LIDS:', userLidRaw);
+  DEV_LIDS.add(userLidRaw); // Add to dev LIDs
+  DEV_NUMBERS.add(userLidRaw); // 🔥 Also treat as dev number
+  console.log('✅ Added USER_LID to DEV_LIDS and DEV_NUMBERS:', userLidRaw);
 }
 
 const botNumber = getUserNumber(king.user.id);
