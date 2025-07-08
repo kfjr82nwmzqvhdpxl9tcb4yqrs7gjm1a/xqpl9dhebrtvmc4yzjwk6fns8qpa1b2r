@@ -408,11 +408,24 @@ The following message was deleted:`,
       contentSummary = '[📦 Unknown or Unsupported Message Type]';
     }
 
-    console.log(`\n=== ${chatType.toUpperCase()} ===`);
-    console.log(`Chat name: ${chatType === '💬 Private Chat' ? 'Private Chat' : 'Group Chat'}`);
-    console.log(`Message sender: ${pushName} (+${senderNumber})`);
-    console.log(`Message: ${contentSummary}\n`);
+    let groupName = '';
+if (chatType === '👥 Group Chat') {
+  try {
+    const metadata = await king.groupMetadata(fromJid);
+    groupName = metadata.subject || 'Unknown Group Name';
+  } catch (e) {
+    groupName = 'Failed to fetch name';
+  }
+}
 
+console.log(`\n=== ${chatType.toUpperCase()} ===`);
+console.log(`Chat name: ${chatType === '👥 Group Chat' ? groupName : 'Private Chat'}`);
+if (chatType === '👥 Group Chat') {
+  console.log(`Group JID: ${fromJid}`);
+}
+console.log(`Message sender: ${pushName} (+${senderNumber})`);
+console.log(`Message: ${contentSummary}\n`);
+  
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
       king.readMessages([msg.key]).catch(() => {});
     }
