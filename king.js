@@ -106,7 +106,7 @@ async function startBot() {
       global.KING_LID = king.user.id;
       
 // Replace this with one of your actual group IDs
-const testGroupId = '120345678901234567@g.us';
+const testGroupId = '120363412785077434@g.us';
 
 try {
   const settings = await db.getGroupSettings(testGroupId);
