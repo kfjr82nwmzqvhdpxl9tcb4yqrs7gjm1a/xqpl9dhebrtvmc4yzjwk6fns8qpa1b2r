@@ -507,12 +507,12 @@ function normalizeId(jid) {
   return jid?.split('@')[0];
 }
 
-const normalizedAdmins = groupAdmins.map(normalizeId);
+const normalizedAdminNumbers = groupAdmins.map(id => getUserNumber(id));
 const senderNorm = normalizeId(senderJidRaw);
-const botNorm = normalizeId(king.user.id);
+const botNorm = normalizedAdminNumbers(king.user.id);
 
-const isAdmin = normalizedAdmins.includes(senderNorm);
-const isBotAdmin = normalizedAdmins.includes(botNorm);
+const isAdmin = normalizedAdminNumbers.includes(senderNumber);
+const isBotAdmin = normalizedAdminNumbers.includes(getUserNumber(king.user.id));
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
 
@@ -548,9 +548,8 @@ console.log('✅ Allowed Users:', global.ALLOWED_USERS);
       }, { quoted: msg });
     }
 
-// ☠️☠️☠️💔 BE BACK FRANCE 
   
-  /*if (command.adminOnly || command.botAdminOnly) {
+  if (command.adminOnly || command.botAdminOnly) {
   if (!isBotAdmin) {
     return king.sendMessage(fromJid, {
       text: '❗ I need to be admin to run this command.',
@@ -561,7 +560,7 @@ console.log('✅ Allowed Users:', global.ALLOWED_USERS);
       text: '⛔ This command is restricted to group admins.',
     }, { quoted: msg });
   }
-}*/
+  }
 
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
