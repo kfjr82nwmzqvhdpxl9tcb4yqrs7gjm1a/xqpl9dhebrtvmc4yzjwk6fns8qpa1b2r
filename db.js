@@ -1,38 +1,31 @@
 const { Pool } = require('pg');
+require('pg').defaults.ssl = true;
+
 const pool = new Pool({
-  connectionString: 'postgresql://beltahke:CdiT5wd6lnosDJyqVtiuHMAeB64DU24b@dpg-d12fn6juibrs73f61n0g-a.oregon-postgres.render.com/beltahtechpg',
-  ssl: { rejectUnauthorized: false }
+  connectionString: 'postgresql://beltahke:CdiT5wd6lnosDJyqVtiuHMAeB64DU24b@dpg-d12fn6juibrs73f61n0g-a.oregon-postgres.render.com/beltahtechpg'
 });
 
 const initTables = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS group_settings (
-        group_id TEXT PRIMARY KEY,
-        antilink_enabled BOOLEAN NOT NULL DEFAULT false,
-        action TEXT DEFAULT 'warn'
-      )
-    `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS group_settings (
+      group_id TEXT PRIMARY KEY,
+      antilink_enabled BOOLEAN NOT NULL DEFAULT false,
+      action TEXT NOT NULL DEFAULT 'kick'
+    );
+  `);
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS user_warnings (
-        group_id TEXT,
-        user_id TEXT,
-        warnings INTEGER DEFAULT 1,
-        PRIMARY KEY (group_id, user_id)
-      )
-    `);
-
-    console.log('✅ Tables initialized');
-  } catch (err) {
-    console.error('⚠️ Failed to initialize tables:', err.message);
-    throw err;
-  }
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_warnings (
+      group_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      warnings INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY (group_id, user_id)
+    );
+  `);
 };
 
-initTables();
-
 module.exports = {
+  initTables,
   getGroupSettings: async (groupId) => {
     const res = await pool.query(
       'SELECT * FROM group_settings WHERE group_id = $1', [groupId]
