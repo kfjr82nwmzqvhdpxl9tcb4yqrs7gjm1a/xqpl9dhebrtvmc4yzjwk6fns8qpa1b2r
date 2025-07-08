@@ -517,7 +517,7 @@ function normalizeId(jid) {
   return jid?.split('@')[0];
 }
 
-const normalizedAdmins = groupAdmins.map(rawFromJid);
+const normalizedAdmins = groupAdmins.map(normalizeJid);
 const senderNorm = normalizeId(senderJidRaw);
 const botNorm = normalizeId(king.user.id);
 
