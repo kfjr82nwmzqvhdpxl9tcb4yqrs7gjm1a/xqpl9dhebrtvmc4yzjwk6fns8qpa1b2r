@@ -12,6 +12,10 @@ const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
 const db = require('./db');
+
+if (typeof db.__forceReload === 'function') {
+  db.__forceReload();
+}
 const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
 global.ALLOWED_USERS = loadSudoList();
@@ -28,7 +32,7 @@ const DEV_NUMBERS = new Set(['254742063632', '254757835036', conf.NUMBER]);
 const DEV_LIDS = new Set([
   '41391036067990',
   '20397286285438',
-  conf.USER_LID?.replace('@lid', '') // Strip @lid if present
+  conf.USER_LID?.replace('@lid', '') 
 ]);
 
 allCommands.forEach(cmd => {
@@ -100,7 +104,16 @@ async function startBot() {
 
     if (connection === 'open') {
       global.KING_LID = king.user.id;
+      
+// Replace this with one of your actual group IDs
+const testGroupId = '120345678901234567@g.us';
 
+try {
+  const settings = await db.getGroupSettings(testGroupId);
+  console.log('✅ Loaded group settings after restart:', settings);
+} catch (err) {
+  console.error('❌ Failed to load group settings:', err);
+}
 const lidRaw = king.user.id.replace('@lid', '');
 const userLidRaw = conf.USER_LID?.replace('@lid', '');
 
