@@ -8,47 +8,71 @@ let groupSettings = {};
 let userWarnings = {};
 
 function loadData() {
-  if (fs.existsSync(SETTINGS_FILE)) {
-    groupSettings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
+      groupSettings = JSON.parse(data || '{}');
+      console.log('[DB] Group settings loaded.');
+    } else {
+      console.log('[DB] No settings file found, starting fresh.');
+    }
+  } catch (err) {
+    console.error('[DB] Error loading group settings:', err);
   }
-  if (fs.existsSync(WARNINGS_FILE)) {
-    userWarnings = JSON.parse(fs.readFileSync(WARNINGS_FILE, 'utf-8'));
+
+  try {
+    if (fs.existsSync(WARNINGS_FILE)) {
+      const data = fs.readFileSync(WARNINGS_FILE, 'utf-8');
+      userWarnings = JSON.parse(data || '{}');
+      console.log('[DB] User warnings loaded.');
+    } else {
+      console.log('[DB] No warnings file found, starting fresh.');
+    }
+  } catch (err) {
+    console.error('[DB] Error loading user warnings:', err);
   }
 }
 
 function saveData() {
-  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(groupSettings, null, 2));
-  fs.writeFileSync(WARNINGS_FILE, JSON.stringify(userWarnings, null, 2));
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(groupSettings, null, 2));
+    fs.writeFileSync(WARNINGS_FILE, JSON.stringify(userWarnings, null, 2));
+    console.log('[DB] Data saved.');
+  } catch (err) {
+    console.error('[DB] Error saving data:', err);
+  }
 }
 
-loadData();
+loadData(); // Load when the module is first required
 
 module.exports = {
   getGroupSettings: async (groupId) => {
     return groupSettings[groupId] || null;
   },
 
-  setGroupSettings: async (groupId, enabled, action) => {
+  setGroupSettings: async (groupId, enabled, action = 'kick') => {
     groupSettings[groupId] = {
       group_id: groupId,
       antilink_enabled: enabled ? 1 : 0,
-      action: action || 'kick',
+      action: action,
     };
     saveData();
   },
 
   incrementWarning: async (groupId, userId) => {
     const key = `${groupId}:${userId}`;
-    if (!userWarnings[key]) {
-      userWarnings[key] = 1;
-    } else {
-      userWarnings[key]++;
-    }
+    userWarnings[key] = (userWarnings[key] || 0) + 1;
     saveData();
   },
 
   getWarnings: async (groupId, userId) => {
     const key = `${groupId}:${userId}`;
     return userWarnings[key] || 0;
+  },
+
+  resetWarnings: async (groupId, userId) => {
+    const key = `${groupId}:${userId}`;
+    delete userWarnings[key];
+    saveData();
   }
 };
