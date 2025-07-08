@@ -548,7 +548,9 @@ console.log('✅ Allowed Users:', global.ALLOWED_USERS);
       }, { quoted: msg });
     }
 
-if (command.adminOnly || command.botAdminOnly) {
+// ☠️☠️☠️💔 BE BACK FRANCE 
+  
+  /*if (command.adminOnly || command.botAdminOnly) {
   if (!isBotAdmin) {
     return king.sendMessage(fromJid, {
       text: '❗ I need to be admin to run this command.',
@@ -559,7 +561,7 @@ if (command.adminOnly || command.botAdminOnly) {
       text: '⛔ This command is restricted to group admins.',
     }, { quoted: msg });
   }
-}
+}*/
 
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
