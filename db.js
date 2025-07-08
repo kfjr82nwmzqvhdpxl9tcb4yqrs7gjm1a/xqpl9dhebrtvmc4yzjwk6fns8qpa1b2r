@@ -1,3 +1,4 @@
+// db.js
 const fs = require('fs');
 const path = require('path');
 
@@ -8,60 +9,43 @@ let groupSettings = {};
 let userWarnings = {};
 
 function loadData() {
-  try {
-    if (fs.existsSync(SETTINGS_FILE)) {
-      const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
-      groupSettings = JSON.parse(data || '{}');
-      console.log('[DB] Group settings loaded.');
-    } else {
-      console.log('[DB] No settings file found, starting fresh.');
-    }
-  } catch (err) {
-    console.error('[DB] Error loading group settings:', err);
+  if (fs.existsSync(SETTINGS_FILE)) {
+    groupSettings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
   }
-
-  try {
-    if (fs.existsSync(WARNINGS_FILE)) {
-      const data = fs.readFileSync(WARNINGS_FILE, 'utf-8');
-      userWarnings = JSON.parse(data || '{}');
-      console.log('[DB] User warnings loaded.');
-    } else {
-      console.log('[DB] No warnings file found, starting fresh.');
-    }
-  } catch (err) {
-    console.error('[DB] Error loading user warnings:', err);
+  if (fs.existsSync(WARNINGS_FILE)) {
+    userWarnings = JSON.parse(fs.readFileSync(WARNINGS_FILE, 'utf-8'));
   }
 }
 
 function saveData() {
-  try {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(groupSettings, null, 2));
-    fs.writeFileSync(WARNINGS_FILE, JSON.stringify(userWarnings, null, 2));
-    console.log('[DB] Data saved.');
-  } catch (err) {
-    console.error('[DB] Error saving data:', err);
-  }
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(groupSettings, null, 2));
+  fs.writeFileSync(WARNINGS_FILE, JSON.stringify(userWarnings, null, 2));
 }
 
-loadData(); // Load when the module is first required
+// Load once when db.js is loaded
+loadData();
 
 module.exports = {
   getGroupSettings: async (groupId) => {
     return groupSettings[groupId] || null;
   },
 
-  setGroupSettings: async (groupId, enabled, action = 'kick') => {
+  setGroupSettings: async (groupId, enabled, action) => {
     groupSettings[groupId] = {
       group_id: groupId,
       antilink_enabled: enabled ? 1 : 0,
-      action: action,
+      action: action || 'kick',
     };
     saveData();
   },
 
   incrementWarning: async (groupId, userId) => {
     const key = `${groupId}:${userId}`;
-    userWarnings[key] = (userWarnings[key] || 0) + 1;
+    if (!userWarnings[key]) {
+      userWarnings[key] = 1;
+    } else {
+      userWarnings[key]++;
+    }
     saveData();
   },
 
@@ -70,9 +54,8 @@ module.exports = {
     return userWarnings[key] || 0;
   },
 
-  resetWarnings: async (groupId, userId) => {
-    const key = `${groupId}:${userId}`;
-    delete userWarnings[key];
-    saveData();
+  // Optional: force reload from main file
+  __forceReload: () => {
+    loadData();
   }
 };
