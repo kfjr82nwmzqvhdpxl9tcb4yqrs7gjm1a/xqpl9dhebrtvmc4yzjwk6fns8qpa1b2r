@@ -1,58 +1,54 @@
-const { Pool } = require('pg');
-require('pg').defaults.ssl = true;
+const fs = require('fs');
+const path = require('path');
 
-const pool = new Pool({
-  connectionString: 'postgresql://beltahke:CdiT5wd6lnosDJyqVtiuHMAeB64DU24b@dpg-d12fn6juibrs73f61n0g-a.oregon-postgres.render.com/beltahtechpg'
-});
+const SETTINGS_FILE = path.join(__dirname, 'group_settings.json');
+const WARNINGS_FILE = path.join(__dirname, 'user_warnings.json');
 
-const initTables = async () => {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS group_settings (
-      group_id TEXT PRIMARY KEY,
-      antilink_enabled BOOLEAN NOT NULL DEFAULT false,
-      action TEXT NOT NULL DEFAULT 'kick'
-    );
-  `);
+let groupSettings = {};
+let userWarnings = {};
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS user_warnings (
-      group_id TEXT NOT NULL,
-      user_id TEXT NOT NULL,
-      warnings INTEGER NOT NULL DEFAULT 1,
-      PRIMARY KEY (group_id, user_id)
-    );
-  `);
-};
+function loadData() {
+  if (fs.existsSync(SETTINGS_FILE)) {
+    groupSettings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
+  }
+  if (fs.existsSync(WARNINGS_FILE)) {
+    userWarnings = JSON.parse(fs.readFileSync(WARNINGS_FILE, 'utf-8'));
+  }
+}
+
+function saveData() {
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(groupSettings, null, 2));
+  fs.writeFileSync(WARNINGS_FILE, JSON.stringify(userWarnings, null, 2));
+}
+
+loadData();
 
 module.exports = {
-  initTables,
   getGroupSettings: async (groupId) => {
-    const res = await pool.query(
-      'SELECT * FROM group_settings WHERE group_id = $1', [groupId]
-    );
-    return res.rows[0];
+    return groupSettings[groupId] || null;
   },
+
   setGroupSettings: async (groupId, enabled, action) => {
-    await pool.query(`
-      INSERT INTO group_settings (group_id, antilink_enabled, action)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (group_id) DO UPDATE
-      SET antilink_enabled = $2, action = $3
-    `, [groupId, enabled, action]);
+    groupSettings[groupId] = {
+      group_id: groupId,
+      antilink_enabled: enabled ? 1 : 0,
+      action: action || 'kick',
+    };
+    saveData();
   },
+
   incrementWarning: async (groupId, userId) => {
-    await pool.query(`
-      INSERT INTO user_warnings (group_id, user_id, warnings)
-      VALUES ($1, $2, 1)
-      ON CONFLICT (group_id, user_id)
-      DO UPDATE SET warnings = user_warnings.warnings + 1
-    `, [groupId, userId]);
+    const key = `${groupId}:${userId}`;
+    if (!userWarnings[key]) {
+      userWarnings[key] = 1;
+    } else {
+      userWarnings[key]++;
+    }
+    saveData();
   },
+
   getWarnings: async (groupId, userId) => {
-    const res = await pool.query(
-      'SELECT warnings FROM user_warnings WHERE group_id = $1 AND user_id = $2',
-      [groupId, userId]
-    );
-    return res.rows[0]?.warnings || 0;
+    const key = `${groupId}:${userId}`;
+    return userWarnings[key] || 0;
   }
 };
