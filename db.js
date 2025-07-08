@@ -4,34 +4,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-const initTables = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS group_settings (
-        group_id TEXT PRIMARY KEY,
-        antilink_enabled BOOLEAN NOT NULL DEFAULT false,
-        action TEXT DEFAULT 'warn'
-      )
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS user_warnings (
-        group_id TEXT,
-        user_id TEXT,
-        warnings INTEGER DEFAULT 1,
-        PRIMARY KEY (group_id, user_id)
-      )
-    `);
-
-    console.log('✅ Tables initialized');
-  } catch (err) {
-    console.error('⚠️ Failed to initialize tables:', err.message);
-    throw err;
-  }
-};
-
-initTables();
-
 module.exports = {
   getGroupSettings: async (groupId) => {
     const res = await pool.query(
