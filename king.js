@@ -117,7 +117,7 @@ DEV_NUMBERS.add(botNumber); // Add bot's number to DEV_NUMBERS
       const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
       const totalCmds = commands.size;
 
-      const connInfo = `*FLASH-MD-V2 IS CONNECTED ⚡*
+      const connInfo = `*FLASH-MD-V2 IS CONNECTED*
 
 *✅ Using Version 2.5!*
 *📌 Commands:* ${totalCmds}
