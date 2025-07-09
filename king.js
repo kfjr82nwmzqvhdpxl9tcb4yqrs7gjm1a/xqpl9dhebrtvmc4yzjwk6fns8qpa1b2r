@@ -436,16 +436,29 @@ The following message was deleted:`,
             if (senderNumber !== getUserNumber(king.user.id)) {
               switch (action) {
                 case 'warn': {
-                  await db.incrementWarning(fromJid, senderJid);
-                  const warnings = await db.getWarnings(fromJid, senderJid);
-                  await king.sendMessage(fromJid, {
-                    text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings} warning${warnings > 1 ? 's' : ''}).`
-                  }, {
-                    quoted: msg,
-                    mentions: [senderJid]
-                  });
-                  break;
-                }
+  await db.incrementWarning(fromJid, senderJid);
+  const warnings = await db.getWarnings(fromJid, senderJid);
+
+  if (warnings >= conf.WARN_LIMIT) {
+    try {
+      await db.clearWarnings(fromJid, senderJid);
+      await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
+      await king.sendMessage(fromJid, {
+        text: `🚫 @${senderNumber} was removed for exceeding ${conf.WARN_LIMIT} warnings.`,
+        mentions: [senderJid]
+      });
+    } catch (err) {
+      console.error('❌ Failed to kick user after max warnings:', err);
+    }
+  } else {
+    await king.sendMessage(fromJid, {
+      text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings}/${conf.WARN_LIMIT}).`,
+      quoted: msg,
+      mentions: [senderJid]
+    });
+  }
+  break;
+}
                 case 'kick': {
                   try {
                     await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
