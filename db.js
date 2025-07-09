@@ -11,7 +11,6 @@ module.exports = {
     );
     return res.rows[0];
   },
-
   setGroupSettings: async (groupId, enabled, action) => {
     await pool.query(`
       INSERT INTO group_settings (group_id, antilink_enabled, action)
@@ -20,7 +19,6 @@ module.exports = {
       SET antilink_enabled = $2, action = $3
     `, [groupId, enabled, action]);
   },
-
   incrementWarning: async (groupId, userId) => {
     await pool.query(`
       INSERT INTO user_warnings (group_id, user_id, warnings)
@@ -29,19 +27,11 @@ module.exports = {
       DO UPDATE SET warnings = user_warnings.warnings + 1
     `, [groupId, userId]);
   },
-
   getWarnings: async (groupId, userId) => {
     const res = await pool.query(
       'SELECT warnings FROM user_warnings WHERE group_id = $1 AND user_id = $2',
       [groupId, userId]
     );
     return res.rows[0]?.warnings || 0;
-  },
-
-  clearWarnings: async (groupId, userId) => {
-    await pool.query(
-      'DELETE FROM user_warnings WHERE group_id = $1 AND user_id = $2',
-      [groupId, userId]
-    );
   }
 };
