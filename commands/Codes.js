@@ -4,22 +4,23 @@ const { franceking } = require('../main');
 
 module.exports = [
   {
-    name: 'catshell',
+    name: 'cmd',
+    aliases: ['getcode'], 
     get flashOnly() {
       return franceking();
     },
     description: 'Sends the JavaScript file where a command is defined.',
-    category: 'UTILS',
+    category: 'User',
     ownerOnly: true,
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
       const commandName = args[0];
 
       if (!commandName) {
-        return king.sendMessage(fromJid, { text: '❗ Usage: catshell <commandName>' }, { quoted: msg });
+        return king.sendMessage(fromJid, { text: '❗ Usage: cmd <commandName>' }, { quoted: msg });
       }
 
-      const commandsDir = __dirname; // folder where command files are stored
+      const commandsDir = __dirname; 
       const files = fs.readdirSync(commandsDir).filter(file => file.endsWith('.js'));
       let foundFile = null;
 
@@ -27,7 +28,7 @@ module.exports = [
         const filePath = path.join(commandsDir, file);
         const fileContent = fs.readFileSync(filePath, 'utf-8');
 
-        // Check for name: 'commandName' inside each file
+        
         const regex = new RegExp(`name\\s*:\\s*['"\`]${commandName}['"\`]`, 'i');
         if (regex.test(fileContent)) {
           foundFile = filePath;
@@ -39,7 +40,7 @@ module.exports = [
         return king.sendMessage(fromJid, { text: `❌ Command *${commandName}* not found.` }, { quoted: msg });
       }
 
-      // Send the file
+      
       try {
         await king.sendMessage(fromJid, {
           document: fs.readFileSync(foundFile),
