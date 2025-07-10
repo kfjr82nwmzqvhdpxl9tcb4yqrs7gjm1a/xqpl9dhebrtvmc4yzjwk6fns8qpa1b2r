@@ -15,7 +15,7 @@ module.exports = {
 
     const text = args.join(' ').trim();
     const commandRaw = msg.body?.split(' ')[0]?.slice(1)?.toLowerCase();
-    const usedPrefix = msg.body?.charAt(0) || '!'; // Default fallback
+    const usedPrefix = msg.body?.charAt(0) || '!';
 
     if (!text && commandRaw !== 'resetai') {
       return king.sendMessage(fromJid, {
@@ -66,9 +66,11 @@ module.exports = {
       });
 
       const data = res.data;
+      console.log('🔍 LLM API Raw Response:', JSON.stringify(data, null, 2));
 
-      if (!data.choices || !data.choices[0]?.message?.content) {
-        throw new Error('Invalid AI response');
+      if (!data || !Array.isArray(data.choices) || !data.choices[0]?.message?.content) {
+        const debugInfo = JSON.stringify(data || {}, null, 2).slice(0, 500);
+        throw new Error(`Invalid AI response. Debug: ${debugInfo}`);
       }
 
       const aiReply = data.choices[0].message.content.trim();
