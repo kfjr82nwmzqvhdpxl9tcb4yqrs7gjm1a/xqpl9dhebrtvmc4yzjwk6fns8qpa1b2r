@@ -404,9 +404,7 @@ The following message was deleted:`,
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
       king.readMessages([msg.key]).catch(() => {});
     }
-
-
-        if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+/*  if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
   const participant = msg.key.participant || msg.participant || null;
   const senderJid = normalizeJid(participant || '');
   const senderNumber = getUserNumber(senderJid);
@@ -433,26 +431,44 @@ The following message was deleted:`,
   } catch (err) {
     console.error('❌ Failed to view status:', err);
   }
+}*/
+  
+if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+  const participant = msg.key.participant || msg.participant || null;
+  const senderJid = normalizeJid(participant || '');
+  const senderNumber = getUserNumber(senderJid);
+
+  try {
+    await king.readMessages([msg.key]);
+    console.log(`✅ Viewed status from: ${senderJid}`);
+
+    if (conf.AUTO_LIKE === "on" && participant) {
+      const greenHeart = '💚';
+
+      const reactionKey = {
+        remoteJid: 'status@broadcast',
+        id: msg.key.id,
+        fromMe: false,
+        participant: msg.key.participant || msg.participant
+      };
+
+      try {
+        await king.sendMessage('status@broadcast', {
+          react: {
+            text: greenHeart,
+            key: reactionKey
+          }
+        });
+        console.log(`💚 Reacted to status from: ${senderNumber}`);
+      } catch (err) {
+        console.error('❌ Failed to react to status:', err);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Failed to view status:', err);
+  }
 }
 
-  /*  if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-      try {
-        await king.readMessages([msg.key]);
-        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
-      } catch (err) {}
-
-      if (conf.AUTO_LIKE === "on") {
-        const participant = msg.key.participant || msg.participant || king.user.id;
-        try {
-          await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-          }, {
-            statusJidList: [participant, king.user.id]
-          });
-          console.log('✅ Liked status');
-        } catch (err) {}
-      }
-    }*/
 
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
