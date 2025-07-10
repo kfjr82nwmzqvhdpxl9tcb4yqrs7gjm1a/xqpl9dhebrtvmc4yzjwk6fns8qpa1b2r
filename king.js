@@ -75,7 +75,7 @@ async function startBot() {
                 pino({ level: "fatal" }).child({ level: "fatal" })
             ),
         },
-        markOnlineOnConnect: true,
+        markOnlineOnConnect: false,
         printQRInTerminal: true,
         logger: pino({ level: "fatal" }).child({ level: "fatal" }),
         browser: Browsers.macOS("Safari"),
@@ -97,9 +97,10 @@ async function startBot() {
         startBot();
       }
     }
-
-    if (connection === 'open') {
-      global.KING_LID = king.user.id;
+if (connection === 'open') {
+  await king.sendPresenceUpdate('unavailable'); // ✅ Prevents online status globally
+}
+    global.KING_LID = king.user.id;
 
 const lidRaw = king.user.id.replace('@lid', '');
 const userLidRaw = conf.USER_LID?.replace('@lid', '');
