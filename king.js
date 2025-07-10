@@ -64,21 +64,27 @@ function getChatCategory(jid) {
 }
 
 async function startBot() {
-  const { state, saveState } = await loadSessionFromBase64();
-  const { version } = await fetchLatestBaileysVersion();
+  try {
+    const { state, saveState } = await loadSessionFromBase64();
+    const { version } = await fetchLatestBaileysVersion();
 
-  king = makeWASocket({
-        auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(
-                state.keys,
-                pino({ level: "fatal" }).child({ level: "fatal" })
-            ),
-        },
-        markOnlineOnConnect: false,
-        printQRInTerminal: true,
-        logger: pino({ level: "fatal" }).child({ level: "fatal" }),
-        browser: Browsers.macOS("Safari"),
+    const king = makeWASocket({
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(
+          state.keys,
+          pino({ level: "fatal" }).child({ level: "fatal" })
+        ),
+      },
+      logger: pino({ level: "silent" }),
+      browser: ['Flash-Md', 'Safari', '1.0.0'],
+      printQRInTerminal: true,
+      fireInitQueries: false,
+      shouldSyncHistoryMessage: true,
+      downloadHistory: true,
+      syncFullHistory: true,
+      generateHighQualityLinkPreview: true,
+      markOnlineOnConnect: false,
     });
 
 
@@ -98,7 +104,7 @@ async function startBot() {
       }
     }
 if (connection === 'open') {
-  await king.sendPresenceUpdate('unavailable'); // ✅ Prevents online status globally
+  await king.sendPresenceUpdate('unavailable'); 
 
     global.KING_LID = king.user.id;
 
