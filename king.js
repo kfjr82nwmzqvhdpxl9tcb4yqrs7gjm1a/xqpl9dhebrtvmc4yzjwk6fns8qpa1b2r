@@ -404,24 +404,27 @@ The following message was deleted:`,
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
       king.readMessages([msg.key]).catch(() => {});
     }
-if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+
+
+        if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+  const participant = msg.key.participant || msg.participant || null;
+  const senderJid = normalizeJid(participant || '');
+  const senderNumber = getUserNumber(senderJid);
+
   try {
     await king.readMessages([msg.key]);
-    
-    const statusSender = msg.key.participant || msg.participant || 'unknown@s.whatsapp.net';
-    const senderNumber = getUserNumber(normalizeJid(statusSender));
-
-    console.log(`✅ Viewed status from: ${statusSender}`);
+    console.log(`✅ Viewed status from: ${senderJid}`);
 
     if (conf.AUTO_LIKE === "on") {
       const greenHeart = '💚';
+
       try {
         await king.sendMessage(fromJid, {
-          react: { key: msg.key, text: greenHeart }
-        }, {
-          statusJidList: [statusSender]
+          react: {
+            key: msg.key,
+            text: greenHeart
+          }
         });
-
         console.log(`💚 Reacted to status from: ${senderNumber}`);
       } catch (err) {
         console.error('❌ Failed to react to status:', err);
