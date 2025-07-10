@@ -52,8 +52,7 @@ function isDevUser(numberOrLid) {
 
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
-  // Return full identifier before @
-  return cleanJid.split('@')[0]; // This already includes ':14' for LIDs
+  return cleanJid.split('@')[0]; 
 }
 function getChatCategory(jid) {
   if (jid === 'status@broadcast') return '🟡 Status Update';
@@ -68,7 +67,7 @@ async function startBot() {
     const { state, saveState } = await loadSessionFromBase64();
     const { version } = await fetchLatestBaileysVersion();
 
-    const king = makeWASocket({
+     king = makeWASocket({
       auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(
