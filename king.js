@@ -404,8 +404,35 @@ The following message was deleted:`,
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
       king.readMessages([msg.key]).catch(() => {});
     }
+if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+  try {
+    await king.readMessages([msg.key]);
+    
+    const statusSender = msg.key.participant || msg.participant || 'unknown@s.whatsapp.net';
+    const senderNumber = getUserNumber(normalizeJid(statusSender));
 
-    if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+    console.log(`✅ Viewed status from: ${statusSender}`);
+
+    if (conf.AUTO_LIKE === "on") {
+      const greenHeart = '💚';
+      try {
+        await king.sendMessage(fromJid, {
+          react: { key: msg.key, text: greenHeart }
+        }, {
+          statusJidList: [statusSender]
+        });
+
+        console.log(`💚 Reacted to status from: ${senderNumber}`);
+      } catch (err) {
+        console.error('❌ Failed to react to status:', err);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Failed to view status:', err);
+  }
+}
+
+  /*  if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
       try {
         await king.readMessages([msg.key]);
         console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
@@ -422,7 +449,7 @@ The following message was deleted:`,
           console.log('✅ Liked status');
         } catch (err) {}
       }
-    }
+    }*/
 
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
