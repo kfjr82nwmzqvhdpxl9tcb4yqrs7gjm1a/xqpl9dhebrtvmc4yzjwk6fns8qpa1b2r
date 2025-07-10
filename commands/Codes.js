@@ -8,7 +8,7 @@ module.exports = [
     get flashOnly() {
       return franceking();
     },
-    description: 'Sends the JavaScript file of a command.',
+    description: 'Sends the JavaScript file where a command is defined.',
     category: 'UTILS',
     ownerOnly: true,
     execute: async (king, msg, args) => {
@@ -16,20 +16,34 @@ module.exports = [
       const commandName = args[0];
 
       if (!commandName) {
-        return king.sendMessage(fromJid, { text: 'Usage: catshell <commandName>' }, { quoted: msg });
+        return king.sendMessage(fromJid, { text: '❗ Usage: catshell <commandName>' }, { quoted: msg });
       }
 
-      // Assuming all commands are in "heroku.js"
-      const filePath = path.join(__dirname, 'heroku.js');
+      const commandsDir = __dirname; // folder where command files are stored
+      const files = fs.readdirSync(commandsDir).filter(file => file.endsWith('.js'));
+      let foundFile = null;
 
-      try {
-        if (!fs.existsSync(filePath)) {
-          return king.sendMessage(fromJid, { text: 'Command file not found.' }, { quoted: msg });
+      for (const file of files) {
+        const filePath = path.join(commandsDir, file);
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+
+        // Check for name: 'commandName' inside each file
+        const regex = new RegExp(`name\\s*:\\s*['"\`]${commandName}['"\`]`, 'i');
+        if (regex.test(fileContent)) {
+          foundFile = filePath;
+          break;
         }
+      }
 
+      if (!foundFile) {
+        return king.sendMessage(fromJid, { text: `❌ Command *${commandName}* not found.` }, { quoted: msg });
+      }
+
+      // Send the file
+      try {
         await king.sendMessage(fromJid, {
-          document: fs.readFileSync(filePath),
-          fileName: `${commandName}.js`,
+          document: fs.readFileSync(foundFile),
+          fileName: path.basename(foundFile),
           mimetype: 'application/javascript'
         }, { quoted: msg });
       } catch (err) {
