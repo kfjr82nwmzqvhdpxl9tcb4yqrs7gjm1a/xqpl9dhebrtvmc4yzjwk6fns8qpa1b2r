@@ -432,8 +432,7 @@ The following message was deleted:`,
     console.error('❌ Failed to view status:', err);
   }
 }*/
-  
-if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+  if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
   const participant = msg.key.participant || msg.participant || null;
   const senderJid = normalizeJid(participant || '');
   const senderNumber = getUserNumber(senderJid);
@@ -442,17 +441,18 @@ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
     await king.readMessages([msg.key]);
     console.log(`✅ Viewed status from: ${senderJid}`);
 
-    if (conf.AUTO_LIKE === "on" && participant) {
+    if (conf.AUTO_LIKE === 'on' && participant) {
       const greenHeart = '💚';
 
       const reactionKey = {
         remoteJid: 'status@broadcast',
         id: msg.key.id,
         fromMe: false,
-        participant: msg.key.participant || msg.participant
+        participant: participant // keep original format
       };
 
       try {
+        // 👇 Use same remoteJid, but do NOT pass statusJidList
         await king.sendMessage('status@broadcast', {
           react: {
             text: greenHeart,
@@ -462,6 +462,7 @@ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
         console.log(`💚 Reacted to status from: ${senderNumber}`);
       } catch (err) {
         console.error('❌ Failed to react to status:', err);
+        console.log('🔎 ReactionKey:', reactionKey);
       }
     }
   } catch (err) {
