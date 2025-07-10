@@ -433,52 +433,57 @@ The following message was deleted:`,
   }
 }*/
   
-if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-  const participant = msg.key.participant || msg.participant || null;
-  const senderJid = normalizeJid(participant || '');
-  const senderNumber = getUserNumber(senderJid);
+if (fromJid === 'status@broadcast') {
+  console.log('ℹ️ Entered status@broadcast handler');
+  console.log('📍 AUTO_VIEW_STATUS:', conf.AUTO_VIEW_STATUS, '| AUTO_LIKE:', conf.AUTO_LIKE);
 
-  try {
-    await king.readMessages([msg.key]);
-    console.log(`✅ Viewed status from: ${senderJid}`);
+  if (conf.AUTO_VIEW_STATUS === 'on') {
+    const participant = msg.key.participant || msg.participant || null;
+    const senderJid = normalizeJid(participant || '');
+    const senderNumber = getUserNumber(senderJid);
 
-    if (conf.AUTO_LIKE === 'on' && participant) {
-      const greenHeart = '💚';
+    try {
+      await king.readMessages([msg.key]);
+      console.log(`✅ Viewed status from: ${senderJid}`);
 
-      const reactionKey = {
-        remoteJid: 'status@broadcast',
-        id: msg.key.id,
-        fromMe: false,
-        participant: participant
-      };
+      if (conf.AUTO_LIKE === 'on' && participant) {
+        const greenHeart = '💚';
 
-      // ✅ Debug logs for inspection
-      console.log('⏳ Preparing reaction with key:', JSON.stringify(reactionKey, null, 2));
-      console.log('📩 Reaction payload:', JSON.stringify({
-        react: {
-          text: greenHeart,
-          key: reactionKey
-        }
-      }, null, 2));
+        const reactionKey = {
+          remoteJid: 'status@broadcast',
+          id: msg.key.id,
+          fromMe: false,
+          participant: participant
+        };
 
-      try {
-        await king.sendMessage('status@broadcast', {
+        const reactionPayload = {
           react: {
             text: greenHeart,
             key: reactionKey
           }
-        });
+        };
 
-        console.log(`💚 Reacted to status from: ${senderNumber}`);
-      } catch (err) {
-        console.error('❌ Failed to react to status:', err);
+        console.log('⏳ Preparing reaction with key:', JSON.stringify(reactionKey));
+        console.log('📩 Reaction payload:', reactionPayload);
+
+        try {
+          await king.sendMessage('status@broadcast', reactionPayload);
+          console.log(`💚 Reacted to status from: ${senderNumber}`);
+        } catch (err) {
+          console.error('❌ Failed to react to status:', err);
+        }
+      } else {
+        console.log('⚠️ Skipped reaction - either AUTO_LIKE is off or participant is missing.');
       }
+    } catch (err) {
+      console.error('❌ Failed to view status:', err);
     }
-  } catch (err) {
-    console.error('❌ Failed to view status:', err);
+  } else {
+    console.log('⚠️ AUTO_VIEW_STATUS is disabled. Skipping...');
   }
 }
 
+      
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
