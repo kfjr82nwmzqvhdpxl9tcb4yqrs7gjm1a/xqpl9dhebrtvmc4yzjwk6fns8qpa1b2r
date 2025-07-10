@@ -404,52 +404,26 @@ The following message was deleted:`,
     if (conf.AUTO_READ_MESSAGES && isDM && !isFromMe) {
       king.readMessages([msg.key]).catch(() => {});
     }
-/*  if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-  const participant = msg.key.participant || msg.participant || null;
-  const senderJid = normalizeJid(participant || '');
-  const senderNumber = getUserNumber(senderJid);
 
-  try {
-    await king.readMessages([msg.key]);
-    console.log(`✅ Viewed status from: ${senderJid}`);
-
-    if (conf.AUTO_LIKE === "on") {
-      const greenHeart = '💚';
-
+    if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
       try {
-        await king.sendMessage(fromJid, {
-          react: {
-            key: msg.key,
-            text: greenHeart
-          }
-        });
-        console.log(`💚 Reacted to status from: ${senderNumber}`);
-      } catch (err) {
-        console.error('❌ Failed to react to status:', err);
+        await king.readMessages([msg.key]);
+        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
+      } catch (err) {}
+
+      if (conf.AUTO_LIKE === "on") {
+        const participant = msg.key.participant || msg.participant || king.user.id;
+        try {
+          await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+          }, {
+            statusJidList: [participant, king.user.id]
+          });
+          console.log('✅ Liked status');
+        } catch (err) {}
       }
     }
-  } catch (err) {
-    console.error('❌ Failed to view status:', err);
-  }
-}*/
-  if (fromJid === 'status@broadcast') {
-  const participant = msg.key.participant || msg.participant;
-  if (!participant) return;
 
-  // Mark status viewed
-  await king.readMessages([msg.key]);
-  console.log(`✅ Viewed status from: ${participant}`);
-
-  if (conf.AUTO_LIKE === 'on') {
-    // Send a reply to the user who posted the status (not a reaction)
-    await king.sendMessage(participant, {
-      text: '💚 Thanks for the status!'
-    });
-    console.log(`💚 Sent visible like reply to ${participant}`);
-  }
-}
-
-      
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
