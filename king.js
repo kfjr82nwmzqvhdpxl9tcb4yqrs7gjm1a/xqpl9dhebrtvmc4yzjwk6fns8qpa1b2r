@@ -432,27 +432,23 @@ The following message was deleted:`,
     console.error('❌ Failed to view status:', err);
   }
 }*/
-  
-if (fromJid === 'status@broadcast') {
+  if (fromJid === 'status@broadcast') {
   const participant = msg.key.participant || msg.participant;
   if (!participant) return;
 
-  // Mark status as viewed
+  // Mark status viewed
   await king.readMessages([msg.key]);
   console.log(`✅ Viewed status from: ${participant}`);
 
   if (conf.AUTO_LIKE === 'on') {
-    try {
-      // Send actual message with 💚 to show your like
-      await king.sendMessage('status@broadcast', {
-        text: '💚'
-      });
-      console.log(`💚 Sent visible like reply to status from: ${participant}`);
-    } catch (err) {
-      console.error('❌ Failed to send like reply:', err);
-    }
+    // Send a reply to the user who posted the status (not a reaction)
+    await king.sendMessage(participant, {
+      text: '💚 Thanks for the status!'
+    });
+    console.log(`💚 Sent visible like reply to ${participant}`);
   }
 }
+
       
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
