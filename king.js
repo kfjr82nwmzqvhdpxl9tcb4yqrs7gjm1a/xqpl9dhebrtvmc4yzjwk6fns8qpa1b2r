@@ -432,7 +432,8 @@ The following message was deleted:`,
     console.error('❌ Failed to view status:', err);
   }
 }*/
-  if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+  
+if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
   const participant = msg.key.participant || msg.participant || null;
   const senderJid = normalizeJid(participant || '');
   const senderNumber = getUserNumber(senderJid);
@@ -448,28 +449,35 @@ The following message was deleted:`,
         remoteJid: 'status@broadcast',
         id: msg.key.id,
         fromMe: false,
-        participant: participant // keep original format
+        participant: participant
       };
 
+      // ✅ Debug logs for inspection
+      console.log('⏳ Preparing reaction with key:', JSON.stringify(reactionKey, null, 2));
+      console.log('📩 Reaction payload:', JSON.stringify({
+        react: {
+          text: greenHeart,
+          key: reactionKey
+        }
+      }, null, 2));
+
       try {
-        // 👇 Use same remoteJid, but do NOT pass statusJidList
         await king.sendMessage('status@broadcast', {
           react: {
             text: greenHeart,
             key: reactionKey
           }
         });
+
         console.log(`💚 Reacted to status from: ${senderNumber}`);
       } catch (err) {
         console.error('❌ Failed to react to status:', err);
-        console.log('🔎 ReactionKey:', reactionKey);
       }
     }
   } catch (err) {
     console.error('❌ Failed to view status:', err);
   }
 }
-
 
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
