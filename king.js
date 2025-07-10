@@ -433,19 +433,19 @@ The following message was deleted:`,
   }
 }*/
   
-
 if (fromJid === 'status@broadcast') {
   const participant = msg.key.participant || msg.participant;
   if (!participant) return;
 
-  // View the status
+  // Mark status as viewed
   await king.readMessages([msg.key]);
   console.log(`✅ Viewed status from: ${participant}`);
 
   if (conf.AUTO_LIKE === 'on') {
     try {
+      // Send actual message with 💚 to show your like
       await king.sendMessage('status@broadcast', {
-        text: `💚`
+        text: '💚'
       });
       console.log(`💚 Sent visible like reply to status from: ${participant}`);
     } catch (err) {
