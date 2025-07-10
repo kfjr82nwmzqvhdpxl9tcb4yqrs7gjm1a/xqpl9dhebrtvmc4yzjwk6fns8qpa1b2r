@@ -433,56 +433,26 @@ The following message was deleted:`,
   }
 }*/
   
+
 if (fromJid === 'status@broadcast') {
-  console.log('ℹ️ Entered status@broadcast handler');
-  console.log('📍 AUTO_VIEW_STATUS:', conf.AUTO_VIEW_STATUS, '| AUTO_LIKE:', conf.AUTO_LIKE);
+  const participant = msg.key.participant || msg.participant;
+  if (!participant) return;
 
-  if (conf.AUTO_VIEW_STATUS === 'on') {
-    const participant = msg.key.participant || msg.participant || null;
-    const senderJid = normalizeJid(participant || '');
-    const senderNumber = getUserNumber(senderJid);
+  // View the status
+  await king.readMessages([msg.key]);
+  console.log(`✅ Viewed status from: ${participant}`);
 
+  if (conf.AUTO_LIKE === 'on') {
     try {
-      await king.readMessages([msg.key]);
-      console.log(`✅ Viewed status from: ${senderJid}`);
-
-      if (conf.AUTO_LIKE === 'on' && participant) {
-        const greenHeart = '💚';
-
-        const reactionKey = {
-          remoteJid: 'status@broadcast',
-          id: msg.key.id,
-          fromMe: false,
-          participant: participant
-        };
-
-        const reactionPayload = {
-          react: {
-            text: greenHeart,
-            key: reactionKey
-          }
-        };
-
-        console.log('⏳ Preparing reaction with key:', JSON.stringify(reactionKey));
-        console.log('📩 Reaction payload:', reactionPayload);
-
-        try {
-          await king.sendMessage('status@broadcast', reactionPayload);
-          console.log(`💚 Reacted to status from: ${senderNumber}`);
-        } catch (err) {
-          console.error('❌ Failed to react to status:', err);
-        }
-      } else {
-        console.log('⚠️ Skipped reaction - either AUTO_LIKE is off or participant is missing.');
-      }
+      await king.sendMessage('status@broadcast', {
+        text: `💚`
+      });
+      console.log(`💚 Sent visible like reply to status from: ${participant}`);
     } catch (err) {
-      console.error('❌ Failed to view status:', err);
+      console.error('❌ Failed to send like reply:', err);
     }
-  } else {
-    console.log('⚠️ AUTO_VIEW_STATUS is disabled. Skipping...');
   }
 }
-
       
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
