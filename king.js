@@ -99,7 +99,7 @@ async function startBot() {
     }
 if (connection === 'open') {
   await king.sendPresenceUpdate('unavailable'); // ✅ Prevents online status globally
-}
+
     global.KING_LID = king.user.id;
 
 const lidRaw = king.user.id.replace('@lid', '');
