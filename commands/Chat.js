@@ -8,22 +8,25 @@ module.exports = {
   description: 'Chat with FLASH AI using conversation memory',
   category: 'Tools',
   aliases: ['resetai'],
-  execute: async (king, msg, args) => {
+  async execute(king, msg, args) {
     const fromJid = msg.key.remoteJid;
-    const text = args.join(' ');
-    const command = msg.body?.split(' ')[0]?.slice(1).toLowerCase();
-    const userId = msg.key.participant || msg.key.remoteJid;
+    const senderJid = msg.key.participant || msg.key.remoteJid;
+    const userId = senderJid;
 
-    if (!text && command !== 'resetai') {
+    const text = args.join(' ').trim();
+    const commandRaw = msg.body?.split(' ')[0]?.slice(1)?.toLowerCase();
+    const usedPrefix = msg.body?.charAt(0) || '!'; // Default fallback
+
+    if (!text && commandRaw !== 'resetai') {
       return king.sendMessage(fromJid, {
-        text: `💬 *FLASH AI* Chatbot\n\nPlease provide a message to chat with FLASH AI.\n\nExample:\n*!ai* Hello, how are you?\n\nCommands:\n- *!ai <message>* - Chat with memory\n- *!resetai* - Reset your conversation history`
+        text: `💬 *FLASH AI* Chatbot\n\nPlease provide a message to chat.\n\nExample:\n*${usedPrefix}ai* How are you?\n\nCommands:\n- *${usedPrefix}ai <message>*\n- *${usedPrefix}resetai*`,
       }, { quoted: msg });
     }
 
-    if (command === 'resetai') {
+    if (commandRaw === 'resetai') {
       delete conversationHistory[userId];
       return king.sendMessage(fromJid, {
-        text: '✅ *FLASH AI* conversation history has been reset. Ready to start fresh!'
+        text: '🧠 FLASH AI conversation history reset!',
       }, { quoted: msg });
     }
 
@@ -43,7 +46,7 @@ module.exports = {
         }
       ];
 
-      conversationHistory[userId].forEach(exchange => {
+      conversationHistory[userId].forEach((exchange) => {
         messages.push({ role: 'user', content: exchange.user });
         messages.push({ role: 'assistant', content: exchange.assistant });
       });
@@ -65,30 +68,30 @@ module.exports = {
       const data = res.data;
 
       if (!data.choices || !data.choices[0]?.message?.content) {
-        throw new Error('Invalid response from AI service');
+        throw new Error('Invalid AI response');
       }
 
-      const aiResponse = data.choices[0].message.content.trim();
+      const aiReply = data.choices[0].message.content.trim();
 
       conversationHistory[userId].push({
         user: text,
-        assistant: aiResponse
+        assistant: aiReply
       });
 
       if (conversationHistory[userId].length > MAX_HISTORY_LENGTH) {
         conversationHistory[userId].shift();
       }
 
-      const formatted = `┌──「 *FLASH AI CHAT* 」──┐\n\n${aiResponse}\n\n└───────────────┘`;
+      const replyMessage = `┌──「 *FLASH AI CHAT* 」──┐\n\n${aiReply}\n\n└───────────────┘`;
 
       await king.sendMessage(fromJid, {
-        text: formatted
+        text: replyMessage
       }, { quoted: msg });
 
-    } catch (error) {
-      console.error('FLASH AI Error:', error);
-      await king.sendMessage(fromJid, {
-        text: `❎ *FLASH AI Error:* ${error.response?.data?.error?.message || error.message}`
+    } catch (err) {
+      console.error('FLASH AI Error:', err);
+      return king.sendMessage(fromJid, {
+        text: `❌ FLASH AI Error:\n${err.response?.data?.error?.message || err.message}`
       }, { quoted: msg });
     }
   }
