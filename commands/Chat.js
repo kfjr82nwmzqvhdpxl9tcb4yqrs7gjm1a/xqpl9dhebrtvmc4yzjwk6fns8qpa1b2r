@@ -62,15 +62,18 @@ module.exports = {
 
       const res = await axios.post(apiUrl, payload, {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 60000
+        timeout: 60000,
+        validateStatus: () => true
       });
 
-      const data = res.data;
-      console.log('🔍 LLM API Raw Response:', JSON.stringify(data, null, 2));
+      if (typeof res.data === 'string' && res.data.includes('<!doctype')) {
+        throw new Error('API responded with HTML. Likely an invalid or parked domain.');
+      }
 
-      if (!data || !Array.isArray(data.choices) || !data.choices[0]?.message?.content) {
-        const debugInfo = JSON.stringify(data || {}, null, 2).slice(0, 500);
-        throw new Error(`Invalid AI response. Debug: ${debugInfo}`);
+      const data = res.data;
+
+      if (!data.choices || !data.choices[0]?.message?.content) {
+        throw new Error('Invalid AI response');
       }
 
       const aiReply = data.choices[0].message.content.trim();
@@ -91,7 +94,6 @@ module.exports = {
       }, { quoted: msg });
 
     } catch (err) {
-      console.error('FLASH AI Error:', err);
       return king.sendMessage(fromJid, {
         text: `❌ FLASH AI Error:\n${err.response?.data?.error?.message || err.message}`
       }, { quoted: msg });
