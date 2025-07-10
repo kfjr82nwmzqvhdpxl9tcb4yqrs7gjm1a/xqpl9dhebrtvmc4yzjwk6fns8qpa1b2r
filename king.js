@@ -52,7 +52,8 @@ function isDevUser(numberOrLid) {
 
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
-  return cleanJid.split('@')[0]; 
+  // Return full identifier before @
+  return cleanJid.split('@')[0]; // This already includes ':14' for LIDs
 }
 function getChatCategory(jid) {
   if (jid === 'status@broadcast') return '🟡 Status Update';
@@ -63,27 +64,21 @@ function getChatCategory(jid) {
 }
 
 async function startBot() {
-  try {
-    const { state, saveState } = await loadSessionFromBase64();
-    const { version } = await fetchLatestBaileysVersion();
+  const { state, saveState } = await loadSessionFromBase64();
+  const { version } = await fetchLatestBaileysVersion();
 
-     king = makeWASocket({
-      auth: {
-        creds: state.creds,
-        keys: makeCacheableSignalKeyStore(
-          state.keys,
-          pino({ level: "fatal" }).child({ level: "fatal" })
-        ),
-      },
-      logger: pino({ level: "silent" }),
-      browser: ['Flash-Md', 'Safari', '1.0.0'],
-      printQRInTerminal: true,
-      fireInitQueries: false,
-      shouldSyncHistoryMessage: true,
-      downloadHistory: true,
-      syncFullHistory: true,
-      generateHighQualityLinkPreview: true,
-      markOnlineOnConnect: false,
+  king = makeWASocket({
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(
+                state.keys,
+                pino({ level: "fatal" }).child({ level: "fatal" })
+            ),
+        },
+        markOnlineOnConnect: false,
+        printQRInTerminal: true,
+        logger: pino({ level: "silent" }),
+        browser: Browsers.macOS("Safari"),
     });
 
 
@@ -103,7 +98,7 @@ async function startBot() {
       }
     }
 if (connection === 'open') {
-  await king.sendPresenceUpdate('unavailable'); 
+  await king.sendPresenceUpdate('unavailable'); // ✅ Prevents online status globally
 
     global.KING_LID = king.user.id;
 
