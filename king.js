@@ -77,7 +77,7 @@ async function startBot() {
         },
         markOnlineOnConnect: false,
         printQRInTerminal: true,
-        logger: pino({ level: "silent" }),
+        logger: pino({ level: "fatal" }).child({ level: "fatal" }),
         browser: Browsers.macOS("Safari"),
     });
 
