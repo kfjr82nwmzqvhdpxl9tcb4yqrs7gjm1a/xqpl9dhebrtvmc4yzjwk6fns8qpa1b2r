@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const util = require('util');
 
 module.exports = [
   {
-    name: 'cmdinfo',
-    aliases: ['commandinfo', 'infocmd'],
-    description: 'Gets info (name, aliases, description) about a specific command.',
+    name: 'structure',
+    aliases: ['cmdstruct', 'getcmdstruct'],
+    description: 'Returns the raw structure of a command (as a JS object).',
     category: 'User',
     ownerOnly: true,
     execute: async (king, msg, args) => {
@@ -13,18 +14,23 @@ module.exports = [
       const commandName = args[0];
 
       if (!commandName) {
-        return king.sendMessage(fromJid, { text: '❗ Usage: cmdinfo <commandName>' }, { quoted: msg });
+        return king.sendMessage(fromJid, { text: '❗ Usage: getstructure <commandName>' }, { quoted: msg });
       }
 
       const commandsDir = __dirname;
       const files = fs.readdirSync(commandsDir).filter(file => file.endsWith('.js'));
-      let commandInfo = null;
+      let commandObject = null;
 
       for (const file of files) {
         const filePath = path.join(commandsDir, file);
-        const commandModule = require(filePath);
+        let commandModule;
+        try {
+          delete require.cache[require.resolve(filePath)];
+          commandModule = require(filePath);
+        } catch (err) {
+          continue;
+        }
 
-        // 
         const commands = Array.isArray(commandModule) ? commandModule : [commandModule];
 
         for (const cmd of commands) {
@@ -32,26 +38,34 @@ module.exports = [
             cmd.name === commandName ||
             (cmd.aliases && cmd.aliases.includes(commandName))
           ) {
-            commandInfo = cmd;
+            commandObject = cmd;
             break;
           }
         }
 
-        if (commandInfo) break;
+        if (commandObject) break;
       }
 
-      if (!commandInfo) {
+      if (!commandObject) {
         return king.sendMessage(fromJid, { text: `❌ Command *${commandName}* not found.` }, { quoted: msg });
       }
 
-      let infoText = `📦 *Command Info:*\n\n`;
-      infoText += `🔹 *Name:* ${commandInfo.name}\n`;
-      infoText += `🔹 *Aliases:* ${(commandInfo.aliases || []).join(', ') || 'None'}\n`;
-      infoText += `🔹 *Description:* ${commandInfo.description || 'No description'}\n`;
-      infoText += `🔹 *Category:* ${commandInfo.category || 'Uncategorized'}\n`;
-      infoText += `🔹 *Owner Only:* ${commandInfo.ownerOnly ? 'Yes' : 'No'}\n`;
+      const commandText = util.inspect(commandObject, { depth: null, compact: false });
 
-      king.sendMessage(fromJid, { text: infoText }, { quoted: msg });
+      if (commandText.length > 4000) {
+        const filePath = path.join(__dirname, `${commandObject.name}_structure.txt`);
+        fs.writeFileSync(filePath, commandText);
+
+        await king.sendMessage(fromJid, {
+          document: fs.readFileSync(filePath),
+          fileName: `${commandObject.name}_structure.txt`,
+          mimetype: 'text/plain'
+        }, { quoted: msg });
+
+        fs.unlinkSync(filePath);
+      } else {
+        await king.sendMessage(fromJid, { text: '```js\n' + commandText + '\n```' }, { quoted: msg });
+      }
     }
   }
 ];
