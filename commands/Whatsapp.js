@@ -20,7 +20,8 @@ async function getBuffer(message, type) {
   return Buffer.concat(chunks);
 }
 
-module.exports = {
+module.exports = [
+  {
   name: "fullpp",
   description: "Set your profile picture without compression (owner only).",
   category: "Mods",
