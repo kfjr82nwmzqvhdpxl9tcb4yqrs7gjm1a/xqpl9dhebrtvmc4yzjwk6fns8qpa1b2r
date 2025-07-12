@@ -244,13 +244,17 @@ if (shouldAutoReact) {
     }
   }).catch(() => {});
 }
-    const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
+ const presence = isGroupJid(fromJid) ? conf.PRESENCE_GROUP : conf.PRESENCE_DM;
+if (presence && presence !== 'none') {
+  await king.sendPresenceUpdate(presence, fromJid);
+}
+  /*const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
 
     if (presenceToSend) {
       try {
         await king.sendPresenceUpdate(presenceToSend, fromJid);
       } catch (err) {}
-    }
+    }*/
 
     if (messageStore.has(msg.key.id)) return;
 
