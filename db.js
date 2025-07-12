@@ -33,5 +33,24 @@ module.exports = {
       [groupId, userId]
     );
     return res.rows[0]?.warnings || 0;
+  },
+  getGroupWelcome: async (groupId) => {
+    const res = await pool.query(
+      'SELECT welcome_enabled, welcome_message FROM group_settings WHERE group_id = $1',
+      [groupId]
+    );
+    if (res.rows.length === 0) return null;
+    return {
+      enabled: res.rows[0].welcome_enabled,
+      message: res.rows[0].welcome_message,
+    };
+  },
+  setGroupWelcome: async (groupId, enabled, message) => {
+    await pool.query(`
+      INSERT INTO group_settings (group_id, welcome_enabled, welcome_message)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (group_id) DO UPDATE
+      SET welcome_enabled = $2, welcome_message = $3
+    `, [groupId, enabled, message]);
   }
 };
