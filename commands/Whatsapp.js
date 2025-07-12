@@ -36,7 +36,8 @@ module.exports = [
     },
 
     execute: async (king, msg, _groupId, args, fromJid, groupMetadata) => {
-      const groupJid = _groupId || msg.key?.remoteJid;
+      const groupJid = (typeof _groupId === 'string' && _groupId) 
+        || (typeof msg.key?.remoteJid === 'string' && msg.key.remoteJid);
 
       if (!groupJid || !groupJid.endsWith("@g.us")) {
         return king.sendMessage(fromJid, {
@@ -54,6 +55,7 @@ module.exports = [
       }
 
       const mediaPath = path.join(__dirname, "..", "temp", `${Date.now()}-gpp.jpg`);
+
       try {
         const buffer = await getBuffer(quotedImage, "image");
         fs.ensureDirSync(path.dirname(mediaPath));
