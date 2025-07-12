@@ -1,15 +1,112 @@
 const { franceking } = require('../main');
-const { downloadContentFromMessage, downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const { prefix } = require('../config');
 const isDev = ['254742063632', '254757835036'];
 
+const fs = require("fs-extra");
+const jimp = require("jimp");
+const { S_WHATSAPP_NET } = require("@whiskeysockets/baileys");
+
+const resizeImage = async (imagePath) => {
+  const image = await jimp.read(imagePath);
+  const resized = image.crop(0, 0, image.getWidth(), image.getHeight()).scaleToFit(720, 720);
+  return {
+    img: await resized.getBufferAsync(jimp.MIME_JPEG),
+    preview: await resized.normalize().getBufferAsync(jimp.MIME_JPEG),
+  };
+};
+
 async function getBuffer(message, type) {
-    const stream = await downloadContentFromMessage(message, type);
-    const chunks = [];
-    for await (const chunk of stream) chunks.push(chunk);
-    return Buffer.concat(chunks);
+  const stream = await downloadContentFromMessage(message, type);
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
 }
+
 module.exports = [
+  {
+    name: "fullpp",
+    description: "Set your profile picture without compression (owner only).",
+    category: "Mods",
+    aliases: ["mypp", "dp"],
+    ownerOnly: true,
+    get flashOnly() {
+      return franceking();
+    },
+
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const quotedImage = quoted?.imageMessage;
+
+      if (!quotedImage) {
+        return king.sendMessage(fromJid, {
+          text: "📸 Please *reply to an image* to set it as your profile picture.",
+        }, { quoted: msg });
+      }
+
+      try {
+        const mediaPath = await king.downloadAndSaveMediaMessage({ message: quoted });
+        const resized = await resizeImage(mediaPath);
+
+        await king.query({
+          tag: "iq",
+          attrs: {
+            to: S_WHATSAPP_NET,
+            type: "set",
+            xmlns: "w:profile:picture",
+          },
+          content: [{
+            tag: "picture",
+            attrs: { type: "image" },
+            content: resized.img,
+          }],
+        });
+
+        await king.sendMessage(fromJid, {
+          text: "✅ Profile picture updated successfully!",
+        }, { quoted: msg });
+
+        fs.unlinkSync(mediaPath);
+
+      } catch (err) {
+        console.error("[FULLPP ERROR]", err);
+        await king.sendMessage(fromJid, {
+          text: "❌ Failed to update profile picture.",
+        }, { quoted: msg });
+      }
+    }
+  },
+  {
+    name: 'location',
+    get flashOnly() {
+      return franceking();
+    },
+    aliases: ['loc'],
+    description: 'Returns Google Maps link from a replied location message.',
+    category: 'WhatsApp',
+
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const locMsg = quoted?.locationMessage;
+
+      if (!locMsg) {
+        return await king.sendMessage(fromJid, { text: 'Reply to a location message to get the map link.' }, { quoted: msg });
+      }
+
+      const { degreesLatitude, degreesLongitude } = locMsg;
+      const mapUrl = `https://maps.google.com/?q=${degreesLatitude},${degreesLongitude}`;
+
+      await king.sendMessage(fromJid, {
+        text: `Live Location: ${mapUrl}`,
+        previewType: 0,
+        contextInfo: { isForwarded: true }
+      }, { quoted: msg });
+    }
+  }
+];
+
   {
     name: 'privacy',
       get flashOnly() {
@@ -494,7 +591,7 @@ module.exports = [
         }
     }
   }, 
-  {
+ /* {
     name: 'fullpp',
       get flashOnly() {
   return franceking();
@@ -524,7 +621,7 @@ module.exports = [
         await king.sendMessage(fromJid, { text: 'Failed to update profile picture.' }, { quoted: msg });
       }
     }
-  },
+  },*/
   {
     name: 'vv',
           get flashOnly() {
