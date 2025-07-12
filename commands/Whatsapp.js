@@ -76,35 +76,7 @@ ownerOnly: true,
       }
     }
   },
-  {
-    name: 'location',
-    get flashOnly() {
-      return franceking();
-    },
-    aliases: ['loc'],
-    description: 'Returns Google Maps link from a replied location message.',
-    category: 'WhatsApp',
 
-    execute: async (king, msg, args) => {
-      const fromJid = msg.key.remoteJid;
-      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const locMsg = quoted?.locationMessage;
-
-      if (!locMsg) {
-        return await king.sendMessage(fromJid, { text: 'Reply to a location message to get the map link.' }, { quoted: msg });
-      }
-
-      const { degreesLatitude, degreesLongitude } = locMsg;
-      const mapUrl = `https://maps.google.com/?q=${degreesLatitude},${degreesLongitude}`;
-
-      await king.sendMessage(fromJid, {
-        text: `Live Location: ${mapUrl}`,
-        previewType: 0,
-        contextInfo: { isForwarded: true }
-      }, { quoted: msg });
-    }
-  }
-];
 
   {
     name: 'privacy',
