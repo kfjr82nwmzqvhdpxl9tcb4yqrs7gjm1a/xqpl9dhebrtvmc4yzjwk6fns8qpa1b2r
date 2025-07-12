@@ -1,11 +1,8 @@
 const { franceking } = require('../main');
-const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const { prefix } = require('../config');
-const isDev = ['254742063632', '254757835036'];
-
+const {S_WHATSAPP_NET, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs-extra");
+const path = require("path");
 const jimp = require("jimp");
-const { S_WHATSAPP_NET } = require("@whiskeysockets/baileys");
 
 const resizeImage = async (imagePath) => {
   const image = await jimp.read(imagePath);
@@ -23,60 +20,63 @@ async function getBuffer(message, type) {
   return Buffer.concat(chunks);
 }
 
-module.exports = [
-  {
-    name: "fullpp",
-    description: "Set your profile picture without compression (owner only).",
-    category: "Mods",
-    aliases: ["mypp", "dp"],
-    get flashOnly() {
-      return franceking();
-    },
-ownerOnly: true,
-    execute: async (king, msg, args) => {
-      const fromJid = msg.key.remoteJid;
-      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const quotedImage = quoted?.imageMessage;
-
-      if (!quotedImage) {
-        return king.sendMessage(fromJid, {
-          text: "📸 Please *reply to an image* to set it as your profile picture.",
-        }, { quoted: msg });
-      }
-
-      try {
-        const mediaPath = await king.downloadAndSaveMediaMessage({ message: quoted });
-        const resized = await resizeImage(mediaPath);
-
-        await king.query({
-          tag: "iq",
-          attrs: {
-            to: S_WHATSAPP_NET,
-            type: "set",
-            xmlns: "w:profile:picture",
-          },
-          content: [{
-            tag: "picture",
-            attrs: { type: "image" },
-            content: resized.img,
-          }],
-        });
-
-        await king.sendMessage(fromJid, {
-          text: "✅ Profile picture updated successfully!",
-        }, { quoted: msg });
-
-        fs.unlinkSync(mediaPath);
-
-      } catch (err) {
-        console.error("[FULLPP ERROR]", err);
-        await king.sendMessage(fromJid, {
-          text: "❌ Failed to update profile picture.",
-        }, { quoted: msg });
-      }
-    }
+module.exports = {
+  name: "fullpp",
+  description: "Set your profile picture without compression (owner only).",
+  category: "Mods",
+  aliases: ["mypp", "dp"],
+  ownerOnly: true,
+  get flashOnly() {
+    return franceking();
   },
 
+  execute: async (king, msg, args) => {
+    const fromJid = msg.key.remoteJid;
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedImage = quoted?.imageMessage;
+
+    if (!quotedImage) {
+      return king.sendMessage(fromJid, {
+        text: "📸 Please *reply to an image* to set it as your profile picture.",
+      }, { quoted: msg });
+    }
+
+    try {
+      const buffer = await getBuffer(quotedImage, "image");
+      const mediaPath = path.join(__dirname, "..", "temp", `${Date.now()}.jpg`);
+      fs.ensureDirSync(path.dirname(mediaPath));
+      fs.writeFileSync(mediaPath, buffer);
+
+      const resized = await resizeImage(mediaPath);
+
+      await king.query({
+        tag: "iq",
+        attrs: {
+          to: S_WHATSAPP_NET,
+          type: "set",
+          xmlns: "w:profile:picture",
+        },
+        content: [{
+          tag: "picture",
+          attrs: { type: "image" },
+          content: resized.img,
+        }],
+      });
+
+      await king.sendMessage(fromJid, {
+        text: "✅ Profile picture updated successfully!",
+      }, { quoted: msg });
+
+      fs.unlinkSync(mediaPath);
+
+    } catch (err) {
+      console.error("[FULLPP ERROR]", err);
+      await king.sendMessage(fromJid, {
+        text: "❌ Failed to update profile picture.",
+      }, { quoted: msg });
+    }
+  }
+}, 
 
   {
     name: 'privacy',
