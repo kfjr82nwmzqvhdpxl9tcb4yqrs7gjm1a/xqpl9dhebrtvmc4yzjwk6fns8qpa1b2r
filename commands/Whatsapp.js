@@ -1,12 +1,12 @@
 const { franceking } = require('../main');
-const { S_WHATSAPP_NET, downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const {S_WHATSAPP_NET, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs-extra");
 const path = require("path");
 const jimp = require("jimp");
 
 const resizeImage = async (imagePath) => {
   const image = await jimp.read(imagePath);
-  const resized = image.scaleToFit(720, 720);
+  const resized = image.crop(0, 0, image.getWidth(), image.getHeight()).scaleToFit(720, 720);
   return {
     img: await resized.getBufferAsync(jimp.MIME_JPEG),
     preview: await resized.normalize().getBufferAsync(jimp.MIME_JPEG),
@@ -20,83 +20,10 @@ async function getBuffer(message, type) {
   return Buffer.concat(chunks);
 }
 
-module.exports = [
-  {
-    name: "fullgpp",
-    description: "Set group profile picture without resizing it.",
-    category: "Group",
-    aliases: ["fullgp", "gpp"],
-    ownerOnly: true,
-    groupOnly: true,
-    adminOnly: true,
-    botAdmin: true,
-
-    get flashOnly() {
-      return franceking();
-    },
-
-    execute: async (king, msg, _groupId, args, fromJid, groupMetadata) => {
-      const groupJid = (typeof _groupId === 'string' && _groupId) 
-        || (typeof msg.key?.remoteJid === 'string' && msg.key.remoteJid);
-
-      if (!groupJid || !groupJid.endsWith("@g.us")) {
-        return king.sendMessage(fromJid, {
-          text: "❌ Invalid or missing group ID. This command must be used in a group.",
-        }, { quoted: msg });
-      }
-
-      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const quotedImage = quoted?.imageMessage;
-
-      if (!quotedImage) {
-        return king.sendMessage(fromJid, {
-          text: "📸 Please *reply to an image* to set it as the group picture.",
-        }, { quoted: msg });
-      }
-
-      const mediaPath = path.join(__dirname, "..", "temp", `${Date.now()}-gpp.jpg`);
-
-      try {
-        const buffer = await getBuffer(quotedImage, "image");
-        fs.ensureDirSync(path.dirname(mediaPath));
-        fs.writeFileSync(mediaPath, buffer);
-
-        const resized = await resizeImage(mediaPath);
-
-        await king.query({
-          tag: "iq",
-          attrs: {
-            to: groupJid,
-            type: "set",
-            xmlns: "w:profile:picture",
-          },
-          content: [{
-            tag: "picture",
-            attrs: { type: "image" },
-            content: resized.img,
-          }],
-        });
-
-        await king.sendMessage(fromJid, {
-          text: "✅ Group profile picture updated successfully!",
-        }, { quoted: msg });
-
-      } catch (err) {
-        console.error("[FULLGPP ERROR]", err);
-        await king.sendMessage(fromJid, {
-          text: "❌ Failed to update group profile picture.",
-        }, { quoted: msg });
-      } finally {
-        if (fs.existsSync(mediaPath)) {
-          fs.unlinkSync(mediaPath);
-        }
-      }
-    }
-  }, 
-  {
+module.exports = {
   name: "fullpp",
   description: "Set your profile picture without compression (owner only).",
-  category: "Mods",
+  category: "WhatsApp",
   aliases: ["mypp", "dp"],
   ownerOnly: true,
   get flashOnly() {
