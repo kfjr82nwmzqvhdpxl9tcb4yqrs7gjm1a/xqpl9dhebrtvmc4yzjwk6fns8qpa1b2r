@@ -1,5 +1,6 @@
 const { franceking } = require('../main');
-const {S_WHATSAPP_NET, downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const { S_WHATSAPP_NET } = require("@whiskeysockets/baileys");
 const fs = require("fs-extra");
 const path = require("path");
 const jimp = require("jimp");
@@ -21,6 +22,66 @@ async function getBuffer(message, type) {
 }
 
 module.exports = [
+  {
+  name: "fullgpp",
+  description: "Set group profile picture without resizing it.",
+  category: "Group",
+  aliases: ["fullgp", "gpp"],
+  ownerOnly: true,
+  groupOnly: true,
+  adminOnly: true,
+  botAdmin: true,
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid, groupMetadata) => {
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedImage = quoted?.imageMessage;
+
+    if (!quotedImage) {
+      return king.sendMessage(fromJid, {
+        text: "📸 Please *reply to an image* to set it as the group picture.",
+      }, { quoted: msg });
+    }
+
+    try {
+      const buffer = await getBuffer(quotedImage, "image");
+      const mediaPath = path.join(__dirname, "..", "temp", `${Date.now()}-gpp.jpg`);
+      fs.ensureDirSync(path.dirname(mediaPath));
+      fs.writeFileSync(mediaPath, buffer);
+
+      const resized = await resizeImage(mediaPath);
+
+      await king.query({
+        tag: "iq",
+        attrs: {
+          to: fromJid,
+          type: "set",
+          xmlns: "w:profile:picture",
+        },
+        content: [{
+          tag: "picture",
+          attrs: { type: "image" },
+          content: resized.img,
+        }],
+      });
+
+      await king.sendMessage(fromJid, {
+        text: "✅ Group profile picture updated successfully!",
+      }, { quoted: msg });
+
+      fs.unlinkSync(mediaPath);
+
+    } catch (err) {
+      console.error("[FULLGPP ERROR]", err);
+      await king.sendMessage(fromJid, {
+        text: "❌ Failed to update group profile picture.",
+      }, { quoted: msg });
+    }
+  }
+}, 
   {
   name: "fullpp",
   description: "Set your profile picture without compression (owner only).",
