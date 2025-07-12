@@ -36,7 +36,7 @@ module.exports = [
     return franceking();
   },
 
-  execute: async (king, msg, args, fromJid, groupMetadata) => {
+  execute: async (king, msg, _groupId, args, fromJid, groupMetadata) => {
     const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     const quotedImage = quoted?.imageMessage;
 
@@ -57,7 +57,7 @@ module.exports = [
       await king.query({
         tag: "iq",
         attrs: {
-          to: fromJid,
+          to: _groupId,
           type: "set",
           xmlns: "w:profile:picture",
         },
