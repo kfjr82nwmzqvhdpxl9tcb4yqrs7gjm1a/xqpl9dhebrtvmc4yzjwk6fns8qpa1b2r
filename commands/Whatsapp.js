@@ -29,11 +29,10 @@ module.exports = [
     description: "Set your profile picture without compression (owner only).",
     category: "Mods",
     aliases: ["mypp", "dp"],
-    ownerOnly: true,
     get flashOnly() {
       return franceking();
     },
-
+ownerOnly: true,
     execute: async (king, msg, args) => {
       const fromJid = msg.key.remoteJid;
       const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
