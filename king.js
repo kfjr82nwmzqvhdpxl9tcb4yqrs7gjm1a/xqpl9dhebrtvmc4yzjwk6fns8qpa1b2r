@@ -101,7 +101,8 @@ if (connection === 'open') {
   await king.sendPresenceUpdate('unavailable'); // ✅ Prevents online status globally
 
     global.KING_LID = king.user.id;
-
+const groupEventHandler = require('./groupEvents');
+groupEventHandler(king);
 const lidRaw = king.user.id.replace('@lid', '');
 const userLidRaw = conf.USER_LID?.replace('@lid', '');
 
