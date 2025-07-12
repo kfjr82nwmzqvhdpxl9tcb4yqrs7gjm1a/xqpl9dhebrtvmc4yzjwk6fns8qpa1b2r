@@ -3,7 +3,7 @@ const { franceking } = require("../main");
 
 module.exports = {
   name: 'encrypt',
-  description: 'Encrypt (obfuscate) JavaScript code using js-confuser.',
+  description: 'Encrypt (obfuscate) a full JavaScript command file using js-confuser.',
   category: 'Developer',
   get flashOnly() {
     return franceking();
@@ -12,50 +12,50 @@ module.exports = {
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
 
-    // Handle text-based input
-    let inputCode = args.join(" ").trim();
-
-    // Or check if it's a document
-    if (!inputCode && msg.message?.documentMessage) {
-      const doc = msg.message.documentMessage;
-      const mime = doc.mimetype || "";
-
-      if (!mime.includes("javascript") && !doc.fileName.endsWith(".js")) {
-        return king.sendMessage(fromJid, {
-          text: "❌ Only .js files are supported for encryption.",
-        }, { quoted: msg });
-      }
-
-      const stream = await king.downloadMediaMessage(msg);
-      inputCode = stream.toString("utf-8");
+    // Require a document upload
+    const docMsg = msg.message?.documentMessage;
+    if (!docMsg) {
+      return king.sendMessage(fromJid, {
+        text: "📄 Please upload a `.js` file with this command to encrypt it.\n\nExample:\nSend a file and caption it: `encrypt`",
+      }, { quoted: msg });
     }
 
-    if (!inputCode) {
+    const mime = docMsg.mimetype || "";
+    const fileName = docMsg.fileName || "";
+
+    // Validate it's a JS file
+    if (!mime.includes("javascript") && !fileName.endsWith(".js")) {
       return king.sendMessage(fromJid, {
-        text: "❌ Please provide JavaScript code or upload a `.js` file to encrypt.\n\nExample:\n```encrypt const test = () => console.log('Hello')```",
+        text: "❌ Only `.js` files are supported for encryption.",
       }, { quoted: msg });
     }
 
     try {
+      // Download the file
+      const fileBuffer = await king.downloadMediaMessage(msg);
+      const inputCode = fileBuffer.toString("utf-8");
+
+      // Encrypt using js-confuser
       const encryptedCode = await JsConfuser(inputCode, {
         compact: true,
         minify: true,
         renameVariables: true,
         controlFlowFlattening: true,
-        preset: "medium",
+        preset: "high", // use "medium" if high causes issues
       });
 
+      // Send back encrypted file
       await king.sendMessage(fromJid, {
         document: Buffer.from(encryptedCode, "utf-8"),
-        fileName: "encrypted.js",
+        fileName: `encrypted-${fileName}`,
         mimetype: "application/javascript",
-        caption: "🔐 *JavaScript Encryption Complete!*\n\nEncrypted using `js-confuser`.",
+        caption: "🔐 *JavaScript file encrypted successfully!*",
       }, { quoted: msg });
 
     } catch (err) {
       console.error("[ENCRYPT ERROR]", err);
       return king.sendMessage(fromJid, {
-        text: "❌ Failed to encrypt the JavaScript code. Please check your input and try again.",
+        text: "❌ Failed to encrypt the uploaded JavaScript file.",
       }, { quoted: msg });
     }
   }
