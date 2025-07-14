@@ -35,7 +35,7 @@ allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
   if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
-async function updatePresence(jid) {
+/*async function updatePresence(jid) {
   const isGroup = isGroupJid(jid);
   const presence = isGroup ? conf.PRESENCE_GROUP : conf.PRESENCE_DM;
   try {
@@ -44,7 +44,7 @@ async function updatePresence(jid) {
     console.error('⚠️ Failed to send presence update:', err);
   }
 }
-
+*/
 function isGroupJid(jid) {
   return jid.endsWith('@g.us');
 }
