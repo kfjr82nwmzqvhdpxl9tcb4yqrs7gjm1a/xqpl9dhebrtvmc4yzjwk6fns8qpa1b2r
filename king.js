@@ -428,7 +428,7 @@ The following message was deleted:`,
     }
 
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
-    await updatePresence(fromJid);
+   // await updatePresence(fromJid);
       if (!text) return;
 
     if (isGroupJid(fromJid)) {
