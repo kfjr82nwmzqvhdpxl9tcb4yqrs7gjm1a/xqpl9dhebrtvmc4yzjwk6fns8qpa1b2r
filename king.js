@@ -75,11 +75,13 @@ async function startBot() {
                 pino({ level: "fatal" }).child({ level: "fatal" })
             ),
         },
-        markOnlineOnConnect: true,
+        markOnlineOnConnect: false,
         printQRInTerminal: true,
         logger: pino({ level: "fatal" }).child({ level: "fatal" }),
         browser: Browsers.macOS("Safari"),
     });
+
+
   global.KING_LID = null;
   const lidToNumberMap = new Map();
 
