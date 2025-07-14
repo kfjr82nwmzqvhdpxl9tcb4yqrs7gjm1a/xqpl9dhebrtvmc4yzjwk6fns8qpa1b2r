@@ -20,31 +20,22 @@ const commands = new Map();
 const aliases = new Map();
 const messageStore = new Map();
 
-/*const PRESENCE = {
+const PRESENCE = {
   DM: conf.PRESENCE_DM || 'paused',
   GROUP: conf.PRESENCE_GROUP || 'paused'
-};*/
+};
 const DEV_NUMBERS = new Set(['254742063632', '254757835036', conf.NUMBER]);
 const DEV_LIDS = new Set([
   '41391036067990',
   '20397286285438',
-  conf.USER_LID?.replace('@lid', '') 
+  conf.USER_LID?.replace('@lid', '') // Strip @lid if present
 ]);
 
 allCommands.forEach(cmd => {
   commands.set(cmd.name, cmd);
   if (cmd.aliases) cmd.aliases.forEach(alias => aliases.set(alias, cmd.name));
 });
-/*async function updatePresence(jid) {
-  const isGroup = isGroupJid(jid);
-  const presence = isGroup ? conf.PRESENCE_GROUP : conf.PRESENCE_DM;
-  try {
-    await king.sendPresenceUpdate(presence, jid);
-  } catch (err) {
-    console.error('⚠️ Failed to send presence update:', err);
-  }
-}
-*/
+
 function isGroupJid(jid) {
   return jid.endsWith('@g.us');
 }
@@ -84,7 +75,7 @@ async function startBot() {
                 pino({ level: "fatal" }).child({ level: "fatal" })
             ),
         },
-        markOnlineOnConnect: false, 
+        markOnlineOnConnect: false,
         printQRInTerminal: true,
         logger: pino({ level: "fatal" }).child({ level: "fatal" }),
         browser: Browsers.macOS("Safari"),
@@ -253,8 +244,19 @@ if (shouldAutoReact) {
     }
   }).catch(() => {});
 }
- 
-if (messageStore.has(msg.key.id)) return;
+ const presence = isGroupJid(fromJid) ? conf.PRESENCE_GROUP : conf.PRESENCE_DM;
+if (presence && presence !== 'none') {
+  await king.sendPresenceUpdate(presence, fromJid);
+}
+  /*const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
+
+    if (presenceToSend) {
+      try {
+        await king.sendPresenceUpdate(presenceToSend, fromJid);
+      } catch (err) {}
+    }*/
+
+    if (messageStore.has(msg.key.id)) return;
 
     if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
       const deletedMsgKey = msg.message.protocolMessage.key.id;
@@ -428,8 +430,7 @@ The following message was deleted:`,
     }
 
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
-   // await updatePresence(fromJid);
-      if (!text) return;
+    if (!text) return;
 
     if (isGroupJid(fromJid)) {
       try {
