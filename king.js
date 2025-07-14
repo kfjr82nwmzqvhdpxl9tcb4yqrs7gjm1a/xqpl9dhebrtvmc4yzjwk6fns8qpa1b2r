@@ -244,10 +244,7 @@ if (shouldAutoReact) {
     }
   }).catch(() => {});
 }
- const presence = isGroupJid(fromJid) ? conf.PRESENCE_GROUP : conf.PRESENCE_DM;
-if (presence && presence !== 'none') {
-  await king.sendPresenceUpdate(presence, fromJid);
-}
+ 
   /*const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
 
     if (presenceToSend) {
