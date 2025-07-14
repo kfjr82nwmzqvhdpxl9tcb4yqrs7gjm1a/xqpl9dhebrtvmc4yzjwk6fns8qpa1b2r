@@ -28,7 +28,7 @@ const DEV_NUMBERS = new Set(['254742063632', '254757835036', conf.NUMBER]);
 const DEV_LIDS = new Set([
   '41391036067990',
   '20397286285438',
-  conf.USER_LID?.replace('@lid', '') // Strip @lid if present
+  conf.USER_LID?.replace('@lid', '') 
 ]);
 
 allCommands.forEach(cmd => {
@@ -245,15 +245,7 @@ if (shouldAutoReact) {
   }).catch(() => {});
 }
  
-  /*const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
-
-    if (presenceToSend) {
-      try {
-        await king.sendPresenceUpdate(presenceToSend, fromJid);
-      } catch (err) {}
-    }*/
-
-    if (messageStore.has(msg.key.id)) return;
+if (messageStore.has(msg.key.id)) return;
 
     if (msg.message?.protocolMessage?.type === 0 && conf.ADM === "on") {
       const deletedMsgKey = msg.message.protocolMessage.key.id;
