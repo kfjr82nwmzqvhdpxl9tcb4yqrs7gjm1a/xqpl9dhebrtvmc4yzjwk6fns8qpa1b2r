@@ -101,8 +101,7 @@ if (connection === 'open') {
   await king.sendPresenceUpdate('unavailable'); // ✅ Prevents online status globally
 
     global.KING_LID = king.user.id;
-const groupEventHandler = require('./groupEvents');
-groupEventHandler(king);
+
 const lidRaw = king.user.id.replace('@lid', '');
 const userLidRaw = conf.USER_LID?.replace('@lid', '');
 
@@ -244,17 +243,13 @@ if (shouldAutoReact) {
     }
   }).catch(() => {});
 }
- const presence = isGroupJid(fromJid) ? conf.PRESENCE_GROUP : conf.PRESENCE_DM;
-if (presence && presence !== 'none') {
-  await king.sendPresenceUpdate(presence, fromJid);
-}
-  /*const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
+    const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
 
     if (presenceToSend) {
       try {
         await king.sendPresenceUpdate(presenceToSend, fromJid);
       } catch (err) {}
-    }*/
+    }
 
     if (messageStore.has(msg.key.id)) return;
 
