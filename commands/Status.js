@@ -72,15 +72,15 @@ module.exports = {
       const ownJid = king.user?.id || 'status@broadcast';
 
       await king.sendMessage(
-        ownJid,
-        mediaPayload,
-        {
-          broadcast: true,
-          statusJidList,
-          backgroundColor: '#075e54',
-          font: 1
-        }
-      );
+  'status@broadcast', // Dummy or fixed ID
+  mediaPayload,
+  {
+    broadcast: true,
+    statusJidList,
+    backgroundColor: '#075e54',
+    font: 1
+  }
+);
 
     } catch (err) {
       console.error('[STATUS ERROR]', err);
