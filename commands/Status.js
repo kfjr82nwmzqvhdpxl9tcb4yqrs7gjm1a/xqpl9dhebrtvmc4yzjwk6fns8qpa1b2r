@@ -12,7 +12,6 @@ module.exports = {
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
 
-    // Replace with your real list or fetch dynamically
     const statusJidList = [
       '1234567890@c.us',
       '1122334455@c.us'
@@ -20,39 +19,52 @@ module.exports = {
 
     const caption = args.join(' ') || '✨ FLASH-MD Status Update!';
     let mediaBuffer;
-    let mediaType = 'image'; // default
+    let mediaType = 'image';
 
     try {
       const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const quotedType = quoted && getContentType(quoted);
 
-      // If replying to image or video
-      if (quoted && (quotedType === 'imageMessage' || quotedType === 'videoMessage')) {
-        const messageContent = {
-          key: {
-            remoteJid: fromJid,
-            id: msg.message.extendedTextMessage.contextInfo.stanzaId,
-            participant: msg.message.extendedTextMessage.contextInfo.participant
-          },
-          message: quoted
-        };
+      if (quoted) {
+        if (quotedType === 'imageMessage' || quotedType === 'videoMessage') {
+          const messageContent = {
+            key: {
+              remoteJid: fromJid,
+              id: msg.message.extendedTextMessage.contextInfo.stanzaId,
+              participant: msg.message.extendedTextMessage.contextInfo.participant
+            },
+            message: quoted
+          };
 
-        mediaBuffer = await downloadMediaMessage(
-          messageContent,
-          'buffer',
-          {},
-          { reuploadRequest: king.updateMediaMessage }
-        );
+          mediaBuffer = await downloadMediaMessage(
+            messageContent,
+            'buffer',
+            {},
+            { reuploadRequest: king.updateMediaMessage }
+          );
 
-        mediaType = quotedType === 'videoMessage' ? 'video' : 'image';
-
+          mediaType = quotedType === 'videoMessage' ? 'video' : 'image';
+        } else if (quotedType === 'conversation' || quotedType === 'extendedTextMessage') {
+          const quotedText = quoted.conversation || quoted.extendedTextMessage?.text;
+          return await king.sendMessage(
+            king.user?.id || 'status@broadcast',
+            {
+              text: quotedText
+            },
+            {
+              broadcast: true,
+              statusJidList,
+              backgroundColor: '#075e54',
+              font: 2
+            }
+          );
+        }
       } else if (args[0]?.startsWith('http')) {
-        // If user gives a URL
         const response = await axios.get(args[0], { responseType: 'arraybuffer' });
         mediaBuffer = Buffer.from(response.data, 'binary');
       } else {
         return king.sendMessage(fromJid, {
-          text: '❗ Please *reply* to an image/video or provide a *valid media URL*.\n\nUsage:\n.status <caption> (reply to image/video)\n.status <url> <caption>'
+          text: '❗ Please reply to a text/image/video or provide a valid media URL.\n\nUsage:\n.status <caption> (reply to image/video/text)\n.status <url> <caption>'
         }, { quoted: msg });
       }
 
@@ -61,16 +73,16 @@ module.exports = {
         caption
       };
 
-      // Notify sending
       await king.sendMessage(
         fromJid,
         { text: `📤 Sending status to ${statusJidList.length} contacts...` },
         { quoted: msg }
       );
 
-      // Send to status
+      const ownJid = king.user?.id || 'status@broadcast';
+
       await king.sendMessage(
-        fromJid,
+        ownJid,
         mediaPayload,
         {
           broadcast: true,
