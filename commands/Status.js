@@ -44,27 +44,17 @@ module.exports = {
           );
 
           mediaType = quotedType === 'videoMessage' ? 'video' : 'image';
-        } else if (quotedType === 'conversation' || quotedType === 'extendedTextMessage') {
-          const quotedText = quoted.conversation || quoted.extendedTextMessage?.text;
-          return await king.sendMessage(
-            king.user?.id || 'status@broadcast',
-            {
-              text: quotedText
-            },
-            {
-              broadcast: true,
-              statusJidList,
-              backgroundColor: '#075e54',
-              font: 2
-            }
-          );
+        } else {
+          return king.sendMessage(fromJid, {
+            text: '❌ Cannot post text-only replies as a status.\nPlease reply to an image or video, or provide a valid media URL.'
+          }, { quoted: msg });
         }
       } else if (args[0]?.startsWith('http')) {
         const response = await axios.get(args[0], { responseType: 'arraybuffer' });
         mediaBuffer = Buffer.from(response.data, 'binary');
       } else {
         return king.sendMessage(fromJid, {
-          text: '❗ Please reply to a text/image/video or provide a valid media URL.\n\nUsage:\n.status <caption> (reply to image/video/text)\n.status <url> <caption>'
+          text: '❗ Please reply to an image/video or provide a valid media URL.\n\nUsage:\n.status <caption> (reply to image/video)\n.status <url> <caption>'
         }, { quoted: msg });
       }
 
