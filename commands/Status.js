@@ -58,14 +58,16 @@ module.exports = {
         caption
       };
 
-      const contacts = await king.onWhatsApp();
-      const userContacts = contacts.filter(c => c.jid.endsWith('@s.whatsapp.net'));
+      const chats = await king.chats.all();
+      const userContacts = chats
+        .map(chat => chat.id)
+        .filter(jid => jid.endsWith('@s.whatsapp.net'));
 
       await king.sendMessage(fromJid, {
         text: `📤 Sending status to ${userContacts.length} contacts...`
       }, { quoted: msg });
 
-      for (const { jid } of userContacts) {
+      for (const jid of userContacts) {
         await king.sendMessage(jid, mediaPayload);
       }
 
