@@ -4,77 +4,44 @@ const { downloadMediaMessage, getContentType } = require('@whiskeysockets/bailey
 
 module.exports = {
   name: 'status',
-  description: 'Send a story/status update to selected users.',
-  category: 'Broadcast',
-  get flashOnly() {
-    return franceking();
-  },
-  execute: async (king, msg, args) => {
-    const fromJid = msg.key.remoteJid;
+  aliases: ['mystatus', 'stat'],
+  description: 'Show your current WhatsApp status updates',
+  flashOnly: false,
+  groupOnly: false,
+  ownerOnly: false,
 
-    const caption = args.join(' ') || '✨ FLASH-MD Status Update!';
-    let mediaBuffer;
-    let mediaType = 'image';
+  execute: async (king, msg, args, fromJid) => {
+    const sender = msg.key.participant || msg.key.remoteJid;
 
     try {
-      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const quotedType = quoted && getContentType(quoted);
-
-      if (quoted) {
-        if (quotedType === 'imageMessage' || quotedType === 'videoMessage') {
-          const messageContent = {
-            key: {
-              remoteJid: fromJid,
-              id: msg.message.extendedTextMessage.contextInfo.stanzaId,
-              participant: msg.message.extendedTextMessage.contextInfo.participant
-            },
-            message: quoted
-          };
-
-          mediaBuffer = await downloadMediaMessage(
-            messageContent,
-            'buffer',
-            {},
-            { reuploadRequest: king.updateMediaMessage }
-          );
-
-          mediaType = quotedType === 'videoMessage' ? 'video' : 'image';
-        } else {
-          return king.sendMessage(fromJid, {
-            text: '❌ Cannot post text-only replies as a status.\nPlease reply to an image or video, or provide a valid media URL.'
-          }, { quoted: msg });
-        }
-      } else if (args[0]?.startsWith('http')) {
-        const response = await axios.get(args[0], { responseType: 'arraybuffer' });
-        mediaBuffer = Buffer.from(response.data, 'binary');
-      } else {
-        return king.sendMessage(fromJid, {
-          text: '❗ Please reply to an image/video or provide a valid media URL.\n\nUsage:\n.status <caption> (reply to image/video)\n.status <url> <caption>'
+      // Make sure the status message is coming from status@broadcast
+      if (msg.key.remoteJid !== 'status@broadcast') {
+        return await king.sendMessage(fromJid, {
+          text: '❌ This command is only for viewing your own status updates.'
         }, { quoted: msg });
       }
 
-      const mediaPayload = {
-        [mediaType]: mediaBuffer,
-        caption
-      };
+      const status = msg.message?.statusMessage;
 
-      const chats = await king.chats.all();
-      const userContacts = chats
-        .map(chat => chat.id)
-        .filter(jid => jid.endsWith('@s.whatsapp.net'));
-
-      await king.sendMessage(fromJid, {
-        text: `📤 Sending status to ${userContacts.length} contacts...`
-      }, { quoted: msg });
-
-      for (const jid of userContacts) {
-        await king.sendMessage(jid, mediaPayload);
+      if (!status || !Array.isArray(status.all)) {
+        return await king.sendMessage(fromJid, {
+          text: '⚠️ Could not read any status update information.'
+        }, { quoted: msg });
       }
 
-    } catch (err) {
-      console.error('[STATUS ERROR]', err);
+      const allStatuses = status.all;
+      const formatted = allStatuses.map((s, i) => {
+        return `📍 *${i + 1}.* ${s.text || 'No text'} (${s.timestamp || 'unknown'})`;
+      }).join('\n\n');
+
       await king.sendMessage(fromJid, {
-        text: '❌ Failed to send status. Please try again or check the media.'
+        text: `*🟢 Your Status Updates:*\n\n${formatted}`
+      }, { quoted: msg });
+
+    } catch (err) {
+      console.error('❗ Error in status command:', err);
+      await king.sendMessage(fromJid, {
+        text: '❌ Failed to fetch status information. It may not be available or supported.'
       }, { quoted: msg });
     }
   }
