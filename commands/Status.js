@@ -1,7 +1,6 @@
 const axios = require('axios');
-const fs = require('fs');
 const { franceking } = require('../main');
-const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { downloadMediaMessage, getContentType } = require('@whiskeysockets/baileys');
 
 module.exports = {
   name: 'status',
@@ -10,62 +9,81 @@ module.exports = {
   get flashOnly() {
     return franceking();
   },
-  execute: async (king, msg, args, extras = {}) => {
+  execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
 
-    // Mock list: Replace with dynamic user fetch or config
+    // Replace with your real list or fetch dynamically
     const statusJidList = [
       '1234567890@c.us',
       '1122334455@c.us'
     ];
 
     const caption = args.join(' ') || '✨ FLASH-MD Status Update!';
-
     let mediaBuffer;
-    let mediaType = 'image';
-    let mediaPayload;
+    let mediaType = 'image'; // default
 
     try {
-      if (msg.message?.imageMessage || msg.message?.videoMessage) {
-        // If replying to a media message
-        mediaBuffer = await downloadMediaMessage(msg, 'buffer', {}, { reuploadRequest: king.updateMediaMessage });
-        mediaType = msg.message.imageMessage ? 'image' : 'video';
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const quotedType = quoted && getContentType(quoted);
+
+      // If replying to image or video
+      if (quoted && (quotedType === 'imageMessage' || quotedType === 'videoMessage')) {
+        const messageContent = {
+          key: {
+            remoteJid: fromJid,
+            id: msg.message.extendedTextMessage.contextInfo.stanzaId,
+            participant: msg.message.extendedTextMessage.contextInfo.participant
+          },
+          message: quoted
+        };
+
+        mediaBuffer = await downloadMediaMessage(
+          messageContent,
+          'buffer',
+          {},
+          { reuploadRequest: king.updateMediaMessage }
+        );
+
+        mediaType = quotedType === 'videoMessage' ? 'video' : 'image';
+
       } else if (args[0]?.startsWith('http')) {
-        // If a URL is given as argument
+        // If user gives a URL
         const response = await axios.get(args[0], { responseType: 'arraybuffer' });
         mediaBuffer = Buffer.from(response.data, 'binary');
       } else {
         return king.sendMessage(fromJid, {
-          text: 'Please reply to an image/video message or provide a valid image/video URL.'
+          text: '❗ Please *reply* to an image/video or provide a *valid media URL*.\n\nUsage:\n.status <caption> (reply to image/video)\n.status <url> <caption>'
         }, { quoted: msg });
       }
 
-      mediaPayload = {
+      const mediaPayload = {
         [mediaType]: mediaBuffer,
         caption
       };
 
+      // Notify sending
       await king.sendMessage(
         fromJid,
-        { text: `✅ Sending status to ${statusJidList.length} contacts...` },
+        { text: `📤 Sending status to ${statusJidList.length} contacts...` },
         { quoted: msg }
       );
 
+      // Send to status
       await king.sendMessage(
         fromJid,
         mediaPayload,
         {
           broadcast: true,
           statusJidList,
-          backgroundColor: '#075e54', // WhatsApp green (optional)
-          font: 1 // 1=default, 2=handwriting, 3=typewriter etc.
+          backgroundColor: '#075e54',
+          font: 1
         }
       );
 
     } catch (err) {
       console.error('[STATUS ERROR]', err);
       await king.sendMessage(fromJid, {
-        text: '❌ Failed to send status update. Please try again.'
+        text: '❌ Failed to send status. Please try again or check the media.'
       }, { quoted: msg });
     }
   }
