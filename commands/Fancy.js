@@ -41,7 +41,6 @@ const fancyStyles = {
 function applyStyle(text, styleId) {
   const style = fancyStyles[styleId];
   if (!style) return null;
-
   return [...text].map(char => style[char] || char).join('');
 }
 
@@ -57,9 +56,16 @@ module.exports = {
     const fromJid = msg.key.remoteJid;
 
     if (args.length < 2 || isNaN(args[0])) {
-      return king.sendMessage(fromJid, {
-        text: 'Usage: fancy <style_number> <your text>\nEg: fancy 1 Hello World'
-      }, { quoted: msg });
+      let previewText = '*Fancy Text Styles Preview:*\n';
+      const example = 'Hello World';
+
+      for (const [id, _] of Object.entries(fancyStyles)) {
+        previewText += `${id}. ${applyStyle(example, id)}\n`;
+      }
+
+      previewText += `\nUsage: fancy <style_number> <your text>\nEg: fancy 1 Hello World`;
+
+      return king.sendMessage(fromJid, { text: previewText }, { quoted: msg });
     }
 
     const styleNumber = parseInt(args[0]);
