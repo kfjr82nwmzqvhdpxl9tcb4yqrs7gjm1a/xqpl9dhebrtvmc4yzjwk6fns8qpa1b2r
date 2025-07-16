@@ -12,11 +12,6 @@ module.exports = {
   execute: async (king, msg, args) => {
     const fromJid = msg.key.remoteJid;
 
-    const statusJidList = [
-      '1234567890@c.us',
-      '1122334455@c.us'
-    ];
-
     const caption = args.join(' ') || '✨ FLASH-MD Status Update!';
     let mediaBuffer;
     let mediaType = 'image';
@@ -63,24 +58,16 @@ module.exports = {
         caption
       };
 
-      await king.sendMessage(
-        fromJid,
-        { text: `📤 Sending status to ${statusJidList.length} contacts...` },
-        { quoted: msg }
-      );
+      const contacts = await king.onWhatsApp();
+      const userContacts = contacts.filter(c => c.jid.endsWith('@s.whatsapp.net'));
 
-      const ownJid = king.user?.id || 'status@broadcast';
+      await king.sendMessage(fromJid, {
+        text: `📤 Sending status to ${userContacts.length} contacts...`
+      }, { quoted: msg });
 
-      await king.sendMessage(
-  'status@broadcast', // Dummy or fixed ID
-  mediaPayload,
-  {
-    broadcast: true,
-    statusJidList,
-    backgroundColor: '#075e54',
-    font: 1
-  }
-);
+      for (const { jid } of userContacts) {
+        await king.sendMessage(jid, mediaPayload);
+      }
 
     } catch (err) {
       console.error('[STATUS ERROR]', err);
