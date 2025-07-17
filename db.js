@@ -1,33 +1,16 @@
 const { Pool } = require('pg');
-
 const pool = new Pool({
   connectionString: 'postgresql://flashmdusers_user:vrtQBGvmcpMXVTd0I6kremlRdHcJVZlX@dpg-d1n44oruibrs73e40j90-a.oregon-postgres.render.com/flashmdusers',
   ssl: { rejectUnauthorized: false }
 });
 
-// Auto-migrate columns if they don't exist
-(async () => {
-  try {
-    await pool.query(`
-      ALTER TABLE group_settings
-      ADD COLUMN IF NOT EXISTS welcome_enabled BOOLEAN DEFAULT false,
-      ADD COLUMN IF NOT EXISTS welcome_message TEXT DEFAULT '👋 Welcome @user to @group!';
-    `);
-    console.log('✅ Columns ensured for welcome feature');
-  } catch (err) {
-    console.error('❌ Failed to ensure columns in group_settings:', err);
-  }
-})();
-
 module.exports = {
   getGroupSettings: async (groupId) => {
     const res = await pool.query(
-      'SELECT * FROM group_settings WHERE group_id = $1',
-      [groupId]
+      'SELECT * FROM group_settings WHERE group_id = $1', [groupId]
     );
     return res.rows[0];
   },
-
   setGroupSettings: async (groupId, enabled, action) => {
     await pool.query(`
       INSERT INTO group_settings (group_id, antilink_enabled, action)
@@ -36,7 +19,6 @@ module.exports = {
       SET antilink_enabled = $2, action = $3
     `, [groupId, enabled, action]);
   },
-
   incrementWarning: async (groupId, userId) => {
     await pool.query(`
       INSERT INTO user_warnings (group_id, user_id, warnings)
@@ -45,7 +27,6 @@ module.exports = {
       DO UPDATE SET warnings = user_warnings.warnings + 1
     `, [groupId, userId]);
   },
-
   getWarnings: async (groupId, userId) => {
     const res = await pool.query(
       'SELECT warnings FROM user_warnings WHERE group_id = $1 AND user_id = $2',
@@ -53,19 +34,25 @@ module.exports = {
     );
     return res.rows[0]?.warnings || 0;
   },
-
   getGroupWelcome: async (groupId) => {
     const res = await pool.query(
       'SELECT welcome_enabled, welcome_message FROM group_settings WHERE group_id = $1',
       [groupId]
     );
-    if (res.rows.length === 0) return null;
+
+    if (res.rows.length === 0) {
+      await pool.query(
+        'INSERT INTO group_settings (group_id, welcome_enabled, welcome_message) VALUES ($1, $2, $3)',
+        [groupId, false, '👋 Welcome @user to @group!']
+      );
+      return { enabled: false, message: '👋 Welcome @user to @group!' };
+    }
+
     return {
       enabled: res.rows[0].welcome_enabled,
       message: res.rows[0].welcome_message,
     };
   },
-
   setGroupWelcome: async (groupId, enabled, message) => {
     await pool.query(`
       INSERT INTO group_settings (group_id, welcome_enabled, welcome_message)
