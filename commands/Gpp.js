@@ -54,7 +54,7 @@ module.exports = [
         await king.query({
           tag: "iq",
           attrs: {
-            to: groupId,
+            to: S_WHATSAPP_NET,
             target: groupId,
             type: "set",
             xmlns: "w:profile:picture"
