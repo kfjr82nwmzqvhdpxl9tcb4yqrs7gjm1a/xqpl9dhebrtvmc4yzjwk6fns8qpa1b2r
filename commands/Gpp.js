@@ -1,15 +1,14 @@
 const { franceking } = require('../main');
-const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const { S_WHATSAPP_NET, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs-extra");
 const path = require("path");
 const jimp = require("jimp");
 
 const resizeImage = async (imagePath) => {
   const image = await jimp.read(imagePath);
-  const resized = image.scaleToFit(720, 720); // Keep full image, fit to 720x720
+  const resized = image.scaleToFit(720, 720); // No crop, just scale
   return {
-    img: await resized.getBufferAsync(jimp.MIME_JPEG),
-    preview: await resized.clone().normalize().getBufferAsync(jimp.MIME_JPEG),
+    img: await resized.getBufferAsync(jimp.MIME_JPEG)
   };
 };
 
@@ -22,10 +21,10 @@ async function getBuffer(message, type) {
 
 module.exports = [
   {
-    name: "grpdp",
-    description: "Set group profile picture in full quality (admin only).",
+    name: "fullgpp",
+    description: "Set group profile picture without cropping or compression (admin only)",
     category: "Group",
-    aliases: ["setgrouppp", "grouppp"],
+    aliases: ["fullgp", "gpp"],
     groupOnly: true,
     adminOnly: true,
     botAdminOnly: true,
@@ -40,31 +39,43 @@ module.exports = [
 
       if (!quotedImage) {
         return king.sendMessage(groupId, {
-          text: "📸 Please *reply to an image* to set it as the group profile picture.",
+          text: "📸 Please *reply to an image* to set it as the full group profile picture.",
         }, { quoted: msg });
       }
 
       try {
         const buffer = await getBuffer(quotedImage, "image");
-        const mediaPath = path.join(__dirname, "..", "temp", `${Date.now()}-grpdp.jpg`);
+        const mediaPath = path.join(__dirname, "..", "temp", `${Date.now()}-group.jpg`);
         fs.ensureDirSync(path.dirname(mediaPath));
         fs.writeFileSync(mediaPath, buffer);
 
         const resized = await resizeImage(mediaPath);
 
-        // ✅ Send full image and preview
-        await king.updateProfilePicture(groupId, resized.img, resized.preview);
+        await king.query({
+          tag: "iq",
+          attrs: {
+            to: S_WHATSAPP_NET,
+            target: groupId,
+            type: "set",
+            xmlns: "w:profile:picture"
+          },
+          content: [{
+            tag: "picture",
+            attrs: { type: "image" },
+            content: resized.img
+          }]
+        });
 
         await king.sendMessage(groupId, {
-          text: "✅ Group profile picture updated successfully in full quality!",
+          text: "✅ Group profile picture updated in full resolution!",
         }, { quoted: msg });
 
         fs.unlinkSync(mediaPath);
 
       } catch (err) {
-        console.error("[GRPDP ERROR]", err);
+        console.error("[FULLGPP ERROR]", err);
         await king.sendMessage(groupId, {
-          text: "❌ Failed to update group profile picture.",
+          text: "❌ Failed to set full group profile picture.",
         }, { quoted: msg });
       }
     }
