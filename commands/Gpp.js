@@ -6,7 +6,7 @@ const jimp = require("jimp");
 
 const resizeImage = async (imagePath) => {
   const image = await jimp.read(imagePath);
-  const resized = image.scaleToFit(720, 720); // No crop, just scale
+  const resized = image.scaleToFit(720, 720); 
   return {
     img: await resized.getBufferAsync(jimp.MIME_JPEG)
   };
@@ -22,7 +22,7 @@ async function getBuffer(message, type) {
 module.exports = [
   {
     name: "fullgpp",
-    description: "Set group profile picture without cropping or compression (admin only)",
+    description: "Set group profile picture without cropping or compression.",
     category: "Group",
     aliases: ["fullgp", "gpp"],
     groupOnly: true,
@@ -67,7 +67,7 @@ module.exports = [
         });
 
         await king.sendMessage(groupId, {
-          text: "✅ Group profile picture updated in full resolution!",
+          text: "✅ Group profile picture updated!",
         }, { quoted: msg });
 
         fs.unlinkSync(mediaPath);
