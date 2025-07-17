@@ -1,4 +1,3 @@
-const { downloadAndSaveMediaMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs-extra");
 const jimp = require("jimp");
 
@@ -18,6 +17,9 @@ module.exports = {
   description: "Set group profile picture without compression",
   aliases: ["fullgp", "gpp"],
   groupOnly: true,
+  adminOnly: false,
+  botAdminOnly: false,
+  ownerOnly: false,
 
   async execute(king, msg, args, fromJid) {
     const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
@@ -35,7 +37,7 @@ module.exports = {
     }
 
     try {
-      const imagePath = await downloadAndSaveMediaMessage(quoted.imageMessage, 'group-img.jpg');
+      const imagePath = await king.downloadAndSaveMediaMessage(quoted.imageMessage, 'group-img.jpg');
       const resized = await resizeImage(imagePath);
 
       await king.query({
