@@ -40,17 +40,20 @@ module.exports = {
       [groupId]
     );
 
+    const footer = '\n\n_This is the official welcome message sent by *FLASH-MD-V2* via Baileys._';
+
     if (res.rows.length === 0) {
+      const defaultMessage = '👋 Hello @user Welcome to @group!' + footer;
       await pool.query(
         'INSERT INTO group_settings (group_id, welcome_enabled, welcome_message) VALUES ($1, $2, $3)',
-        [groupId, false, '👋 Welcome @user to @group!']
+        [groupId, false, defaultMessage]
       );
-      return { enabled: false, message: '👋 Welcome @user to @group!' };
+      return { enabled: false, message: defaultMessage };
     }
 
     return {
       enabled: res.rows[0].welcome_enabled,
-      message: res.rows[0].welcome_message,
+      message: res.rows[0].welcome_message + footer,
     };
   },
   setGroupWelcome: async (groupId, enabled, message) => {
