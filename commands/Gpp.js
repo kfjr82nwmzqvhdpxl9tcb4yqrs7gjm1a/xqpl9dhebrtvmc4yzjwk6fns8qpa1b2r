@@ -35,11 +35,7 @@ module.exports = [
     execute: async (king, msg, args, { isBotAdmin }) => {
       const fromJid = msg.key.remoteJid;
 
-      if (!isBotAdmin) {
-        return king.sendMessage(fromJid, {
-          text: "🚫 I need to be *admin* to change the group profile picture.",
-        }, { quoted: msg });
-      }
+
 
       const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const quotedImage = quoted?.imageMessage;
