@@ -17,16 +17,16 @@ module.exports = [
       const fromJid = msg.key.remoteJid;
       const option = args[0]?.toLowerCase();
 
-      if (!option || !['on', 'off', 'set'].includes(option)) {
+      if (!option || !['on', 'off', 'message'].includes(option)) {
         return king.sendMessage(fromJid, {
-          text: '❌ Usage:\n.welcome on - Enable welcome messages\n.welcome off - Disable welcome messages\n.welcome set <message> - Set welcome message text\n\nUse placeholders: @user and @group'
+          text: '❌ Usage:\n.welcome on - Enable welcome messages\n.welcome off - Disable welcome messages\n.welcome message <message> - Set welcome message text\n\nUse placeholders: @user and @group'
         }, { quoted: msg });
       }
 
       if (option === 'on' || option === 'off') {
         const enabled = option === 'on';
         const oldConfig = await db.getGroupWelcome(fromJid);
-        const message = oldConfig?.message || '👋 Welcome @user to @group!';
+        const message = oldConfig?.message || '👋 Hey @user welcome to @group!\n\n\n This Is a welcome message sent by Flash-Md-V2 via baileys';
         await db.setGroupWelcome(fromJid, enabled, message);
 
         return king.sendMessage(fromJid, {
@@ -34,7 +34,7 @@ module.exports = [
         }, { quoted: msg });
       }
 
-      if (option === 'set') {
+      if (option === 'message') {
         const messageText = args.slice(1).join(' ');
         if (!messageText) {
           return king.sendMessage(fromJid, {
