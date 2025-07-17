@@ -1,12 +1,12 @@
-const { S_WHATSAPP_NET } = require('@whiskeysockets/baileys');
-const fs = require("fs-extra");
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const jimp = require("jimp");
 
-async function resizeImage(imagePath) {
-  const image = await jimp.read(imagePath);
+async function resizeImage(buffer) {
+  const image = await jimp.read(buffer);
   const resized = image
     .crop(0, 0, image.getWidth(), image.getHeight())
     .scaleToFit(720, 720);
+
   return {
     img: await resized.getBufferAsync(jimp.MIME_JPEG),
     preview: await resized.normalize().getBufferAsync(jimp.MIME_JPEG),
@@ -15,40 +15,35 @@ async function resizeImage(imagePath) {
 
 module.exports = {
   name: "fullgpp",
-  category: "Group",
-  description: "Set group profile picture without compression",
-  aliases: ["fullgp", "gpp"],
   groupOnly: true,
   adminOnly: false,
   botAdminOnly: false,
-  ownerOnly: false,
 
   async execute(king, msg, args, fromJid) {
     const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-    if (!fromJid.endsWith('@g.us')) {
-      return king.sendMessage(fromJid, {
-        text: "❌ This command only works in groups.",
-      }, { quoted: msg });
-    }
-
     if (!quoted?.imageMessage) {
       return king.sendMessage(fromJid, {
-        text: "📷 Please reply to an image to set as group profile picture.",
+        text: "📷 Please reply to an image.",
       }, { quoted: msg });
     }
 
     try {
-      const imagePath = await king.downloadAndSaveMediaMessage(quoted.imageMessage);
-      const resized = await resizeImage(imagePath);
+      const buffer = await downloadMediaMessage(
+        { message: quoted },
+        "buffer",
+        {},
+        { logger: king.logger, reuploadRequest: king.updateMediaMessage }
+      );
+
+      const resized = await resizeImage(buffer);
 
       await king.query({
         tag: 'iq',
         attrs: {
-          to: S_WHATSAPP_NET,
+          to: fromJid,
           type: "set",
           xmlns: "w:profile:picture",
-          target: fromJid
         },
         content: [{
           tag: "picture",
@@ -57,15 +52,13 @@ module.exports = {
         }]
       });
 
-      await fs.promises.unlink(imagePath);
-
-      return king.sendMessage(fromJid, {
+      await king.sendMessage(fromJid, {
         text: "✅ Group profile picture updated!",
       }, { quoted: msg });
 
     } catch (err) {
       console.error("❌ Error setting profile pic:", err);
-      return king.sendMessage(fromJid, {
+      await king.sendMessage(fromJid, {
         text: "❌ Failed to update group profile picture.",
       }, { quoted: msg });
     }
