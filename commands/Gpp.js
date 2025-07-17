@@ -6,10 +6,10 @@ const jimp = require("jimp");
 
 const resizeImage = async (imagePath) => {
   const image = await jimp.read(imagePath);
-  const resized = image.crop(0, 0, image.getWidth(), image.getHeight()).scaleToFit(720, 720);
+  const resized = image.scaleToFit(720, 720); // Keep full image, fit to 720x720
   return {
     img: await resized.getBufferAsync(jimp.MIME_JPEG),
-    preview: await resized.normalize().getBufferAsync(jimp.MIME_JPEG),
+    preview: await resized.clone().normalize().getBufferAsync(jimp.MIME_JPEG),
   };
 };
 
@@ -25,7 +25,7 @@ module.exports = [
     name: "grpdp",
     description: "Set group profile picture in full quality (admin only).",
     category: "Group",
-    aliases: ["setgrouppp", "gpp"],
+    aliases: ["setgrouppp", "grouppp"],
     groupOnly: true,
     adminOnly: true,
     botAdminOnly: true,
@@ -52,11 +52,11 @@ module.exports = [
 
         const resized = await resizeImage(mediaPath);
 
-        // Set group profile picture using both full image and preview
+        // ✅ Send full image and preview
         await king.updateProfilePicture(groupId, resized.img, resized.preview);
 
         await king.sendMessage(groupId, {
-          text: "✅ Group profile picture updated successfully!",
+          text: "✅ Group profile picture updated successfully in full quality!",
         }, { quoted: msg });
 
         fs.unlinkSync(mediaPath);
