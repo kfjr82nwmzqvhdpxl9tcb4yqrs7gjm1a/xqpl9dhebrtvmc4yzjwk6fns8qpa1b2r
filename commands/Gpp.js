@@ -1,4 +1,4 @@
-const { downloadAndSaveMediaMessage, S_WHATSAPP_NET } = require('@whiskeysockets/baileys');
+const { downloadAndSaveMediaMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs-extra");
 const jimp = require("jimp");
 
@@ -8,8 +8,7 @@ async function resizeImage(imagePath) {
     .crop(0, 0, image.getWidth(), image.getHeight())
     .scaleToFit(720, 720);
   return {
-    img: await resized.getBufferAsync(jimp.MIME_JPEG),
-    preview: await resized.normalize().getBufferAsync(jimp.MIME_JPEG),
+    img: await resized.getBufferAsync(jimp.MIME_JPEG)
   };
 }
 
@@ -19,9 +18,6 @@ module.exports = {
   description: "Set group profile picture without compression",
   aliases: ["fullgp", "gpp"],
   groupOnly: true,
-  adminOnly: false,
-  botAdminOnly: false,
-  ownerOnly: false,
 
   async execute(king, msg, args, fromJid) {
     const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
@@ -39,16 +35,15 @@ module.exports = {
     }
 
     try {
-      const imagePath = await king.downloadAndSaveMediaMessage(quoted.imageMessage);
+      const imagePath = await downloadAndSaveMediaMessage(quoted.imageMessage, 'group-img.jpg');
       const resized = await resizeImage(imagePath);
 
       await king.query({
         tag: 'iq',
         attrs: {
-          to: S_WHATSAPP_NET,
+          to: fromJid,
           type: "set",
-          xmlns: "w:profile:picture",
-          target: fromJid
+          xmlns: "w:profile:picture"
         },
         content: [{
           tag: "picture",
