@@ -169,6 +169,23 @@ king.ev.on('call', async (call) => {
     }
   }
 });
+king.ev.on('group-participants.update', async ({ id, participants, action }) => {
+  if (!isGroupJid(id)) return;
+
+  if (action === 'add' || action === 'invite') {
+    for (const participant of participants) {
+      try {
+        await king.sendMessage(id, {
+          text: `Welcome <@${participant.split('@')[0]}>!`,
+          mentions: [participant]
+        });
+      } catch (err) {
+        console.error('Failed to send welcome message:', err);
+      }
+    }
+  }
+});
+  
 king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
