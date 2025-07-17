@@ -173,15 +173,28 @@ king.ev.on('group-participants.update', async ({ id, participants, action }) => 
   if (!isGroupJid(id)) return;
 
   if (action === 'add' || action === 'invite') {
-    for (const participant of participants) {
-      try {
+    try {
+      const welcomeConfig = await db.getGroupWelcome(id);
+
+      if (!welcomeConfig || !welcomeConfig.enabled) return;
+
+      const groupMetadata = await king.groupMetadata(id);
+      const groupName = groupMetadata.subject;
+
+      for (const participant of participants) {
+        const userMention = `@${participant.split('@')[0]}`;
+        const welcomeMsg = welcomeConfig.message || '👋 Welcome @user to @group!';
+        const finalMsg = welcomeMsg
+          .replace(/@user/g, userMention)
+          .replace(/@group/g, groupName);
+
         await king.sendMessage(id, {
-          text: `Welcome <@${participant.split('@')[0]}>!`,
+          text: finalMsg,
           mentions: [participant]
         });
-      } catch (err) {
-        console.error('Failed to send welcome message:', err);
       }
+    } catch (err) {
+      console.error('❗ Failed to send custom welcome message:', err);
     }
   }
 });
