@@ -183,7 +183,7 @@ king.ev.on('group-participants.update', async ({ id, participants, action }) => 
 
       for (const participant of participants) {
         const userMention = `@${participant.split('@')[0]}`;
-        const welcomeMsg = welcomeConfig.message || '👋 Welcome @user to @group!';
+        const welcomeMsg = welcomeConfig.message || '👋Hey @user Welcome to @group!\n\n- This Is an official welcome message sent by *FLASH-MD* Via Baileys.';
         const finalMsg = welcomeMsg
           .replace(/@user/g, userMention)
           .replace(/@group/g, groupName);
