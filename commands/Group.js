@@ -12,6 +12,7 @@ module.exports = [
   category: 'Group',
   adminOnly: true,
   botAdminOnly: true,
+  ownerOnly: true, 
   groupOnly: true,
 
   execute: async (king, msg, args) => {
@@ -187,6 +188,7 @@ module.exports = [
     category: 'Group',
     groupOnly: true,
     adminOnly: true,
+      ownerOnly: true, 
     botAdminOnly: true,
     execute: async (king, msg, args, fromJid) => {
       const newSubject = args.join(' ');
@@ -211,6 +213,7 @@ module.exports = [
     aliases: ['remove'],
     description: 'Remove a user from the group.',
     category: 'Group',
+      ownerOnly: true, 
     groupOnly: true,
     adminOnly: true,
     botAdminOnly: true,
@@ -243,6 +246,7 @@ module.exports = [
     aliases: [],
     description: 'Add a user to the group.',
     category: 'Group',
+      ownerOnly: true, 
     groupOnly: true,
     adminOnly: true,
     execute: async (king, msg, args) => {
@@ -276,6 +280,7 @@ module.exports = [
     aliases: [],
     description: 'Remove all non-admin members.',
     category: 'Group',
+      ownerOnly: true, 
     groupOnly: true,
     adminOnly: true,
     execute: async (king, msg) => {
@@ -301,6 +306,7 @@ module.exports = [
     aliases: [],
     description: 'Promote a member to admin.',
     category: 'Group',
+      ownerOnly: true, 
     groupOnly: true,
     adminOnly: true,
     botAdminOnly: true,
@@ -334,6 +340,7 @@ module.exports = [
     aliases: [],
     description: 'Demote a group admin.',
     category: 'Group',
+      ownerOnly: true, 
     groupOnly: true,
     adminOnly: true,
     botAdminOnly: true,
@@ -368,6 +375,7 @@ module.exports = [
     category: 'Group',
     groupOnly: true,
     adminOnly: true,
+    ownerOnly: true, 
     botAdminOnly: true,
     reaction: '☑️',
     execute: async (king, msg) => {
@@ -586,6 +594,7 @@ module.exports = [
     aliases: ['close'],
     description: 'Only admins can send messages.',
     category: 'Group',
+      ownerOnly: true, 
     groupOnly: true,
     adminOnly: true,
     botAdminOnly: true,
@@ -610,6 +619,7 @@ module.exports = [
     description: 'Allow all members to send messages.',
     category: 'Group',
     groupOnly: true,
+      ownerOnly: true, 
     adminOnly: true,
     botAdminOnly: true,
 
@@ -633,6 +643,7 @@ module.exports = [
     description: 'Get the group invite link.',
     category: 'Group',
     groupOnly: true,
+      ownerOnly: true, 
     adminOnly: true,
     botAdminOnly: true,
 
@@ -658,6 +669,7 @@ module.exports = [
     description: 'Revoke current invite link and generate new one.',
     category: 'Group',
     groupOnly: true,
+      ownerOnly: true, 
     adminOnly: true,
     botAdminOnly: true,
 
