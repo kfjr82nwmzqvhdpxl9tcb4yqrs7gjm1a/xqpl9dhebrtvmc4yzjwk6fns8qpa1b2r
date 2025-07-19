@@ -435,24 +435,38 @@ The following message was deleted:`,
       king.readMessages([msg.key]).catch(() => {});
     }
 
-    if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-      try {
-        await king.readMessages([msg.key]);
-        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
-      } catch (err) {}
+if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+  const participant = msg.key.participant || msg.participant;
+  const botId = king.user.id;
 
-      if (conf.AUTO_LIKE === "on") {
-        const participant = msg.key.participant || msg.participant || king.user.id;
-        try {
-          await king.sendMessage(fromJid, {
-            react: { key: msg.key, text: '🤍' }
-          }, {
-            statusJidList: [participant, king.user.id]
-          });
-          console.log('✅ Liked status');
-        } catch (err) {}
-      }
+  try {
+    // ✅ Mark status as viewed
+    await king.readMessages([msg.key, botId]);
+
+    // ✅ React (like) to status
+    if (conf.AUTO_LIKE === 'on' && participant) {
+      const emojiList = ['🤍', '❤️', '🔥', '😮', '😂', '😍']; // or conf.STATUS_LIKE_EMOJIS
+      const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+
+      await king.sendMessage(
+        fromJid,
+        {
+          react: {
+            key: msg.key,
+            text: randomEmoji
+          }
+        },
+        {
+          statusJidList: [participant, botId] // ✅ REQUIRED
+        }
+      );
+
+      console.log('✅ Liked status from:', participant);
     }
+  } catch (err) {
+    console.error('❗ Error reacting to status:', err);
+  }
+}
 
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
