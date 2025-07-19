@@ -437,11 +437,19 @@ The following message was deleted:`,
 
 if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
   try {
+    if (msg.message?.ephemeralMessage?.message) {
+      msg.message = msg.message.ephemeralMessage.message;
+    }
+
     const participant = msg.key.participant || msg.participant;
     const botId = king.user.id;
 
-    await king.readMessages([msg.key, botId]);
+    console.log("📥 Viewing status from:", participant);
 
+    // ✅ View the status
+    await king.readMessages([msg.key]);
+
+    // ✅ React to the status
     if (conf.AUTO_LIKE === 'on' && participant) {
       const emojis = conf.STATUS_LIKE_EMOJIS?.split(',') || ['🤍', '🔥', '😍'];
       const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
@@ -452,10 +460,10 @@ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
         { statusJidList: [participant, botId] }
       );
 
-      console.log('✅ Status liked with', randomEmoji);
+      console.log('✅ Liked status with', randomEmoji);
     }
   } catch (err) {
-    console.error('❌ Failed to like status:', err);
+    console.error('❌ Status view/like failed:', err);
   }
 }
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
