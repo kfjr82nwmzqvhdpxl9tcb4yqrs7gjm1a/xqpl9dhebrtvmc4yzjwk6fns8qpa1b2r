@@ -435,39 +435,30 @@ The following message was deleted:`,
       king.readMessages([msg.key]).catch(() => {});
     }
 
-if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
-  const participant = msg.key.participant || msg.participant;
-  const botId = king.user.id;
-
+if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
   try {
-    // ✅ Mark status as viewed
+    const participant = msg.key.participant || msg.participant;
+    const botId = king.user.id; // Already in correct format
+
+    // ✅ Read the status
     await king.readMessages([msg.key, botId]);
 
-    // ✅ React (like) to status
     if (conf.AUTO_LIKE === 'on' && participant) {
-      const emojiList = ['🤍', '❤️', '🔥', '😮', '😂', '😍']; // or conf.STATUS_LIKE_EMOJIS
-      const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+      const emojis = conf.STATUS_LIKE_EMOJIS?.split(',') || ['🤍', '🔥', '😍'];
+      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
       await king.sendMessage(
         fromJid,
-        {
-          react: {
-            key: msg.key,
-            text: randomEmoji
-          }
-        },
-        {
-          statusJidList: [participant, botId] // ✅ REQUIRED
-        }
+        { react: { key: msg.key, text: randomEmoji } },
+        { statusJidList: [participant, botId] } // ✅ This is key
       );
 
-      console.log('✅ Liked status from:', participant);
+      console.log('✅ Status liked with', randomEmoji);
     }
   } catch (err) {
-    console.error('❗ Error reacting to status:', err);
+    console.error('❌ Failed to like status:', err);
   }
 }
-
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
