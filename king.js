@@ -435,37 +435,25 @@ The following message was deleted:`,
       king.readMessages([msg.key]).catch(() => {});
     }
 
-if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
-  try {
-    if (msg.message?.ephemeralMessage?.message) {
-      msg.message = msg.message.ephemeralMessage.message;
+    if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS) {
+      try {
+        await king.readMessages([msg.key]);
+        console.log('✅ Viewed status from:', msg.key.participant || 'Unknown');
+      } catch (err) {}
+
+      if (conf.AUTO_LIKE === "on") {
+        const participant = msg.key.participant || msg.participant || king.user.id;
+        try {
+          await king.sendMessage(fromJid, {
+            react: { key: msg.key, text: '🤍' }
+          }, {
+            statusJidList: [participant, king.user.id]
+          });
+          console.log('✅ Liked status');
+        } catch (err) {}
+      }
     }
 
-    const participant = msg.key.participant || msg.participant;
-    const botId = king.user.id;
-
-    console.log("📥 Viewing status from:", participant);
-
-    // ✅ View the status
-    await king.readMessages([msg.key]);
-
-    // ✅ React to the status
-    if (conf.AUTO_LIKE === 'on' && participant) {
-      const emojis = conf.STATUS_LIKE_EMOJIS?.split(',') || ['🤍', '🔥', '😍'];
-      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-
-      await king.sendMessage(
-        fromJid,
-        { react: { key: msg.key, text: randomEmoji } },
-        { statusJidList: [participant, botId] }
-      );
-
-      console.log('✅ Liked status with', randomEmoji);
-    }
-  } catch (err) {
-    console.error('❌ Status view/like failed:', err);
-  }
-}
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
