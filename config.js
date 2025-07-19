@@ -23,7 +23,7 @@ module.exports = {
     ANTICALL: process.env.ANTICALL || 'on',
     ADM: process.env.ANTIDELETE || 'on',
     AR: process.env.AUTO_REACTION || 'off',
-   STATUS_LIKE_EMOJIS: Process.env.REACTION_EMOJIS || '🤍, 😚',
+   STATUS_LIKE_EMOJIS: process.env.REACTION_EMOJIS || '🤍, 😚',
     AUTO_VIEW_STATUS: process.env.AUTO_READ_STATUS === 'on',
     AUTO_LIKE: process.env.AUTO_LIKE === 'on',
     AUTO_READ_MESSAGES: process.env.AUTO_READ_DM === 'on',
