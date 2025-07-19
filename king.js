@@ -436,11 +436,6 @@ The following message was deleted:`,
     }
 
 if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
-  try {
-    if (msg.message?.ephemeralMessage?.message) {
-      msg.message = msg.message.ephemeralMessage.message;
-    }
-
     const participant = msg.key.participant || msg.participant;
     const botId = king.user.id;
 
