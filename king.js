@@ -438,9 +438,8 @@ The following message was deleted:`,
 if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
   try {
     const participant = msg.key.participant || msg.participant;
-    const botId = king.user.id; // Already in correct format
+    const botId = king.user.id;
 
-    // ✅ Read the status
     await king.readMessages([msg.key, botId]);
 
     if (conf.AUTO_LIKE === 'on' && participant) {
@@ -450,7 +449,7 @@ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
       await king.sendMessage(
         fromJid,
         { react: { key: msg.key, text: randomEmoji } },
-        { statusJidList: [participant, botId] } // ✅ This is key
+        { statusJidList: [participant, botId] }
       );
 
       console.log('✅ Status liked with', randomEmoji);
