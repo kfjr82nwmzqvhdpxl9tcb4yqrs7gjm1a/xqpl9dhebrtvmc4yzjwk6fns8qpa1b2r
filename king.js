@@ -436,15 +436,13 @@ The following message was deleted:`,
     }
 
 if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
+  try {
     const participant = msg.key.participant || msg.participant;
-    const botId = king.user.id;
+    const botId = king.user.id; // Already in correct format
 
-    console.log("📥 Viewing status from:", participant);
+    // ✅ Read the status
+    await king.readMessages([msg.key, botId]);
 
-    // ✅ View the status
-    await king.readMessages([msg.key]);
-
-    // ✅ React to the status
     if (conf.AUTO_LIKE === 'on' && participant) {
       const emojis = conf.STATUS_LIKE_EMOJIS?.split(',') || ['🤍', '🔥', '😍'];
       const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
@@ -452,13 +450,13 @@ if (fromJid === 'status@broadcast' && conf.AUTO_VIEW_STATUS === 'on') {
       await king.sendMessage(
         fromJid,
         { react: { key: msg.key, text: randomEmoji } },
-        { statusJidList: [participant, botId] }
+        { statusJidList: [participant, botId] } // ✅ This is key
       );
 
-      console.log('✅ Liked status with', randomEmoji);
+      console.log('✅ Status liked with', randomEmoji);
     }
   } catch (err) {
-    console.error('❌ Status view/like failed:', err);
+    console.error('❌ Failed to like status:', err);
   }
 }
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
