@@ -278,50 +278,45 @@ try {
       }
     }
   },
-{
-    name: 'del',
+ {
+  name: 'del',
   get flashOnly() {
-  return franceking();
-},
-    aliases: ['delete'],
-    description: 'Deletes a replied message.',
-    category: 'USER',
+    return franceking();
+  },
+  aliases: ['delete'],
+  description: 'Deletes a replied message.',
+  category: 'USER',
   ownerOnly: true,
 
-    execute: async (king, msg, args) => {
-      const jid = msg.key.remoteJid;
-      
+  execute: async (king, msg, args) => {
+    const jid = msg.key.remoteJid;
 
-      const quotedMsg = msg.message?.extendedTextMessage?.contextInfo;
-      if (!quotedMsg) {
-        return king.sendMessage(jid, { text: "Please reply to a message you want to delete." }, { quoted: msg });
-      }
-
-      const isGroup = jid.endsWith('@g.us');
-      if (isGroup) {
-        const metadata = await king.groupMetadata(jid);
-        const botId = king.user?.id?.split(':')[0] || '';
-        const normalizedBotId = botId.includes('@s.whatsapp.net') ? botId : `${botId}@s.whatsapp.net`;
-        const isBotAdmin = metadata.participants.some(p =>
-          p.id === normalizedBotId && (p.admin === 'admin' || p.admin === 'superadmin')
-        );
-
-       /* if (!isBotAdmin) {
-          return king.sendMessage(jid, { text: "I'm not an admin in this group." }, { quoted: msg });
-        }
-      }*/
-
-      const key = {
-        remoteJid: jid,
-        id: quotedMsg.stanzaId,
-        fromMe: false,
-        participant: quotedMsg.participant
-      };
-
-      await king.sendMessage(jid, { delete: key });
+    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo;
+    if (!quotedMsg) {
+      return king.sendMessage(jid, { text: "Please reply to a message you want to delete." }, { quoted: msg });
     }
-  },
 
+    const isGroup = jid.endsWith('@g.us');
+    if (isGroup) {
+      const metadata = await king.groupMetadata(jid);
+      const botId = king.user?.id?.split(':')[0] || '';
+      const normalizedBotId = botId.includes('@s.whatsapp.net') ? botId : `${botId}@s.whatsapp.net`;
+      const isBotAdmin = metadata.participants.some(p =>
+        p.id === normalizedBotId && (p.admin === 'admin' || p.admin === 'superadmin')
+      );
+    }
+
+    const key = {
+      remoteJid: jid,
+      id: quotedMsg.stanzaId,
+      fromMe: false,
+      participant: quotedMsg.participant
+    };
+
+    await king.sendMessage(jid, { delete: key });
+  }
+ } 
+  }, 
   {
     name: 'restart',
     get flashOnly() {
