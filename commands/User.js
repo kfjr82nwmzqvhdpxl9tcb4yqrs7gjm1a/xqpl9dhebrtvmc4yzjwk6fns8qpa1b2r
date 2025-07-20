@@ -315,8 +315,7 @@ try {
 
     await king.sendMessage(jid, { delete: key });
   }
- } 
-  }, 
+},
   {
     name: 'restart',
     get flashOnly() {
