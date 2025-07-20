@@ -306,10 +306,10 @@ try {
           p.id === normalizedBotId && (p.admin === 'admin' || p.admin === 'superadmin')
         );
 
-        if (!isBotAdmin) {
+       /* if (!isBotAdmin) {
           return king.sendMessage(jid, { text: "I'm not an admin in this group." }, { quoted: msg });
         }
-      }
+      }*/
 
       const key = {
         remoteJid: jid,
