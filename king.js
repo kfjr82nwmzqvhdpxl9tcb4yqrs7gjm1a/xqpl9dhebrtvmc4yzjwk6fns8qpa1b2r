@@ -52,8 +52,7 @@ function isDevUser(numberOrLid) {
 
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
-  // Return full identifier before @
-  return cleanJid.split('@')[0]; // This already includes ':14' for LIDs
+  return cleanJid.split('@')[0]; 
 }
 function getChatCategory(jid) {
   if (jid === 'status@broadcast') return '🟡 Status Update';
@@ -75,7 +74,7 @@ async function startBot() {
                 pino({ level: "fatal" }).child({ level: "fatal" })
             ),
         },
-        markOnlineOnConnect: false,
+        markOnlineOnConnect: true,
         printQRInTerminal: true,
         logger: pino({ level: "fatal" }).child({ level: "fatal" }),
         browser: Browsers.macOS("Safari"),
@@ -98,7 +97,7 @@ async function startBot() {
       }
     }
 if (connection === 'open') {
-  await king.sendPresenceUpdate('unavailable'); // ✅ Prevents online status globally
+  await king.sendPresenceUpdate('unavailable'); 
 
     global.KING_LID = king.user.id;
 
@@ -106,14 +105,14 @@ const lidRaw = king.user.id.replace('@lid', '');
 const userLidRaw = conf.USER_LID?.replace('@lid', '');
 
 if (userLidRaw) {
-  lidToNumberMap.set(king.user.id, userLidRaw); // Map bot LID to number
-  DEV_LIDS.add(userLidRaw); // Add to dev LIDs
-  DEV_NUMBERS.add(userLidRaw); // 🔥 Also treat as dev number
+  lidToNumberMap.set(king.user.id, userLidRaw); 
+  DEV_LIDS.add(userLidRaw); 
+  DEV_NUMBERS.add(userLidRaw); 
   console.log('✅ Added USER_LID to DEV_LIDS and DEV_NUMBERS:', userLidRaw);
 }
 
 const botNumber = getUserNumber(king.user.id);
-DEV_NUMBERS.add(botNumber); // Add bot's number to DEV_NUMBERS
+DEV_NUMBERS.add(botNumber); 
       const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
       const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
       const totalCmds = commands.size;
