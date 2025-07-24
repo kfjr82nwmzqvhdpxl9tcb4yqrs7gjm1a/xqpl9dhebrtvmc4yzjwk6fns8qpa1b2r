@@ -202,7 +202,7 @@ module.exports = [
       await king.sendMessage(jid, mess, { quoted: msg });
     }
   },
-
+/*
   {
     name: 'whois',
     get flashOnly() {
@@ -239,7 +239,48 @@ module.exports = [
 
       await king.sendMessage(jid, mess, { quoted: msg });
     }
+  },*/
+
+
+  {
+  name: 'whois',
+  get flashOnly() {
+    return franceking();
   },
+  description: 'Get user profile picture and status.',
+  category: 'USER',
+
+  execute: async (king, msg, args) => {
+    const fromJid = msg.key.remoteJid;
+    const sender = getSenderJid(msg);
+
+    const isQuoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const targetJid = isQuoted
+      ? msg.message.extendedTextMessage.contextInfo.participant
+      : sender;
+
+    let ppUrl;
+    try {
+      ppUrl = await king.profilePictureUrl(targetJid, 'image');
+    } catch (err) {
+      ppUrl = "https://static.animecorner.me/2023/08/op2.jpg";
+    }
+
+    let status = "Status not found or hidden.";
+    try {
+      const userStatus = await king.fetchStatus(targetJid);
+      status = userStatus.status || status;
+    } catch (err) {}
+
+    const mess = {
+      image: { url: ppUrl },
+      caption: `*Name:* @${targetJid.split("@")[0]}\n*Number:* ${targetJid.replace('@s.whatsapp.net', '')}\n*Status:*\n${status}`,
+      mentions: [targetJid]
+    };
+
+    await king.sendMessage(fromJid, mess, { quoted: msg });
+  }
+}, 
 
   {
     name: 'mygroups',
