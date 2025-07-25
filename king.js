@@ -139,6 +139,8 @@ DEV_NUMBERS.add(botNumber);
     }
   });
 
+const handledCalls = new Set();
+    
   king.ev.on('call', async (calls) => {
   if (conf.ANTICALL !== "on") return;
 
@@ -169,36 +171,7 @@ DEV_NUMBERS.add(botNumber);
     setTimeout(() => handledCalls.delete(callId), 5 * 60 * 1000);
   }
 });
-/*
-  const handledCalls = new Set();
 
-king.ev.on('call', async (call) => {
-  if (conf.ANTICALL === "on") {
-    const callId = call[0].id;
-    const callerId = call[0].from;
-   
-  if (handledCalls.has(callId)) return;
-    handledCalls.add(callId);
-    setTimeout(() => handledCalls.delete(callId), 5 * 60 * 1000);
-
-    const superUsers = [
-      '254742063632@s.whatsapp.net',
-      '254757835036@s.whatsapp.net',
-      '254751284190@s.whatsapp.net'
-    ];
-
-    if (!superUsers.includes(callerId)) {
-      try {
-        await king.rejectCall(callId, callerId);
-        await king.sendMessage(callerId, {
-          text: '*🚫 Your call has been declined by FLASH-MD-V2*.'
-        });
-      } catch (err) {
-        console.error('❗ Error rejecting call:', err);
-      }
-    }
-  }
-});*/
 king.ev.on('group-participants.update', async ({ id, participants, action }) => {
   if (!isGroupJid(id)) return;
 
