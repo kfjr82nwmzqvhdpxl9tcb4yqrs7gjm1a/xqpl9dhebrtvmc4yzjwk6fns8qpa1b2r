@@ -202,6 +202,7 @@ module.exports = [
       await king.sendMessage(jid, mess, { quoted: msg });
     }
   },
+
     {
   name: 'whois',
   get flashOnly() {
@@ -225,34 +226,34 @@ module.exports = [
     }
 
     let status = "No status found.";
+    let dateText = "";
+
     try {
       const fetchedStatuses = await king.fetchStatus(targetJid);
-
-      console.log('\n📦 [NPM-style fetchStatus Result]');
-      console.log(JSON.stringify(fetchedStatuses, null, 2));
-      console.log('📦 [End of Result]\n');
-
       if (Array.isArray(fetchedStatuses) && fetchedStatuses.length > 0) {
-        const firstStatus = fetchedStatuses[0]?.status?.status;
-        status = firstStatus || "No public status or user has hidden it.";
+        const first = fetchedStatuses[0];
+        status = first?.status?.status || "No public status or user has hidden it.";
+        if (first?.status?.setAt) {
+          const date = new Date(first.status.setAt);
+          const formattedDate = date.toLocaleDateString("en-GB"); // DD/MM/YYYY
+          dateText = `\n*Set at:* ${formattedDate}`;
+        }
       } else {
         status = "No public status or user has hidden it.";
       }
     } catch (err) {
-      console.error('❌ Error fetching user status:', err);
       status = "Couldn't retrieve status due to an error.";
     }
 
     const mess = {
       image: { url: ppUrl },
-      caption: `*Name:* @${targetJid.split("@")[0]}\n*Number:* ${targetJid.replace('@s.whatsapp.net', '')}\n*Status:*\n${status}`,
+      caption: `*Name:* @${targetJid.split("@")[0]}\n*Number:* ${targetJid.replace('@s.whatsapp.net', '')}\n*Status:*\n${status}${dateText}`,
       mentions: quotedMsg ? [targetJid] : []
     };
 
     await king.sendMessage(jid, mess, { quoted: msg });
   }
 }, 
-
   {
     name: 'mygroups',
     get flashOnly() {
