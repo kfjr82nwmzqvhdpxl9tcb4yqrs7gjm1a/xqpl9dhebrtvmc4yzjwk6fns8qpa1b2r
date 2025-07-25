@@ -203,7 +203,52 @@ module.exports = [
     }
   },
 
-  {
+{
+  name: 'whois',
+  get flashOnly() {
+    return franceking();
+  },
+  description: 'Get user profile picture and status.',
+  category: 'USER',
+
+  execute: async (king, msg, args) => {
+    const jid = msg.key.remoteJid;
+    const sender = getSenderJid(msg);
+
+    const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const targetJid = msg.message?.extendedTextMessage?.contextInfo?.participant || sender;
+
+    let ppUrl;
+    try {
+      ppUrl = await king.profilePictureUrl(targetJid, 'image');
+    } catch (err) {
+      ppUrl = "https://static.animecorner.me/2023/08/op2.jpg";
+    }
+
+    let status = "No status found.";
+    try {
+      const userStatus = await king.fetchStatus(targetJid);
+      if (userStatus?.status) {
+        status = userStatus.status;
+      } else {
+        status = "No public status or user has hidden it.";
+      }
+    } catch (err) {
+      console.error('Error fetching user status:', err);
+      status = "Couldn't retrieve status due to an error.";
+    }
+
+    const mess = {
+      image: { url: ppUrl },
+      caption: `*Name:* @${targetJid.split("@")[0]}\n*Number:* ${targetJid.replace('@s.whatsapp.net', '')}\n*Status:*\n${status}`,
+      mentions: quotedMsg ? [targetJid] : []
+    };
+
+    await king.sendMessage(jid, mess, { quoted: msg });
+  }
+}, 
+  
+  /*{
     name: 'whois',
     get flashOnly() {
   return franceking();
@@ -239,7 +284,7 @@ module.exports = [
 
       await king.sendMessage(jid, mess, { quoted: msg });
     }
-  },
+  },*/
 
   {
     name: 'mygroups',
