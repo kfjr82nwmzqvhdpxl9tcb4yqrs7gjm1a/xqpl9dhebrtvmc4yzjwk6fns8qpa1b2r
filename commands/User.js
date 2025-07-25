@@ -203,7 +203,8 @@ module.exports = [
     }
   },
 
-{
+
+    {
   name: 'whois',
   get flashOnly() {
     return franceking();
@@ -228,13 +229,19 @@ module.exports = [
     let status = "No status found.";
     try {
       const userStatus = await king.fetchStatus(targetJid);
+
+      // 🔍 Log full result like an NPM package inspection
+      console.log('\n📦 [NPM-style fetchStatus Result]');
+      console.log(JSON.stringify(userStatus, null, 2));  // Pretty-print the full object
+      console.log('📦 [End of Result]\n');
+
       if (userStatus?.status) {
         status = userStatus.status;
       } else {
         status = "No public status or user has hidden it.";
       }
     } catch (err) {
-      console.error('Error fetching user status:', err);
+      console.error('❌ Error fetching user status:', err);
       status = "Couldn't retrieve status due to an error.";
     }
 
@@ -247,7 +254,6 @@ module.exports = [
     await king.sendMessage(jid, mess, { quoted: msg });
   }
 }, 
-  
   /*{
     name: 'whois',
     get flashOnly() {
