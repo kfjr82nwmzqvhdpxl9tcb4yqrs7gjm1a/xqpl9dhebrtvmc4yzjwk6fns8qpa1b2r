@@ -202,8 +202,6 @@ module.exports = [
       await king.sendMessage(jid, mess, { quoted: msg });
     }
   },
-
-
     {
   name: 'whois',
   get flashOnly() {
@@ -228,15 +226,15 @@ module.exports = [
 
     let status = "No status found.";
     try {
-      const userStatus = await king.fetchStatus(targetJid);
+      const fetchedStatuses = await king.fetchStatus(targetJid);
 
-      // 🔍 Log full result like an NPM package inspection
       console.log('\n📦 [NPM-style fetchStatus Result]');
-      console.log(JSON.stringify(userStatus, null, 2));  // Pretty-print the full object
+      console.log(JSON.stringify(fetchedStatuses, null, 2));
       console.log('📦 [End of Result]\n');
 
-      if (userStatus?.status) {
-        status = userStatus.status;
+      if (Array.isArray(fetchedStatuses) && fetchedStatuses.length > 0) {
+        const firstStatus = fetchedStatuses[0]?.status?.status;
+        status = firstStatus || "No public status or user has hidden it.";
       } else {
         status = "No public status or user has hidden it.";
       }
@@ -254,43 +252,6 @@ module.exports = [
     await king.sendMessage(jid, mess, { quoted: msg });
   }
 }, 
-  /*{
-    name: 'whois',
-    get flashOnly() {
-  return franceking();
-},
-    description: 'Get user profile picture and status.',
-    category: 'USER',
-
-    execute: async (king, msg, args) => {
-      const jid = msg.key.remoteJid;
-      const sender = getSenderJid(msg);
-
-      const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const targetJid = msg.message?.extendedTextMessage?.contextInfo?.participant || sender;
-
-      let ppUrl;
-      try {
-        ppUrl = await king.profilePictureUrl(targetJid, 'image');
-      } catch (err) {
-        ppUrl = "https://static.animecorner.me/2023/08/op2.jpg";
-      }
-
-      let status = "No status found.";
-      try {
-        const userStatus = await king.fetchStatus(targetJid);
-        status = userStatus.status || status;
-      } catch (err) {}
-
-      const mess = {
-        image: { url: ppUrl },
-        caption: `*Name:* @${targetJid.split("@")[0]}\n*Number:* ${targetJid.replace('@s.whatsapp.net', '')}\n*Status:*\n${status}`,
-        mentions: quotedMsg ? [targetJid] : []
-      };
-
-      await king.sendMessage(jid, mess, { quoted: msg });
-    }
-  },*/
 
   {
     name: 'mygroups',
