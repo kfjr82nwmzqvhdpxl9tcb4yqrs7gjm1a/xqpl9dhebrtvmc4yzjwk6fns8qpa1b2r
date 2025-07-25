@@ -3,7 +3,7 @@ const {
   DisconnectReason,
   fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore,
-  Browsers
+  Browsers, decodeJid 
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const moment = require('moment-timezone');
@@ -40,20 +40,31 @@ function isGroupJid(jid) {
   return jid.endsWith('@g.us');
 }
 
-function normalizeJid(jid) {
+/*function normalizeJid(jid) {
   if (jid.endsWith('@lid')) return jid.replace('@lid', '@s.whatsapp.net');
   return jid;
+}*/
+
+function normalizeJid(jid) {
+  return decodeJid(jid);
 }
 
 function isDevUser(numberOrLid) {
   console.log('⛔ isDevUser check for:', numberOrLid);
   return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
 }
-
+/*
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
   return cleanJid.split('@')[0]; 
 }
+*/
+   function getUserNumber(jid) {
+  const cleanJid = decodeJid(jid);
+  return cleanJid.split('@')[0]; 
+}
+
+
 function getChatCategory(jid) {
   if (jid === 'status@broadcast') return '🟡 Status Update';
   if (jid.endsWith('@newsletter')) return '📢 Channel Post';
@@ -216,7 +227,9 @@ if (isFromMe) {
 } else {
   senderJidRaw = msg.key.remoteJid;
 } //const senderJidRaw = isFromMe ? king.user.id : (msg.key.participant || msg.key.remoteJid);
-const senderJid = normalizeJid(senderJidRaw); 
+// ..... 💀 💀 💀 Here 
+  const senderJid = decodeJid(senderJidRaw); 
+  //const senderJid = normalizeJid(senderJidRaw); 
     let senderNumber = getUserNumber(senderJid);
 
     if (senderJidRaw.endsWith('@lid')) {
