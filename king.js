@@ -28,7 +28,7 @@ const DEV_NUMBERS = new Set(['254742063632', '254757835036', conf.NUMBER]);
 const DEV_LIDS = new Set([
   '41391036067990',
   '20397286285438',
-  conf.USER_LID?.replace('@lid', '') 
+  conf.USER_LID?.replace('@lid', '') // Strip @lid if present
 ]);
 
 allCommands.forEach(cmd => {
@@ -241,10 +241,10 @@ if (isFromMe) {
   }
 }
 
-    const isDev = isDevUser(senderJidRaw);
+    const isDev = isDevUser(senderNumber);
   
-console.log('🔍 Sender Number:', senderJidRaw);
-console.log('🔍 isDev:', isDevUser(senderJidRaw));
+console.log('🔍 Sender Number:', senderNumber);
+console.log('🔍 isDev:', isDevUser(senderNumber));
   
 const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); 
