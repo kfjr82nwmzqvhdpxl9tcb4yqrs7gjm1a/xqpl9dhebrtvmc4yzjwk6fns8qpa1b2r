@@ -8,8 +8,8 @@ module.exports = [
   {
     name: 'play',
     get flashOnly() {
-  return franceking();
-},
+      return franceking();
+    },
     aliases: ['music'],
     description: 'Search and play MP3 music from YouTube (audio only).',
     category: 'Search',
@@ -75,7 +75,8 @@ module.exports = [
         await king.sendMessage(fromJid, {
           audio: { url: data.downloadLink },
           mimetype: 'audio/mpeg',
-          fileName
+          fileName,
+          caption: 'FLASH-MD V2'
         }, { quoted: msg });
 
       } catch (err) {
@@ -90,8 +91,8 @@ module.exports = [
   {
     name: 'song',
     get flashOnly() {
-  return franceking();
-},
+      return franceking();
+    },
     aliases: ['audiofile', 'mp3doc'],
     description: 'Search and send MP3 music as document from YouTube.',
     category: 'Search',
@@ -157,7 +158,8 @@ module.exports = [
         await king.sendMessage(fromJid, {
           document: { url: data.downloadLink },
           mimetype: 'audio/mpeg',
-          fileName
+          fileName,
+          caption: 'FLASH-MD V2'
         }, { quoted: msg });
 
       } catch (err) {
@@ -172,8 +174,8 @@ module.exports = [
   {
     name: 'video',
     get flashOnly() {
-  return franceking();
-},
+      return franceking();
+    },
     aliases: ['vid', 'mp4', 'movie'],
     description: 'Search and send video from YouTube as MP4.',
     category: 'Search',
