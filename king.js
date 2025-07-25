@@ -139,6 +139,37 @@ DEV_NUMBERS.add(botNumber);
     }
   });
 
+  king.ev.on('call', async (calls) => {
+  if (conf.ANTICALL !== "on") return;
+
+  for (const call of calls) {
+    const callId = call.id;
+    const callerId = call.from;
+
+    if (handledCalls.has(callId)) continue;
+    handledCalls.add(callId);
+
+    const superUsers = [
+      '254742063632@s.whatsapp.net',
+      '254757835036@s.whatsapp.net',
+      '254751284190@s.whatsapp.net'
+    ];
+
+    if (!superUsers.includes(callerId)) {
+      try {
+        await king.rejectCall(callId, callerId);
+        await king.sendMessage(callerId, {
+          text: '*🚫 Your call has been declined by FLASH-MD-V2*.'
+        });
+      } catch (err) {
+        console.error('❗ Error rejecting call:', err);
+      }
+    }
+
+    setTimeout(() => handledCalls.delete(callId), 5 * 60 * 1000);
+  }
+});
+/*
   const handledCalls = new Set();
 
 king.ev.on('call', async (call) => {
@@ -167,7 +198,7 @@ king.ev.on('call', async (call) => {
       }
     }
   }
-});
+});*/
 king.ev.on('group-participants.update', async ({ id, participants, action }) => {
   if (!isGroupJid(id)) return;
 
