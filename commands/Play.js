@@ -159,7 +159,7 @@ module.exports = [
           document: { url: data.downloadLink },
           mimetype: 'audio/mpeg',
           fileName,
-          caption: 'FLASH-MD V2'
+          caption: '*FLASH-MD V2*'
         }, { quoted: msg });
 
       } catch (err) {
@@ -239,11 +239,12 @@ module.exports = [
         await king.sendMessage(fromJid, message, { quoted: msg });
 
         await king.sendMessage(fromJid, {
-          video: { url: data.downloadLink },
-          mimetype: 'video/mp4',
-          fileName
-        }, { quoted: msg });
-
+  video: { url: data.downloadLink },
+  mimetype: 'video/mp4',
+  fileName,
+  caption: '*FLASH-MD V2*'
+}, { quoted: msg });
+        
       } catch (err) {
         console.error('[VIDEO] Error:', err);
         await king.sendMessage(fromJid, {
