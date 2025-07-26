@@ -5,7 +5,7 @@ function mapPresence(val) {
         typing: 'composing',
         online: 'available',
         recording: 'recording',
-        paused: 'paused',
+        paused: 'unavailable',
         offline: 'unavailable'
     };
     return mapping[val?.toLowerCase()?.trim()] || 'paused';
