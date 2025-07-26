@@ -50,6 +50,10 @@ function isDevUser(numberOrLid) {
   return DEV_NUMBERS.has(numberOrLid) || DEV_LIDS.has(numberOrLid);
 }
 
+function normalizeBareNumber(jid) {
+  return normalizeJid(jid).split('@')[0].split(':')[0]; // handles 254742063632:32
+}
+
 function getUserNumber(jid) {
   const cleanJid = normalizeJid(jid);
   return cleanJid.split('@')[0]; 
@@ -564,10 +568,9 @@ console.log('🙋 SenderJidRaw:', senderJidRaw);
 function normalizeId(jid) {
   return jid?.split('@')[0];
 }
-const normalizedAdmins = groupAdmins.map(j => normalizeJid(j).split('@')[0]);
-const senderNorm = normalizeJid(senderJidRaw).split('@')[0];
-const botNorm = normalizeJid(king.user.id).split('@')[0];
-
+  const normalizedAdmins = groupAdmins.map(normalizeBareNumber);
+const senderNorm = normalizeBareNumber(senderJidRaw);
+const botNorm = normalizeBareNumber(king.user.id);
 const isAdmin = normalizedAdmins.includes(senderNorm);
 const isBotAdmin = normalizedAdmins.includes(botNorm);
 
