@@ -573,8 +573,16 @@ const senderNorm = normalizeBareNumber(senderJidRaw);
 const botNorm = normalizeBareNumber(king.user.id);
 const isAdmin = normalizedAdmins.includes(senderNorm);
 const isBotAdmin = normalizedAdmins.includes(botNorm);
+
+/*const normalizedAdmins = groupAdmins.map(normalizeJid);
+const senderNorm = normalizeId(senderJidRaw);
+const botNorm = normalizeId(king.user.id);
+
+const isAdmin = normalizedAdmins.includes(senderNorm);
+const isBotAdmin = normalizedAdmins.includes(botNorm);*/
 const senderIdNormalized = normalizeJid(senderJid);
 const botIdNormalized = normalizeJid(king.user.id);
+
 const lidId = senderJidRaw.endsWith('@lid') ? senderJidRaw.replace('@lid', '') : null;
 const isSudo = global.ALLOWED_USERS.has(senderNumber) || (lidId && global.ALLOWED_USERS.has(lidId));
 
@@ -612,7 +620,7 @@ console.log('🤖 Normalized Bot:', botNorm);
 
 // ☠️☠️☠️💔 BE BACK FRANCE 
   
-  if (command.adminOnly || command.botAdminOnly) {
+  /*if (command.adminOnly || command.botAdminOnly) {
   if (!isBotAdmin) {
     return king.sendMessage(fromJid, {
       text: '❗ I need to be admin to run this command.',
@@ -623,7 +631,7 @@ console.log('🤖 Normalized Bot:', botNorm);
       text: '⛔ This command is restricted to group admins.',
     }, { quoted: msg });
   }
-  }
+}*/
 
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
