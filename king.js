@@ -564,14 +564,13 @@ console.log('🙋 SenderJidRaw:', senderJidRaw);
 function normalizeId(jid) {
   return jid?.split('@')[0];
 }
+const normalizedAdmins = groupAdmins.map(j => normalizeJid(j).split('@')[0]);
+const senderNorm = normalizeJid(senderJidRaw).split('@')[0];
+const botNorm = normalizeJid(king.user.id).split('@')[0];
 
-const normalizedAdmins = groupAdmins.map(j => normalizeJid(j)); // normalize to @s.whatsapp.net
-const senderNormJid = normalizeJid(senderJidRaw);
-const botNormJid = normalizeJid(king.user.id);
+const isAdmin = normalizedAdmins.includes(senderNorm);
+const isBotAdmin = normalizedAdmins.includes(botNorm);
 
-const isAdmin = normalizedAdmins.includes(senderNormJid);
-const isBotAdmin = normalizedAdmins.includes(botNormJid);
-  
 /*const normalizedAdmins = groupAdmins.map(normalizeJid);
 const senderNorm = normalizeId(senderJidRaw);
 const botNorm = normalizeId(king.user.id);
@@ -590,9 +589,9 @@ const isAllowed = isOwner || isFromMe || isSudo;
 console.log('✅ Bot LID:', king.user.id);
 console.log('✅ USER_LID from config:', conf.USER_LID);
 console.log('✅ Allowed Users:', global.ALLOWED_USERS); 
-  console.log('🔍 Group Admins:', normalizedAdmins);
-console.log('🔍 Sender JID:', senderNormJid, '| Is Admin:', isAdmin);
-console.log('🔍 Bot JID:', botNormJid, '| Is Bot Admin:', isBotAdmin);
+console.log('🧼 Normalized Admins:', normalizedAdmins);
+console.log('🙋 Normalized Sender:', senderNorm);
+console.log('🤖 Normalized Bot:', botNorm);
   
     if (command.ownerOnly && !isAllowed) {
       return king.sendMessage(fromJid, {
