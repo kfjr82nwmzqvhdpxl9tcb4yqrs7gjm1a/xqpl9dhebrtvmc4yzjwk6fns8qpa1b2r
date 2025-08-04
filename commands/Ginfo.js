@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'groupinfo',
+  name: 'info',
   aliases: ['ginfo', 'ginf'],
   groupOnly: true,
 
@@ -14,7 +14,7 @@ module.exports = {
       const admins = participants.filter(p => p.admin);
       const ownerJid = metadata.owner || (admins.find(p => p.admin === 'superadmin')?.id);
       
-      // Function to resolve JIDs (including LIDs) to phone numbers
+      
       async function getDisplayNumber(jid) {
         if (!jid) return 'Unknown';
 
@@ -36,16 +36,16 @@ module.exports = {
         return jid.split('@')[0];
       }
 
-      // Resolve owner
+      
       const ownerNumber = await getDisplayNumber(ownerJid);
 
-      // Resolve admin numbers
+      
       const adminList = await Promise.all(admins.map(async (a, i) => {
         const number = await getDisplayNumber(a.id);
         return `${i + 1}. @${number}`;
       }));
 
-      // Prepare message
+      
       const response = `*📄 Group Information:*\n\n` +
         `📌 *Name:* ${groupName}\n` +
         `🆔 *ID:* ${groupId}\n` +
@@ -53,7 +53,7 @@ module.exports = {
         `👥 *Members:* ${totalMembers}\n` +
         `🛡️ *Admins (${admins.length}):*\n${adminList.join('\n')}`;
 
-      // Send message with mentions
+      
       await sock.sendMessage(fromJid, {
         text: response,
         mentions: [
