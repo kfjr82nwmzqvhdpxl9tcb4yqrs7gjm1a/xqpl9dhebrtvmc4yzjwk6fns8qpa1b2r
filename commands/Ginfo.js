@@ -1,11 +1,3 @@
-function normalizeJid(jid) {
-  return jid?.replace('@lid', '@s.whatsapp.net');
-}
-
-function getNumber(jid) {
-  return normalizeJid(jid)?.split('@')[0];
-}
-
 module.exports = {
   name: 'groupinfo',
   aliases: ['ginfo', 'ginf'],
@@ -20,26 +12,53 @@ module.exports = {
       const totalMembers = participants.length;
 
       const admins = participants.filter(p => p.admin);
-
-      const adminList = admins
-        .map((a, i) => `\n${i + 1}. @${getNumber(a.id)}`)
-        .join('');
-
       const ownerJid = metadata.owner || (admins.find(p => p.admin === 'superadmin')?.id);
-      const ownerNumber = ownerJid ? getNumber(ownerJid) : 'Unknown';
+      
+      // Function to resolve JIDs (including LIDs) to phone numbers
+      async function getDisplayNumber(jid) {
+        if (!jid) return 'Unknown';
 
+        if (jid.endsWith('@s.whatsapp.net')) {
+          return jid.split('@')[0];
+        }
+
+        if (jid.endsWith('@lid')) {
+          try {
+            const result = await sock.onWhatsApp(jid);
+            const waJid = result?.[0]?.jid;
+            return waJid ? waJid.split('@')[0] : jid.split('@')[0];
+          } catch (err) {
+            console.warn('Failed to resolve LID:', jid);
+            return jid.split('@')[0];
+          }
+        }
+
+        return jid.split('@')[0];
+      }
+
+      // Resolve owner
+      const ownerNumber = await getDisplayNumber(ownerJid);
+
+      // Resolve admin numbers
+      const adminList = await Promise.all(admins.map(async (a, i) => {
+        const number = await getDisplayNumber(a.id);
+        return `${i + 1}. @${number}`;
+      }));
+
+      // Prepare message
       const response = `*📄 Group Information:*\n\n` +
         `📌 *Name:* ${groupName}\n` +
         `🆔 *ID:* ${groupId}\n` +
         `👑 *Owner:* @${ownerNumber}\n` +
         `👥 *Members:* ${totalMembers}\n` +
-        `🛡️ *Admins (${admins.length}):*${adminList}`;
+        `🛡️ *Admins (${admins.length}):*\n${adminList.join('\n')}`;
 
+      // Send message with mentions
       await sock.sendMessage(fromJid, {
         text: response,
         mentions: [
-          ...(ownerJid ? [normalizeJid(ownerJid)] : []),
-          ...admins.map(a => normalizeJid(a.id))
+          ...(ownerJid ? [ownerJid] : []),
+          ...admins.map(a => a.id)
         ]
       }, { quoted: msg });
 
