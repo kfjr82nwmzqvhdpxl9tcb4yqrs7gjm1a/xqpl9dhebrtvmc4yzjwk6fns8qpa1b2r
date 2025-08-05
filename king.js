@@ -464,7 +464,7 @@ The following message was deleted:`,
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
-  /*  if (isGroupJid(fromJid)) {
+    if (isGroupJid(fromJid)) {
       try {
         const settings = await db.getGroupSettings(fromJid);
         if (settings?.antilink_enabled) {
@@ -519,68 +519,9 @@ The following message was deleted:`,
           }
         }
       } catch (e) {}
-    }*/
-
-if (isGroupJid(fromJid)) {
-  try {
-    const settings = await db.getGroupSettings(fromJid);
-    if (settings?.antilink_enabled) {
-      const linkRegex = /(https?:\/\/|www\.)[^\s]+/i;
-      if (linkRegex.test(text)) {
-        const action = settings.action || 'warn';
-        if (
-          senderNumber !== getUserNumber(king.user.id) &&
-          !isAdmin &&
-          !isOwner
-        ) {
-          switch (action) {
-            case 'warn': {
-              await db.incrementWarning(fromJid, senderJid);
-              const warnings = await db.getWarnings(fromJid, senderJid);
-
-              if (warnings >= conf.WARN_LIMIT) {
-                try {
-                  await db.clearWarnings(fromJid, senderJid);
-                  await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
-                  await king.sendMessage(fromJid, {
-                    text: `🚫 @${senderNumber} was removed for exceeding ${conf.WARN_LIMIT} warnings.`,
-                    mentions: [senderJid]
-                  });
-                } catch (err) {
-                  console.error('❌ Failed to kick user after max warnings:', err);
-                }
-              } else {
-                await king.sendMessage(fromJid, {
-                  text: `⚠️ @${senderNumber}, posting links is not allowed!\nYou have been warned (${warnings}/${conf.WARN_LIMIT}).`,
-                  quoted: msg,
-                  mentions: [senderJid]
-                });
-              }
-              break;
-            }
-            case 'kick': {
-              try {
-                await king.groupParticipantsUpdate(fromJid, [senderJid], 'remove');
-                await king.sendMessage(fromJid, {
-                  text: `🚫 @${senderNumber} has been removed for posting a link.`
-                }, {
-                  mentions: [senderJid]
-                });
-              } catch (e) {}
-              break;
-            }
-            case 'delete': {
-              try {
-                await king.sendMessage(fromJid, { delete: msg.key });
-              } catch (e) {}
-              break;
-            }
-          }
-        }
-      }
     }
-  } catch (e) {}
-}
+
+
 
     const prefixes = [...conf.prefixes];
 const hasNoPrefix = prefixes.includes('');
