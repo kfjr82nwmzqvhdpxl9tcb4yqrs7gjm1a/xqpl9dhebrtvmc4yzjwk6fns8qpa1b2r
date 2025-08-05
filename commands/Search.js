@@ -273,7 +273,7 @@ module.exports = [
       }
     }
   },
-6
+
 {
   name: 'ytmp3',
   get flashOnly() {
