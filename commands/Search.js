@@ -3,6 +3,8 @@ const axios = require('axios');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const yts = require('yt-search');
 const fg = require('api-dylux');
+const BASE_URL = 'https://noobs-api.top';
+
 
 module.exports = [
   {
@@ -271,9 +273,7 @@ module.exports = [
       }
     }
   },
-// Shared constants
-const BASE_URL = 'https://noobs-api.top';
-
+6
 {
   name: 'ytmp3',
   get flashOnly() {
