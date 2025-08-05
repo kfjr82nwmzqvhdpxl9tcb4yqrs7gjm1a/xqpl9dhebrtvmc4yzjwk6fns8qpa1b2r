@@ -568,24 +568,12 @@ console.log('🙋 SenderJidRaw:', senderJidRaw);
 function normalizeId(jid) {
   return jid?.split('@')[0];
 }
-
-function isGroupAdmin(jid, groupAdmins) {
-  return groupAdmins.map(normalizeBareNumber).includes(normalizeBareNumber(jid));
-}
-
-  
-function isGroupAdmin(jid, groupAdmins) {
-  return groupAdmins.map(normalizeBareNumber).includes(normalizeBareNumber(jid));
-}
-  
   const normalizedAdmins = groupAdmins.map(normalizeBareNumber);
 const senderNorm = normalizeBareNumber(senderJidRaw);
 const botNorm = normalizeBareNumber(king.user.id);
-const isAdmin = isGroupAdmin(senderJidRaw, groupAdmins);
-const isBotAdmin = isGroupAdmin(king.user.id, groupAdmins);
-//const isAdmin = normalizedAdmins.includes(senderNorm);
-//const isBotAdmin = normalizedAdmins.includes(botNorm);
-  
+const isAdmin = normalizedAdmins.includes(senderNorm);
+const isBotAdmin = normalizedAdmins.includes(botNorm);
+
 /*const normalizedAdmins = groupAdmins.map(normalizeJid);
 const senderNorm = normalizeId(senderJidRaw);
 const botNorm = normalizeId(king.user.id);
@@ -644,21 +632,6 @@ console.log('🤖 Normalized Bot:', botNorm);
     }, { quoted: msg });
   }
 }*/
-
-
- if (isGroup && (command.adminOnly || command.botAdminOnly)) {
-  if (command.botAdminOnly && !isBotAdmin) {
-    return king.sendMessage(fromJid, {
-      text: '❗ I need to be admin to run this command.',
-    }, { quoted: msg });
-  }
-
-  if (command.adminOnly && !isAdmin && !isAllowed) {
-    return king.sendMessage(fromJid, {
-      text: '⛔ This command is restricted to group admins.',
-    }, { quoted: msg });
-  }
-}
 
     try {
       await command.execute(king, msg, args, fromJid, allCommands);
