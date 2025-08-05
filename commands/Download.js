@@ -1048,7 +1048,7 @@ _Enjoy using the app. Powered by FLASH-MD_`,
             }, { quoted: msg });
         }
     }
-} 
+}, 
     
     /*   
     {
