@@ -1,7 +1,7 @@
 const { franceking } = require('../main');
 const axios = require('axios');
 const getFBInfo = require('@xaviabot/fb-downloader');
-const { search, download } = require('aptoide_apk_dl'); 
+const { search, download } = require('aptoide_scrapper_fixed'); 
 
 
 
