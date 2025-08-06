@@ -464,6 +464,42 @@ The following message was deleted:`,
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
+try {
+  const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
+  const quotedMsg = contextInfo?.quotedMessage;
+  const commandText = text.toLowerCase().trim();
+
+  const isStatusReply = contextInfo?.participant && quotedMsg;
+
+  if ((commandText === 'save' || commandText === 'send') && isStatusReply) {
+    const recipientJid = senderJid;
+
+    if (quotedMsg.imageMessage) {
+      await king.sendMessage(recipientJid, {
+        image: quotedMsg.imageMessage,
+        caption: '📸 Saved this status image!'
+      }, { quoted: msg });
+    } else if (quotedMsg.videoMessage) {
+      await king.sendMessage(recipientJid, {
+        video: quotedMsg.videoMessage,
+        caption: '🎥 Saved this status video!'
+      }, { quoted: msg });
+    } else if (quotedMsg.stickerMessage) {
+      await king.sendMessage(recipientJid, {
+        sticker: quotedMsg.stickerMessage
+      }, { quoted: msg });
+    } else {
+      await king.sendMessage(recipientJid, {
+        text: '❗ Sorry, this status reply does not contain a supported media type.'
+      }, { quoted: msg });
+    }
+    return; // Don't continue with command handling
+  }
+} catch (err) {
+  console.error('❌ Error handling status save/send reply:', err);
+}
+
+  
     if (isGroupJid(fromJid)) {
       try {
         const settings = await db.getGroupSettings(fromJid);
