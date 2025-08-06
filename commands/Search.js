@@ -271,67 +271,77 @@ module.exports = [
       }
     }
   },
+
   {
-    name: 'ytmp3',
-    get flashOnly() {
-      return franceking();
-    },
-    aliases: ['yta', 'ytaudio'],
-    description: 'Downloads audio from a YouTube video.',
-    category: 'Download',
-    execute: async (king, msg, args, fromJid) => {
-      const query = args.join(' ');
-      if (!query) {
-        return king.sendMessage(fromJid, {
-          text: 'Please provide a video name or YouTube URL.'
-        }, { quoted: msg });
-      }
-
-      try {
-        const search = await yts(query);
-        const video = search.videos[0];
-
-        if (!video) {
-          return king.sendMessage(fromJid, {
-            text: 'No results found.'
-          }, { quoted: msg });
-        }
-
-        const fileName = `${video.title.replace(/[\\/:*?"<>|]/g, '')}.mp3`;
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.url)}&format=mp3`;
-        const response = await axios.get(apiURL);
-        const data = response.data;
-
-        if (!data.downloadLink) {
-          return king.sendMessage(fromJid, {
-            text: 'Failed to retrieve the MP3 download link.'
-          }, { quoted: msg });
-        }
-
-        await king.sendMessage(fromJid, {
-          audio: { url: data.downloadLink },
-          mimetype: 'audio/mpeg',
-          fileName,
-          caption: '*FLASH-MD V2 - MP3*',
-          contextInfo: {
-            forwardingScore: 1,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363238139244263@newsletter',
-              newsletterName: 'FLASH-MD',
-              serverMessageId: -1
-            }
-          }
-        }, { quoted: msg });
-
-      } catch (err) {
-        console.error('[YTMP3 ERROR]', err);
-        await king.sendMessage(fromJid, {
-          text: 'An error occurred while downloading MP3.'
-        }, { quoted: msg });
-      }
-    }
+  name: 'ytmp3',
+  get flashOnly() {
+    return franceking();
   },
+  aliases: ['mp3'],
+  description: 'Search and play MP3 music from YouTube (audio only).',
+  category: 'Search',
+  execute: async (king, msg, args) => {
+    const fromJid = msg.key.remoteJid;
+    const query = args.join(' ');
+
+    if (!query) {
+      return king.sendMessage(fromJid, {
+        text: 'Please provide a song name or YouTube Link.'
+      }, { quoted: msg });
+    }
+
+    try {
+      const search = await yts(query);
+      const video = search.videos[0];
+
+      if (!video) {
+        return king.sendMessage(fromJid, {
+          text: 'No results found for your query.'
+        }, { quoted: msg });
+      }
+
+      const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '');
+      const fileName = `${safeTitle}.mp3`;
+      const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+
+      const response = await axios.get(apiURL);
+      const data = response.data;
+
+      if (!data.downloadLink) {
+        return king.sendMessage(fromJid, {
+          text: 'Failed to retrieve the MP3 download link.'
+        }, { quoted: msg });
+      }
+
+      
+
+      await king.sendMessage(fromJid, {
+        audio: { url: data.downloadLink },
+        mimetype: 'audio/mpeg',
+        fileName,
+        contextInfo: {
+          forwardingScore: 1,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363238139244263@newsletter',
+            newsletterName: 'FLASH-MD',
+            serverMessageId: -1
+          }
+        },
+        caption: 'FLASH-MD V2'
+      }, { quoted: msg });
+
+    } catch (err) {
+      console.error('[PLAY] Error:', err);
+      await king.sendMessage(fromJid, {
+        text: 'An error occurred while processing your request.'
+      }, { quoted: msg });
+    }
+  }
+},
+
+
+  
   {
     name: 'ytmp4',
     get flashOnly() {
