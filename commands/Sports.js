@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-{
+module.exports = [
+  {
   name: 'serie-a',
   description: 'Serie-a command',
   category: 'Utils',
@@ -353,3 +354,4 @@ const axios = require('axios');
     }
   }
 }
+];
