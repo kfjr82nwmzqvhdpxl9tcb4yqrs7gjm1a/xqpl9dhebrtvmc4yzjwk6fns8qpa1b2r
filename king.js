@@ -468,7 +468,7 @@ const fs = require('fs');
 const path = require('path');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 
-const tempDir = path.join(__dirname, '..', 'temp');
+const tempDir = '/tmp/my-temp-dir';//const tempDir = path.join(__dirname, '..', 'temp');
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
