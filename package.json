@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-  "start": "node db-init.js && node index.js"
+    "start": "node db-init.js && node index.js"
   },
   "dependencies": {
     "@hapi/boom": "^9.1.4",
@@ -13,17 +13,17 @@
     "@xaviabot/fb-downloader": "^1.0.14",
     "express": "^4.19.2",
     "aptoide_scrapper_fixed": "1.0.2",
-    "ffmpeg-static" : "5.2.0", 
+    "ffmpeg-static": "5.2.0",
     "heroku-client": "^3.1.0",
     "mumaker": "^2.0.0",
     "moment-timezone": "^0.5.43",
-    "acrcloud": "^1.4.0", 
+    "acrcloud": "^1.4.0",
     "performance-now": "^2.1.0",
     "pino": "^8.15.1",
     "axios": "^1.4.0",
     "fluent-ffmpeg": "^2.1.2",
     "fs-extra": "^11.1.1",
-        "jimp": "^0.16.13",
+    "jimp": "^0.16.13",
     "wa-sticker-formatter": "^4.4.4",
     "pg": "^8.11.2",
     "node-catbox": "^3.2.0",
@@ -32,6 +32,7 @@
     "node-cron": "^3.0.3",
     "translatte": "^3.0.1",
     "pino-pretty": "^10.0.0",
-    "api-dylux": "^1.1.9"
+    "api-dylux": "^1.1.9",
+    "file-type": "^18.0.0"
   }
 }
