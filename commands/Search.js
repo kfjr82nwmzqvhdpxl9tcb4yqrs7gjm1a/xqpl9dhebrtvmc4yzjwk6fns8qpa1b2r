@@ -2,7 +2,6 @@ const { franceking } = require('../main');
 const axios = require('axios');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const yts = require('yt-search');
-const fg = require('api-dylux');
 const BASE_URL = 'https://noobs-api.top';
 
 module.exports = [
