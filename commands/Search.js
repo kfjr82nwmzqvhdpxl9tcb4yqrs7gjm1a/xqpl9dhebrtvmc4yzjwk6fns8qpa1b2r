@@ -167,18 +167,18 @@ module.exports = [
 
         const text = `❄️ *Weather in ${data.name}, ${data.sys.country}*
 
-🌡️ *Temperature:* ${data.main.temp}°C (Feels like ${data.main.feels_like}°C)
-📉 *Min:* ${data.main.temp_min}°C  📈 *Max:* ${data.main.temp_max}°C
-📝 *Condition:* ${data.weather[0].description}
-💧 *Humidity:* ${data.main.humidity}%
-🌬️ *Wind:* ${data.wind.speed} m/s
-☁️ *Cloudiness:* ${data.clouds.all}%
-🌧️ *Rain (last hour):* ${rain} mm
-🌄 *Sunrise:* ${sunrise}
-🌅 *Sunset:* ${sunset}
-🧭 *Coordinates:* ${data.coord.lat}, ${data.coord.lon}
+🌡️ Temperature: ${data.main.temp}°C (Feels like ${data.main.feels_like}°C)
+📉 Min: ${data.main.temp_min}°C  📈 Max: ${data.main.temp_max}°C
+📝 Condition: ${data.weather[0].description}
+💧 Humidity: ${data.main.humidity}%
+🌬️ Wind: ${data.wind.speed} m/s
+☁️ Cloudiness: ${data.clouds.all}%
+🌧️ Rain (last hour): ${rain} mm
+🌄 Sunrise: ${sunrise}
+🌅 Sunset: ${sunset}
+🧭 Coordinates: ${data.coord.lat}, ${data.coord.lon}
 
-*°Powered by FLASH-MD*`;
+°Powered by FLASH-MD`;
 
         await king.sendMessage(fromJid, {
           text,
