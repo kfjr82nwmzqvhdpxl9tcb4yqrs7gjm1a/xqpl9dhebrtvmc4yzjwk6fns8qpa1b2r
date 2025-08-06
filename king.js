@@ -464,6 +464,15 @@ The following message was deleted:`,
     const text = m?.conversation || m?.extendedTextMessage?.text || m?.imageMessage?.caption || m?.videoMessage?.caption || '';
     if (!text) return;
 
+const fs = require('fs');
+const path = require('path');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+
+const tempDir = path.join(__dirname, '..', 'temp');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir);
+}
+
 try {
   const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
   const quotedMsg = contextInfo?.quotedMessage;
@@ -473,31 +482,58 @@ try {
 
   if ((commandText === 'save' || commandText === 'send') && isStatusReply) {
     const recipientJid = senderJid;
+    let sendMsg;
+
+    const quotedMsgWrapper = { message: quotedMsg };
 
     if (quotedMsg.imageMessage) {
-      await king.sendMessage(recipientJid, {
-        image: quotedMsg.imageMessage,
+      const buffer = await downloadMediaMessage(quotedMsgWrapper, 'buffer', {}, { logger: console });
+      const filePath = path.join(tempDir, `${Date.now()}-status-image.jpg`);
+      fs.writeFileSync(filePath, buffer);
+      sendMsg = {
+        image: { url: filePath },
         caption: '📸 Saved this status image!'
-      }, { quoted: msg });
+      };
     } else if (quotedMsg.videoMessage) {
-      await king.sendMessage(recipientJid, {
-        video: quotedMsg.videoMessage,
+      const buffer = await downloadMediaMessage(quotedMsgWrapper, 'buffer', {}, { logger: console });
+      const filePath = path.join(tempDir, `${Date.now()}-status-video.mp4`);
+      fs.writeFileSync(filePath, buffer);
+      sendMsg = {
+        video: { url: filePath },
         caption: '🎥 Saved this status video!'
-      }, { quoted: msg });
+      };
     } else if (quotedMsg.stickerMessage) {
-      await king.sendMessage(recipientJid, {
-        sticker: quotedMsg.stickerMessage
-      }, { quoted: msg });
+      const buffer = await downloadMediaMessage(quotedMsgWrapper, 'buffer', {}, { logger: console });
+      const filePath = path.join(tempDir, `${Date.now()}-status-sticker.webp`);
+      fs.writeFileSync(filePath, buffer);
+      sendMsg = {
+        sticker: { url: filePath }
+      };
     } else {
       await king.sendMessage(recipientJid, {
         text: '❗ Sorry, this status reply does not contain a supported media type.'
       }, { quoted: msg });
+      return;
     }
-    return; // Don't continue with command handling
+
+    await king.sendMessage(recipientJid, sendMsg, { quoted: msg });
+
+    // Clean up the temporary file
+    const fileUrl = sendMsg.image?.url || sendMsg.video?.url || sendMsg.sticker?.url;
+    if (fileUrl) {
+      try {
+        await fs.promises.unlink(fileUrl);
+      } catch (e) {
+        console.warn('⚠️ Failed to delete temp file:', fileUrl, e);
+      }
+    }
+
+    return; // prevent further handling
   }
 } catch (err) {
   console.error('❌ Error handling status save/send reply:', err);
 }
+      
 
   
     if (isGroupJid(fromJid)) {
