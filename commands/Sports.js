@@ -39,7 +39,7 @@ module.exports = [
       }, { quoted: msg });
     }
   }
-}
+}, 
 
 {
   name: 'tinyurl',
