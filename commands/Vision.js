@@ -1,6 +1,5 @@
 const { franceking } = require('../main');
-const vertexAI = require('../france/Gemini'); 
-const axios = require('axios');
+const Gemini = require('../france/Gemini');
 
 module.exports = [
   {
@@ -13,16 +12,18 @@ module.exports = [
     category: 'AI',
     execute: async (king, msg, args, fromJid) => {
       try {
-        if (!msg.message?.imageMessage) {
+        const quotedMsg = msg.quoted;
+
+        if (!quotedMsg?.message?.imageMessage) {
           return king.sendMessage(fromJid, {
             text: '📷 Please reply to an image with the command.',
           }, { quoted: msg });
         }
 
-        const media = await king.downloadMediaMessage(msg.message.imageMessage);
+        const media = await king.downloadMediaMessage(quotedMsg.message.imageMessage);
         const buffer = Buffer.from(media);
 
-        const ai = new vertexAI();
+        const ai = new Gemini();
 
         const prompt = args.join(' ') || 'Describe this image in detail.';
         const result = await ai.chat(prompt, {
@@ -43,7 +44,7 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        }, { quoted: msg });
+        }, { quoted: quotedMsg });
 
       } catch (error) {
         console.error('[VISION ERROR]', error);
