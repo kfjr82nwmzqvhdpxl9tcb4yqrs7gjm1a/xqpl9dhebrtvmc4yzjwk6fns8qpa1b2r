@@ -8,13 +8,13 @@ module.exports = [
       return franceking();
     },
     description: 'Serie-a command',
-    category: 'Utils',
+    category: 'Sports',
     execute: async (king, msg, args, fromJid) => {
       try {
         const res = await axios.get('https://api.dreaded.site/api/standings/SA');
         const standings = res.data.data;
 
-        const message = `SERIE-A TABLE STANDINGS\n\n${standings}`;
+        const message = `TABLE STANDINGS FOR SERIE-A\n\n${standings}`;
 
         await king.sendMessage(fromJid, {
           text: message,
@@ -52,7 +52,7 @@ module.exports = [
     },
     aliases: ['shorturl'],
     description: 'Tinyurl command',
-    category: 'Utils',
+    category: 'General',
     execute: async (king, msg, args, fromJid) => {
       const text = args.join(' ');
       if (!text) {
