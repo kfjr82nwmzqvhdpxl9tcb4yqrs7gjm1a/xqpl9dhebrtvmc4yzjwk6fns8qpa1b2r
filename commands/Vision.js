@@ -1,5 +1,7 @@
-const { franceking } = require('../main');
+const fs = require('fs');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const Gemini = require('../france/Gemini');
+const { franceking } = require('../main');
 
 module.exports = [
   {
@@ -12,16 +14,20 @@ module.exports = [
     category: 'AI',
     execute: async (king, msg, args, fromJid) => {
       try {
-        const quotedMsg = msg.quoted;
+        const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-        if (!quotedMsg?.message?.imageMessage) {
+        if (!quotedMsg?.imageMessage) {
           return king.sendMessage(fromJid, {
             text: '📷 Please reply to an image with the command.',
           }, { quoted: msg });
         }
 
-        const media = await king.downloadMediaMessage(quotedMsg.message.imageMessage);
-        const buffer = Buffer.from(media);
+        const buffer = await downloadMediaMessage(
+          { message: { imageMessage: quotedMsg.imageMessage } },
+          'buffer',
+          {},
+          { logger: console }
+        );
 
         const ai = new Gemini();
 
@@ -44,7 +50,7 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        }, { quoted: quotedMsg });
+        }, { quoted: msg });
 
       } catch (error) {
         console.error('[VISION ERROR]', error);
