@@ -106,11 +106,18 @@ module.exports = [
         const response = await axios.get('https://api.dreaded.site/api/standings/BL1');
         const standings = response.data.data;
 
-        let table = '🏆 *TABLE STANDINGS FOR BUNDESLIGA*\n\n';
-        standings.forEach((team, index) => {
-          table += `*${index + 1}. ${team.team}*\n`;
-          table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
-        });
+        let table;
+        if (typeof standings === 'string') {
+          table = `🏆 *TABLE STANDINGS FOR BUNDESLIGA*\n\n${standings}`;
+        } else if (Array.isArray(standings)) {
+          table = '🏆 *TABLE STANDINGS FOR BUNDESLIGA*\n\n';
+          standings.forEach((team, index) => {
+            table += `*${index + 1}. ${team.team}*\n`;
+            table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
+          });
+        } else {
+          table = '⚠️ Unexpected data format from API.';
+        }
 
         await king.sendMessage(fromJid, {
           text: table.trim(),
@@ -156,11 +163,18 @@ module.exports = [
         const response = await axios.get('https://api.dreaded.site/api/standings/PL');
         const standings = response.data.data;
 
-        let table = '🏆 *ENGLISH PREMIER LEAGUE STANDINGS*\n\n';
-        standings.forEach((team, index) => {
-          table += `*${index + 1}. ${team.team}*\n`;
-          table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
-        });
+        let table;
+        if (typeof standings === 'string') {
+          table = `🏆 *ENGLISH PREMIER LEAGUE STANDINGS*\n\n${standings}`;
+        } else if (Array.isArray(standings)) {
+          table = '🏆 *ENGLISH PREMIER LEAGUE STANDINGS*\n\n';
+          standings.forEach((team, index) => {
+            table += `*${index + 1}. ${team.team}*\n`;
+            table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
+          });
+        } else {
+          table = '⚠️ Unexpected data format from API.';
+        }
 
         await king.sendMessage(fromJid, {
           text: table.trim(),
@@ -206,11 +220,18 @@ module.exports = [
         const response = await axios.get('https://api.dreaded.site/api/standings/PD');
         const standings = response.data.data;
 
-        let table = '🏆 *LA LIGA TABLE STANDINGS*\n\n';
-        standings.forEach((team, index) => {
-          table += `*${index + 1}. ${team.team}*\n`;
-          table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
-        });
+        let table;
+        if (typeof standings === 'string') {
+          table = `🏆 *LA LIGA TABLE STANDINGS*\n\n${standings}`;
+        } else if (Array.isArray(standings)) {
+          table = '🏆 *LA LIGA TABLE STANDINGS*\n\n';
+          standings.forEach((team, index) => {
+            table += `*${index + 1}. ${team.team}*\n`;
+            table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
+          });
+        } else {
+          table = '⚠️ Unexpected data format from API.';
+        }
 
         await king.sendMessage(fromJid, {
           text: table.trim(),
@@ -223,7 +244,7 @@ module.exports = [
               serverMessageId: -1
             }
           }
-        }, { quoted: msg });
+          }, { quoted: msg });
 
       } catch (err) {
         console.error('[LALIGA ERROR]', err);
@@ -256,11 +277,18 @@ module.exports = [
         const response = await axios.get('https://api.dreaded.site/api/standings/FL1');
         const standings = response.data.data;
 
-        let table = '🏆 *LIGUE 1 TABLE STANDINGS*\n\n';
-        standings.forEach((team, index) => {
-          table += `*${index + 1}. ${team.team}*\n`;
-          table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
-        });
+        let table;
+        if (typeof standings === 'string') {
+          table = `🏆 *LIGUE 1 TABLE STANDINGS*\n\n${standings}`;
+        } else if (Array.isArray(standings)) {
+          table = '🏆 *LIGUE 1 TABLE STANDINGS*\n\n';
+          standings.forEach((team, index) => {
+            table += `*${index + 1}. ${team.team}*\n`;
+            table += `   📊 Pts: ${team.points} | P: ${team.played} | W: ${team.win} | D: ${team.draw} | L: ${team.lose} | GD: ${team.goalsDiff}\n\n`;
+          });
+        } else {
+          table = '⚠️ Unexpected data format from API.';
+        }
 
         await king.sendMessage(fromJid, {
           text: table.trim(),
