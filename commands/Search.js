@@ -244,7 +244,7 @@ module.exports = [
 
         await king.sendMessage(fromJid, {
           image: { url: videos[0].thumbnail },
-          caption: text + '*Powered by FLASH-MD*',
+          caption: text + '*Powered by D*',
           contextInfo: {
             forwardingScore: 1,
             isForwarded: true,
@@ -273,75 +273,71 @@ module.exports = [
   },
 
   {
-  name: 'ytmp3',
-  get flashOnly() {
-    return franceking();
+    name: 'ytmp3',
+    get flashOnly() {
+      return franceking();
+    },
+    aliases: ['mp3'],
+    description: 'Search and play MP3 music from YouTube (audio only).',
+    category: 'Search',
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
+      const query = args.join(' ');
+
+      if (!query) {
+        return king.sendMessage(fromJid, {
+          text: 'Please provide a song name or YouTube Link.'
+        }, { quoted: msg });
+      }
+
+      try {
+        const search = await yts(query);
+        const video = search.videos[0];
+
+        if (!video) {
+          return king.sendMessage(fromJid, {
+            text: 'No results found for your query.'
+          }, { quoted: msg });
+        }
+
+        const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '');
+        const fileName = `${safeTitle}.mp3`;
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+
+        const response = await axios.get(apiURL);
+        const data = response.data;
+
+        if (!data.downloadLink) {
+          return king.sendMessage(fromJid, {
+            text: 'Failed to retrieve the MP3 download link.'
+          }, { quoted: msg });
+        }
+
+        await king.sendMessage(fromJid, {
+          audio: { url: data.downloadLink },
+          mimetype: 'audio/mpeg',
+          fileName,
+          contextInfo: {
+            forwardingScore: 1,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: '120363238139244263@newsletter',
+              newsletterName: 'FLASH-MD',
+              serverMessageId: -1
+            }
+          },
+          caption: 'FLASH-MD V2'
+        }, { quoted: msg });
+
+      } catch (err) {
+        console.error('[PLAY] Error:', err);
+        await king.sendMessage(fromJid, {
+          text: 'An error occurred while processing your request.'
+        }, { quoted: msg });
+      }
+    }
   },
-  aliases: ['mp3'],
-  description: 'Search and play MP3 music from YouTube (audio only).',
-  category: 'Search',
-  execute: async (king, msg, args) => {
-    const fromJid = msg.key.remoteJid;
-    const query = args.join(' ');
 
-    if (!query) {
-      return king.sendMessage(fromJid, {
-        text: 'Please provide a song name or YouTube Link.'
-      }, { quoted: msg });
-    }
-
-    try {
-      const search = await yts(query);
-      const video = search.videos[0];
-
-      if (!video) {
-        return king.sendMessage(fromJid, {
-          text: 'No results found for your query.'
-        }, { quoted: msg });
-      }
-
-      const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '');
-      const fileName = `${safeTitle}.mp3`;
-      const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
-
-      const response = await axios.get(apiURL);
-      const data = response.data;
-
-      if (!data.downloadLink) {
-        return king.sendMessage(fromJid, {
-          text: 'Failed to retrieve the MP3 download link.'
-        }, { quoted: msg });
-      }
-
-      
-
-      await king.sendMessage(fromJid, {
-        audio: { url: data.downloadLink },
-        mimetype: 'audio/mpeg',
-        fileName,
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        },
-        caption: 'FLASH-MD V2'
-      }, { quoted: msg });
-
-    } catch (err) {
-      console.error('[PLAY] Error:', err);
-      await king.sendMessage(fromJid, {
-        text: 'An error occurred while processing your request.'
-      }, { quoted: msg });
-    }
-  }
-},
-
-
-  
   {
     name: 'ytmp4',
     get flashOnly() {
@@ -350,7 +346,8 @@ module.exports = [
     aliases: ['ytv', 'ytvideo'],
     description: 'Downloads a YouTube video.',
     category: 'Download',
-    execute: async (king, msg, args, fromJid) => {
+    execute: async (king, msg, args) => {
+      const fromJid = msg.key.remoteJid;
       const query = args.join(' ');
       if (!query) {
         return king.sendMessage(fromJid, {
@@ -368,8 +365,9 @@ module.exports = [
           }, { quoted: msg });
         }
 
-        const fileName = `${video.title.replace(/[\\/:*?"<>|]/g, '')}.mp4`;
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.url)}&format=mp4`;
+        const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '');
+        const fileName = `${safeTitle}.mp4`;
+        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp4`;
         const response = await axios.get(apiURL);
         const data = response.data;
 
@@ -403,4 +401,4 @@ module.exports = [
       }
     }
   }
-];
+]; 
