@@ -1,8 +1,12 @@
-const axios = require('axios');
+const {franceking} = require('../main');
+         const axios = require('axios');
 
 module.exports = [
   {
   name: 'serie-a',
+    get flashOnly() {
+    return franceking();
+  },
   description: 'Serie-a command',
   category: 'Utils',
   execute: async (king, msg, args, fromJid) => {
@@ -43,6 +47,9 @@ module.exports = [
 
 {
   name: 'tinyurl',
+  get flashOnly() {
+    return franceking();
+  },
   aliases: ['shorturl'],
   description: 'Tinyurl command',
   category: 'Utils',
