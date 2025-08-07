@@ -981,6 +981,9 @@ const contextInfo = {
 {
     name: 'apk',
     aliases: ['app', 'application'],
+    get flashOnly() {
+    return franceking();
+  },
     description: 'Search and download Android APK files.',
     category: 'Download',
     execute: async (sock, msg, args) => {
