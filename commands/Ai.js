@@ -3,7 +3,8 @@ const axios = require('axios');
 const vertexAI = require('../france/Gemini');
 const { franceking } = require('../main');
 
-module.exports = {
+module.exports = [
+  {
   name: 'imagine',
   aliases: ['draw', 'generate'],
   description: 'Generate an image using Gemini AI.',
