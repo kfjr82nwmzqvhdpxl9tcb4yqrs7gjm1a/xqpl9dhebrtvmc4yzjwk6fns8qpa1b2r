@@ -1,7 +1,68 @@
-const { franceking } = require('../main');
+
 const axios = require('axios');
+const vertexAI = require('../france/Gemini');
+const { franceking } = require('../main');
 
 module.exports = [
+  {
+  name: 'gemini',
+  aliases: ['ask', 'gpt'],
+  description: 'Ask anything using Gemini AI.',
+  category: 'AI',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    if (!args.length) {
+      return king.sendMessage(fromJid, {
+        text: '❓ *Please provide a question or prompt to ask Gemini AI.*'
+      }, { quoted: msg });
+    }
+
+    const prompt = args.join(' ');
+    const ai = new vertexAI();
+
+    try {
+      const result = await ai.chat(prompt, {
+        model: 'gemini-1.5-flash'
+      });
+
+      const aiReply = result?.[0]?.content?.parts?.[0]?.text;
+
+      if (!aiReply) {
+        return king.sendMessage(fromJid, {
+          text: '⚠️ No response received from Gemini AI.'
+        }, { quoted: msg });
+      }
+
+      await king.sendMessage(fromJid, {
+        text: `💬 *Gemini AI says:*\n\n${aiReply}`
+      }, { quoted: msg });
+
+    } catch (err) {
+      const status = err.response?.status;
+      const errorData = err.response?.data;
+      const message = err.message;
+      const stack = err.stack;
+
+      const errorMsg = [
+        '*❌ Error talking to Gemini:*',
+        status ? `*Status:* ${status}` : '',
+        message ? `*Message:* ${message}` : '',
+        errorData ? `*Data:* ${JSON.stringify(errorData, null, 2)}` : '',
+        stack ? `*Stack:* ${stack}` : ''
+      ].filter(Boolean).join('\n\n');
+
+      const trimmedError = errorMsg.length > 4000 ? errorMsg.slice(0, 4000) + '…' : errorMsg;
+
+      await king.sendMessage(fromJid, {
+        text: trimmedError
+      }, { quoted: msg });
+    }
+  }
+}, 
   {
     name: 'llama',
     get flashOnly() {
