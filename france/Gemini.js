@@ -1,6 +1,7 @@
+
 const fs = require('fs');
 const axios = require('axios');
-const { fromBuffer } = require('file-type');
+const fileType = require('file-type');
 
 class vertexAI {
     constructor() {
@@ -26,7 +27,7 @@ class vertexAI {
 
         const parts = [{ text: question }];
         if (file_buffer) {
-            const { mime } = await fromBuffer(file_buffer);
+            const { mime } = await fileType.fromBuffer(file_buffer);
             parts.unshift({
                 inlineData: {
                     mimeType: mime,
@@ -87,3 +88,4 @@ class vertexAI {
 }
 
 module.exports = vertexAI;
+
