@@ -34,12 +34,12 @@ module.exports = {
       if (isVideo) {
         await king.sendMessage(fromJid, {
           video: { url: igmp4 },
-          caption: '✨ Downloaded by Flash-Md-V2'
+          caption: '_*✨ Downloaded by Flash-Md-V2*_'
         }, { quoted: msg });
       } else {
         await king.sendMessage(fromJid, {
           image: { url: igmp4 },
-          caption: '✨ Downloaded by Flash-Md-V2'
+          caption: '_*✨ Downloaded by Flash-Md-V2*_'
         }, { quoted: msg });
       }
 
