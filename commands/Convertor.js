@@ -87,7 +87,8 @@ module.exports = [
       fs.writeFileSync(tmpPath, buffer);
 
       try {
-        await execPromise(`ffmpeg -y -i "${tmpPath}" "${outPath}"`);
+const ffmpegPath = require('ffmpeg-static');
+await execPromise(`"${ffmpegPath}" -y -i "${tmpPath}" "${outPath}"`);
         await king.sendMessage(fromJid, {
           image: fs.readFileSync(outPath),
           caption: '✅ *Sticker converted to image.*'
