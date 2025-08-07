@@ -48,7 +48,7 @@ module.exports = [
   {
   name: 'trim',
   description: 'Trim quoted audio or video.',
-  category: 'Conversion',
+  category: 'Converter',
 
   get flashOnly() {
     return franceking();
@@ -114,7 +114,7 @@ module.exports = [
     name: 'toimg',
     aliases: ['photo'],
     description: 'Convert static sticker to image.',
-    category: 'Conversion',
+    category: 'Converter',
 
     get flashOnly() {
       return franceking();
