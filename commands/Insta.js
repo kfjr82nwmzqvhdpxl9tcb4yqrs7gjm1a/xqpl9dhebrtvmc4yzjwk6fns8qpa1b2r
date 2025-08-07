@@ -23,16 +23,25 @@ module.exports = {
     try {
       const { igmp4, error } = await getInstaMedia(url);
 
-      if (error) {
+      if (error || !igmp4) {
         return king.sendMessage(fromJid, {
-          text: `❌ *Failed to download media:*\n${error}`
+          text: `❌ *Failed to download media:*\n${error || 'Invalid or unsupported link.'}`
         }, { quoted: msg });
       }
 
-      await king.sendMessage(fromJid, {
-        video: { url: igmp4 },
-        caption: '📥 *Downloaded from Instagram*'
-      }, { quoted: msg });
+      const isVideo = igmp4.includes('.mp4') || igmp4.includes('video');
+
+      if (isVideo) {
+        await king.sendMessage(fromJid, {
+          video: { url: igmp4 },
+          caption: '✨ Downloaded by Flash-Md-V2'
+        }, { quoted: msg });
+      } else {
+        await king.sendMessage(fromJid, {
+          image: { url: igmp4 },
+          caption: '✨ Downloaded by Flash-Md-V2'
+        }, { quoted: msg });
+      }
 
     } catch (err) {
       await king.sendMessage(fromJid, {
