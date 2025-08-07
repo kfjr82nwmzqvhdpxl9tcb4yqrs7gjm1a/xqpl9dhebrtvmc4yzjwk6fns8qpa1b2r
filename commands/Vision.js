@@ -48,9 +48,24 @@ module.exports = {
       }, { quoted: msg });
 
     } catch (err) {
-      console.error('[VISION ERROR]', err.response?.status, err.response?.data || err.message || err);
+      const status = err.response?.status;
+      const errorData = err.response?.data;
+      const message = err.message;
+      const stack = err.stack;
+
+      const errorMsg = [
+        '*❌ Error analyzing image:*',
+        status ? `*Status:* ${status}` : '',
+        message ? `*Message:* ${message}` : '',
+        errorData ? `*Data:* ${JSON.stringify(errorData, null, 2)}` : '',
+        stack ? `*Stack:* ${stack}` : ''
+      ].filter(Boolean).join('\n\n');
+
+      // Limit message to 4000 characters for WhatsApp safety
+      const trimmedError = errorMsg.length > 4000 ? errorMsg.slice(0, 4000) + '…' : errorMsg;
+
       await king.sendMessage(fromJid, {
-        text: '❌ Failed to analyze the image. Please try again later.'
+        text: trimmedError
       }, { quoted: msg });
     }
   }
