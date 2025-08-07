@@ -1,4 +1,4 @@
-const getInstaMedia = require('../france/insta');
+const getInstaMedia = require('../france/Insta');
 const { franceking } = require('../main');
 
 module.exports = {
