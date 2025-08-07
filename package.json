@@ -8,7 +8,7 @@
   },
   "engines": {
     "node": "20.x",
-    "npm": "9.x"
+    "npm": "11.x"
   },
   "dependencies": {
     "@hapi/boom": "^9.1.4",
