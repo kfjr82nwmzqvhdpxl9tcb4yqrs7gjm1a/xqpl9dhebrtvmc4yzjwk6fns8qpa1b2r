@@ -728,7 +728,7 @@ _Use this info to explore or install the package via terminal_`;
     const username = args[0]?.toLowerCase(); 
     if (!username) {
       return king.sendMessage(fromJid, {
-        text: '📖 *Provide a username to fetch stories.*\n\nExample: `.instastories kimkardashian`'
+        text: '📖 *Provide a username to fetch stories.*\n\nExample: `story france.king1`'
       }, { quoted: msg });
     }
 
@@ -741,7 +741,7 @@ _Use this info to explore or install the package via terminal_`;
         }, { quoted: msg });
       }
 
-      const stories = res.items.slice(0, 5); // Limit to first 5
+      const stories = res.items.slice(0, 5); 
 
       for (const [index, item] of stories.entries()) {
         const caption = `📖 *${username}* - Story ${index + 1} of ${stories.length}\n\n_*✨Downloaded by Flash-Md-V2*_`;
