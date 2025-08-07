@@ -1,4 +1,3 @@
-// commands/genius.js
 const { searchGenius, getLyrics } = require('../france/Genius');
 const { franceking } = require('../main');
 
