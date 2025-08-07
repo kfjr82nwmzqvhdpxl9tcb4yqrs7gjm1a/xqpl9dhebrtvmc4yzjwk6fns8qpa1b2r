@@ -250,7 +250,7 @@ await execPromise(`"${ffmpegPath}" -y -i "${tmpPath}" "${outPath}"`);
 },
     aliases: [],
     description: 'Enhance an image from a given URL using AI enhancement.',
-    category: 'Media',
+    category: 'converter',
     execute: async (sock, msg, args) => {
         const chatId = msg.key.remoteJid;
 
