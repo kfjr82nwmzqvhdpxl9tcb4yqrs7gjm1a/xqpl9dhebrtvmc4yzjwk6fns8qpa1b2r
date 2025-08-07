@@ -6,7 +6,7 @@ module.exports = {
   name: 'twitter',
   aliases: ['tw', 'twdl'],
   description: 'Download and send Twitter videos directly.',
-  category: 'Downloader',
+  category: 'Download',
 
   get flashOnly() {
     return franceking();
