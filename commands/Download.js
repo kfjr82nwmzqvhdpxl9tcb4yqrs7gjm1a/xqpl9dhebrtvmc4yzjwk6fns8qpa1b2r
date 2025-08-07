@@ -1,4 +1,5 @@
 const { franceking } = require('../main');
+const { fetchAllPosts } = require('../france/Ig');
 const axios = require('axios');
 const getFBInfo = require('@xaviabot/fb-downloader');
 const { search, download } = require('aptoide_scrapper_fixed'); 
@@ -19,6 +20,59 @@ function formatDate(dateStr) {
 
 
 module.exports = [
+ {
+  name: 'posts',
+  aliases: ['igposts', 'instafeed'],
+  description: 'Download recent Instagram posts of a given username.',
+  category: 'Download',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    const username = args[0];
+
+    if (!username) {
+      return king.sendMessage(fromJid, {
+        text: '📸 *Please provide an Instagram username.*\n\nExample: `!posts france.king1`'
+      }, { quoted: msg });
+    }
+
+    try {
+      const { total, items } = await fetchAllPosts(username);
+
+      if (total === 0 || !items.length) {
+        return king.sendMessage(fromJid, {
+          text: `❌ *No posts found for @${username}.*\nMaybe the account is private or invalid.`
+        }, { quoted: msg });
+      }
+
+      
+      const maxPosts = items.slice(0, 5);
+
+      for (const item of maxPosts) {
+        if (item.type === 'image') {
+          await king.sendMessage(fromJid, {
+            image: { url: item.url },
+            caption: `📸 _✨ Downloaded by Flash-Md-V2_`
+          }, { quoted: msg });
+        } else if (item.type === 'video') {
+          await king.sendMessage(fromJid, {
+            video: { url: item.url },
+            caption: `🎥 _✨ Downloaded by Flash-Md-V2_`
+          }, { quoted: msg });
+        }
+      }
+
+    } catch (err) {
+      console.error('[IG POSTS ERROR]', err);
+      await king.sendMessage(fromJid, {
+        text: '❌ *Something went wrong fetching posts.* Please try again later.'
+      }, { quoted: msg });
+    }
+  }
+}, 
     {
         name: 'npm',
         get flashOnly() {
