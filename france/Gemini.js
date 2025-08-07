@@ -1,5 +1,3 @@
-Here is your corrected full Gemini.js file with file-type dynamic import applied properly and no comments:
-
 const fs = require('fs');
 const axios = require('axios');
 let fileType;
