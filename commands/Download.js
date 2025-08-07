@@ -2,7 +2,8 @@ const { franceking } = require('../main');
 const axios = require('axios');
 const getFBInfo = require('@xaviabot/fb-downloader');
 const { search, download } = require('aptoide_scrapper_fixed'); 
-
+const { fetchStories } = require('../france/Ig');
+ 
 
 
 function formatDate(dateStr) {
@@ -713,87 +714,64 @@ _Use this info to explore or install the package via terminal_`;
     }
   }
 }, 
-    {
-  name: "story",
-        get flashOnly() {
+   
+{
+  name: 'story',
+    get flashOnly() {
   return franceking();
-},
-  aliases: ["instastory", "igstory"],
-  description: "Download all Instagram stories from a username",
-  category: "Download",
-  execute: async (sock, msg, args) => {
-    const chatId = msg.key.remoteJid;
-    const senderName = msg.pushName || "User";
-    const contextInfo = {
-      forwardingScore: 1,
-      isForwarded: true,
-      forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363238139244263@newsletter',
-        newsletterName: 'FLASH-MD',
-        serverMessageId: -1
-      }
-    };
+}, 
+  aliases: ['igstories', 'stories'],
+  description: 'Fetch Instagram stories using.',
+  category: 'Download',
 
-    if (!args[0]) {
-      return await sock.sendMessage(chatId, { text: "Please provide a valid Instagram username.", contextInfo }, { quoted: msg });
+  async execute(king, msg, args, fromJid) {
+    const username = args[0]?.toLowerCase(); 
+    if (!username) {
+      return king.sendMessage(fromJid, {
+        text: '📖 *Provide a username to fetch stories.*\n\nExample: `.instastories kimkardashian`'
+      }, { quoted: msg });
     }
 
-    const username = args[0];
-    const apiUrl = `https://bk9.fun/download/igs?username=${encodeURIComponent(username)}`;
-
     try {
-      const apiResponse = await axios.get(apiUrl);
+      const res = await fetchStories(username);
 
-      if (!apiResponse.data.status || !apiResponse.data.BK9 || apiResponse.data.BK9.length === 0) {
-        return await sock.sendMessage(chatId, { text: "No stories found or failed to fetch stories.", contextInfo }, { quoted: msg });
+      if (!res || res.total === 0 || !Array.isArray(res.items)) {
+        return king.sendMessage(fromJid, {
+          text: `⚠️ No stories found for *${username}*.`
+        }, { quoted: msg });
       }
 
-      const stories = apiResponse.data.BK9;
+      const stories = res.items.slice(0, 5); // Limit to first 5
 
-      await sock.sendMessage(chatId, {
-        text: `*Instagram Story Downloader*\n\n` +
-              `╭───────────────◆\n` +
-              `│⿻ *Instagram User:* ${username}\n` +
-              `│⿻ *Total Stories:* ${stories.length}\n` +
-              `╰────────────────◆\n\n` +
-              `_Downloading all stories now..._`,
-        contextInfo
-      }, { quoted: msg });
+      for (const [index, item] of stories.entries()) {
+        const caption = `📖 *${username}* - Story ${index + 1} of ${stories.length}\n\n_*✨Downloaded by Flash-Md-V2*_`;
 
-      let mediaSent = 0;
-
-      for (const story of stories) {
-        if (story.url) {
-          if (story.type.includes("image")) {
-            await sock.sendMessage(chatId, {
-              image: { url: story.url },
-              caption: `📷 Instagram Story - @${username}`
-            }, { quoted: msg });
-            mediaSent++;
-          } else if (story.type.includes("video")) {
-            await sock.sendMessage(chatId, {
-              video: { url: story.url },
-              caption: `🎥 Instagram Story - @${username}`
-            }, { quoted: msg });
-            mediaSent++;
-          }
+        if (item.type === 'image') {
+          await king.sendMessage(fromJid, {
+            image: { url: item.url },
+            caption
+          }, { quoted: msg });
+        } else if (item.type === 'video') {
+          await king.sendMessage(fromJid, {
+            video: { url: item.url },
+            caption
+          }, { quoted: msg });
+        } else {
+          await king.sendMessage(fromJid, {
+            text: `⚠️ Unknown media type:\n${item.url}`
+          }, { quoted: msg });
         }
       }
 
-      if (mediaSent > 0) {
-        await sock.sendMessage(chatId, { text: `✅ All ${mediaSent} stories have been sent.`, contextInfo }, { quoted: msg });
-      } else {
-        await sock.sendMessage(chatId, { text: "⚠️ The stories could not be sent. They might be expired or private.", contextInfo }, { quoted: msg });
-      }
-
     } catch (error) {
-      console.error("IG Story Error:", error);
-      await sock.sendMessage(chatId, { text: "An error occurred while fetching stories. Try again later.", contextInfo }, { quoted: msg });
+      console.error('Error fetching Instagram stories:', error);
+      return king.sendMessage(fromJid, {
+        text: `❌ Failed to fetch stories for *${username}*. Try again later.`
+      }, { quoted: msg });
     }
   }
-    },  
-            
-   {
+}, 
+      {
   name: "mediafire",
        get flashOnly() {
   return franceking();
