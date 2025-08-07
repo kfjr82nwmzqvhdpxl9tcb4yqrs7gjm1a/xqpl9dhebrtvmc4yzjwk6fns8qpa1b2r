@@ -147,7 +147,7 @@ _Use this info to explore or install the package via terminal_`;
 },
   aliases: ["tg"],
   description: "Download and send all stickers from a Telegram pack",
-  category: "Sticker",
+  category: "Download",
   execute: async (sock, msg, args) => {
     const chatId = msg.key.remoteJid;
 
