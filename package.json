@@ -33,6 +33,6 @@
     "translatte": "^3.0.1",
     "pino-pretty": "^10.0.0",
     "api-dylux": "^1.1.9",
-    "file-type": "^18.0.0"
+    "file-type": "21.0.0"
   }
 }
