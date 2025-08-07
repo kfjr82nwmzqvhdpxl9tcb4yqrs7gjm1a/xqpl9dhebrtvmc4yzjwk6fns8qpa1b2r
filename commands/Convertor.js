@@ -13,7 +13,8 @@ const fs1 = require('fs');
 const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
-
+const { tmpdir } = require('os');
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const catbox = new Catbox();
 const { downloadContentFromMessage } = baileys;
@@ -44,6 +45,71 @@ const contextInfo = {
 
 
 module.exports = [
+  {
+  name: 'trim',
+  description: 'Trim quoted audio or video.',
+  category: 'Conversion',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    const start = parseInt(args[0]);
+    const end = parseInt(args[1]);
+
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const isVideo = quoted?.videoMessage;
+    const isAudio = quoted?.audioMessage;
+
+    if (!(isVideo || isAudio)) {
+      return king.sendMessage(fromJid, {
+        text: '❌ *Reply to a video or audio with the command.*\n\nExample:\n`trim 1 4`'
+      }, { quoted: msg });
+    }
+
+    if (isNaN(start) || isNaN(end) || end <= start) {
+      return king.sendMessage(fromJid, {
+        text: '❌ *Invalid time range.*\n\nUse: `trim <start> <end>`\nExample: `trim 1 4`'
+      }, { quoted: msg });
+    }
+
+    const buffer = await downloadMediaMessage(
+      { message: quoted },
+      'buffer',
+      {},
+      { logger: console }
+    );
+
+    const ext = isVideo ? 'mp4' : 'mp3';
+    const input = path.join(tmpdir(), `input_${Date.now()}.${ext}`);
+    const output = path.join(tmpdir(), `output_${Date.now()}.${ext}`);
+    fs.writeFileSync(input, buffer);
+
+    ffmpeg(input)
+      .setStartTime(start)
+      .setDuration(end - start)
+      .output(output)
+      .on('end', async () => {
+        const trimmed = fs.readFileSync(output);
+        await king.sendMessage(fromJid, {
+          [isVideo ? 'video' : 'audio']: trimmed,
+          mimetype: isVideo ? 'video/mp4' : 'audio/mp4',
+          ptt: !isVideo
+        }, { quoted: msg });
+        fs.unlinkSync(input);
+        fs.unlinkSync(output);
+      })
+      .on('error', async () => {
+        await king.sendMessage(fromJid, {
+          text: '❌ *Failed to trim the media.*'
+        }, { quoted: msg });
+        if (fs.existsSync(input)) fs.unlinkSync(input);
+        if (fs.existsSync(output)) fs.unlinkSync(output);
+      })
+      .run();
+  }
+}, 
   {
     name: 'toimg',
     aliases: ['photo'],
