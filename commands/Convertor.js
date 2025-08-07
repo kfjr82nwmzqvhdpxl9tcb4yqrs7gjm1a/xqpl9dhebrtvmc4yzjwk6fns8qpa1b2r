@@ -1,5 +1,6 @@
 const { franceking } = require('../main');
 const axios = require('axios');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const fs = require('fs-extra');
 const ffmpegPath = require('ffmpeg-static'); 
 const ffmpeg = require('fluent-ffmpeg'); 
@@ -41,57 +42,67 @@ const contextInfo = {
   }
 };
 
+
 module.exports = [
   {
-  name: 'toimg',
-    aliases: ['photo'], 
-  description: 'Convert static sticker to image.',
-  category: 'Conversion',
+    name: 'toimg',
+    aliases: ['photo'],
+    description: 'Convert static sticker to image.',
+    category: 'Conversion',
 
-  get flashOnly() {
-    return franceking();
-  },
+    get flashOnly() {
+      return franceking();
+    },
 
-  execute: async (king, msg, args, fromJid) => {
-    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    execute: async (king, msg, args, fromJid) => {
+      const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-    if (!quoted?.stickerMessage) {
-      return king.sendMessage(fromJid, {
-        text: '❌ *Reply to a static sticker to convert it to image.*'
-      }, { quoted: msg });
+      if (!quoted?.stickerMessage) {
+        return king.sendMessage(fromJid, {
+          text: '❌ *Reply to a static sticker to convert it to image.*'
+        }, { quoted: msg });
+      }
+
+      if (
+        quoted.stickerMessage.isAnimated ||
+        quoted.stickerMessage.isLottie ||
+        quoted.stickerMessage.mimetype !== 'image/webp'
+      ) {
+        return king.sendMessage(fromJid, {
+          text: '❌ *Only static stickers are supported.*'
+        }, { quoted: msg });
+      }
+
+      fs.ensureDirSync('./temp');
+      const tmpPath = './temp/sticker.webp';
+      const outPath = './temp/image.jpg';
+
+      const buffer = await downloadMediaMessage(
+        { message: quoted },
+        'buffer',
+        {},
+        { logger: console }
+      );
+
+      fs.writeFileSync(tmpPath, buffer);
+
+      try {
+        await execPromise(`ffmpeg -y -i "${tmpPath}" "${outPath}"`);
+        await king.sendMessage(fromJid, {
+          image: fs.readFileSync(outPath),
+          caption: '✅ *Sticker converted to image.*'
+        }, { quoted: msg });
+      } catch (err) {
+        await king.sendMessage(fromJid, {
+          text: `❌ *Failed to convert sticker.*\n\n${err.message}`
+        }, { quoted: msg });
+      } finally {
+        if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+        if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+      }
     }
+  }, 
 
-    const quotedObj = await msg.getQuotedObj();
-
-    if (quotedObj.isAnimated || quotedObj.isLottie || quotedObj.mimetype !== 'image/webp') {
-      return king.sendMessage(fromJid, {
-        text: '❌ *Only static stickers are supported.*'
-      }, { quoted: msg });
-    }
-
-    const stream = await quotedObj.download();
-    fs1.mkdirSync('./temp', { recursive: true });
-
-    const tmpPath = './temp/sticker.webp';
-    const outPath = './temp/image.jpg';
-    fs1.writeFileSync(tmpPath, stream);
-
-    try {
-      await execPromise(`ffmpeg -y -i "${tmpPath}" "${outPath}"`);
-      await king.sendMessage(fromJid, {
-        image: fs1.readFileSync(outPath),
-        caption: '✅ *Sticker converted to image.*'
-      }, { quoted: msg });
-    } catch (err) {
-      await king.sendMessage(fromJid, {
-        text: `❌ *Failed to convert sticker.*\n\n${err.message}`
-      }, { quoted: msg });
-    } finally {
-      if (fs1.existsSync(tmpPath)) fs1.unlinkSync(tmpPath);
-      if (fs1.existsSync(outPath)) fs1.unlinkSync(outPath);
-    }
-  }
-}, 
 {
   name: 'sticker',
   get flashOnly() {
