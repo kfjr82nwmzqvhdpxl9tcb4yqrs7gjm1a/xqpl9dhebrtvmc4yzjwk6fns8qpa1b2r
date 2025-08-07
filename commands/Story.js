@@ -4,12 +4,12 @@ module.exports = {
   name: 'instastories',
   aliases: ['igstories', 'stories'],
   description: 'Fetch Instagram stories using Mollygram.',
-  category: 'Scraper',
+  category: 'Download',
 
-  async execute(France, msg, args, fromJid) {
+  async execute(king, msg, args, fromJid) {
     const username = args[0]?.toLowerCase(); // lowercase username
     if (!username) {
-      return France.king1.sendMessage(fromJid, {
+      return king.sendMessage(fromJid, {
         text: '📖 *Provide a username to fetch stories.*\n\nExample: `.instastories kimkardashian`'
       }, { quoted: msg });
     }
@@ -18,7 +18,7 @@ module.exports = {
       const res = await fetchStories(username);
 
       if (!res || res.total === 0 || !Array.isArray(res.items)) {
-        return France.king1.sendMessage(fromJid, {
+        return king.sendMessage(fromJid, {
           text: `⚠️ No stories found for *${username}*.`
         }, { quoted: msg });
       }
@@ -29,17 +29,17 @@ module.exports = {
         const caption = `📖 *${username}* - Story ${index + 1} of ${stories.length}\n\n_*✨Downloaded by Flash-Md-V2*_`;
 
         if (item.type === 'image') {
-          await France.king1.sendMessage(fromJid, {
+          await king.sendMessage(fromJid, {
             image: { url: item.url },
             caption
           }, { quoted: msg });
         } else if (item.type === 'video') {
-          await France.king1.sendMessage(fromJid, {
+          await king.sendMessage(fromJid, {
             video: { url: item.url },
             caption
           }, { quoted: msg });
         } else {
-          await France.king1.sendMessage(fromJid, {
+          await king.sendMessage(fromJid, {
             text: `⚠️ Unknown media type:\n${item.url}`
           }, { quoted: msg });
         }
@@ -47,7 +47,7 @@ module.exports = {
 
     } catch (error) {
       console.error('Error fetching Instagram stories:', error);
-      return France.king1.sendMessage(fromJid, {
+      return king.sendMessage(fromJid, {
         text: `❌ Failed to fetch stories for *${username}*. Try again later.`
       }, { quoted: msg });
     }
