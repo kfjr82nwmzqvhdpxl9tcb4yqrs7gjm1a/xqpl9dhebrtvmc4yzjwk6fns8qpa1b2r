@@ -8,6 +8,7 @@ const baileys = require('@whiskeysockets/baileys');
 const { Sticker } = require('wa-sticker-formatter');
 const { Catbox } = require('node-catbox');
 const path = require('path');
+const fs1 = require('fs');
 const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
@@ -69,16 +70,16 @@ module.exports = [
     }
 
     const stream = await quotedObj.download();
-    fs.mkdirSync('./temp', { recursive: true });
+    fs1.mkdirSync('./temp', { recursive: true });
 
     const tmpPath = './temp/sticker.webp';
     const outPath = './temp/image.jpg';
-    fs.writeFileSync(tmpPath, stream);
+    fs1.writeFileSync(tmpPath, stream);
 
     try {
       await execPromise(`ffmpeg -y -i "${tmpPath}" "${outPath}"`);
       await king.sendMessage(fromJid, {
-        image: fs.readFileSync(outPath),
+        image: fs1.readFileSync(outPath),
         caption: '✅ *Sticker converted to image.*'
       }, { quoted: msg });
     } catch (err) {
@@ -86,8 +87,8 @@ module.exports = [
         text: `❌ *Failed to convert sticker.*\n\n${err.message}`
       }, { quoted: msg });
     } finally {
-      if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
-      if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+      if (fs1.existsSync(tmpPath)) fs1.unlinkSync(tmpPath);
+      if (fs1.existsSync(outPath)) fs1.unlinkSync(outPath);
     }
   }
 }, 
