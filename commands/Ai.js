@@ -2,8 +2,72 @@
 const axios = require('axios');
 const vertexAI = require('../france/Gemini');
 const { franceking } = require('../main');
+const { intelQuery } = require('../france/Deep');
 
-module.exports = [
+module.exports = {
+  name: 'deepseek',
+  aliases: ['intel', 'findout'],
+  description: 'Conducts an AI-powered investigation and returns summarized insights.',
+  category: 'AI',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (client, msg, args, fromJid) => {
+    const inputQuery = args.join(' ').trim();
+
+    if (!inputQuery) {
+      return client.sendMessage(fromJid, {
+        text: '🕵️ *You need to specify what to investigate.*\nTry: deepseek Bitcoin trends'
+      }, { quoted: msg });
+    }
+
+    try {
+      await client.sendMessage(fromJid, {
+        text: '⏳ *Gathering intelligence... please hold on.*'
+      }, { quoted: msg });
+
+      const data = await intelQuery(inputQuery);
+
+      const summary = data.summary?.trim() || '_No summary available._';
+      const references = data.references?.length
+        ? '\n🌍 *References:*\n' + data.references.map((url, idx) => `${idx + 1}. ${url}`).join('\n')
+        : '';
+
+      const cost = data.stats?.cost
+        ? `\n💰 *Estimated Cost:* $${data.stats.cost.toFixed(2)}`
+        : '';
+
+      const agent = data.stats?.engine
+        ? `\n🤖 *Agent Type:* ${data.stats.engine}`
+        : '';
+
+      const stats = `\n📑 *Pages:* ${data.stats.pages} | 🖼 *Images:* ${data.stats.images}`;
+
+      const messageBody = `🧾 *Intel Report:*\n\n${summary}${references}${cost}${agent}${stats}`;
+
+      const output = messageBody.length > 4000
+        ? messageBody.slice(0, 4000) + '…'
+        : messageBody;
+
+      await client.sendMessage(fromJid, {
+        text: output
+      }, { quoted: msg });
+
+    } catch (err) {
+      const fallback = [
+        '*🚫 Could not complete the investigation.*',
+        err.message ? `*Reason:* ${err.message}` : '',
+        err.stack ? `*Trace:* ${err.stack}` : ''
+      ].filter(Boolean).join('\n\n');
+
+      await client.sendMessage(fromJid, {
+        text: fallback
+      }, { quoted: msg });
+    }
+  }
+}, 
   {
   name: 'imagine',
   aliases: ['draw', 'generate'],
