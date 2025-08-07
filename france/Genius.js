@@ -3,7 +3,8 @@ const puppeteer = require('puppeteer');
 async function searchGenius(query) {
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: puppeteer.executablePath()
   });
 
   const page = await browser.newPage();
@@ -27,7 +28,8 @@ async function searchGenius(query) {
 async function getLyrics(url) {
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: puppeteer.executablePath()
   });
 
   const page = await browser.newPage();
