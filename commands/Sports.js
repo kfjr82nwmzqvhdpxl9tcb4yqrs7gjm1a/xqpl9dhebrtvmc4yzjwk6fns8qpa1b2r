@@ -51,7 +51,7 @@ module.exports = [
     },
     aliases: ['shorturl'],
     description: 'Tinyurl command',
-    category: 'Genaral',
+    category: 'General',
     execute: async (king, msg, args, fromJid) => {
       const text = args.join(' ');
       if (!text) {
