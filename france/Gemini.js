@@ -1,7 +1,8 @@
+Here is your corrected full Gemini.js file with file-type dynamic import applied properly and no comments:
 
 const fs = require('fs');
 const axios = require('axios');
-const fileType = require('file-type');
+let fileType;
 
 class vertexAI {
     constructor() {
@@ -27,7 +28,10 @@ class vertexAI {
 
         const parts = [{ text: question }];
         if (file_buffer) {
-            const { mime } = await fileType.fromBuffer(file_buffer);
+            if (!fileType) {
+                fileType = await import('file-type');
+            }
+            const { mime } = await fileType.fileTypeFromBuffer(file_buffer);
             parts.unshift({
                 inlineData: {
                     mimeType: mime,
