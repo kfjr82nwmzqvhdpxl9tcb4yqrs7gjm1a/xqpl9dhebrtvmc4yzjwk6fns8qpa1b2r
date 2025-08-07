@@ -7,6 +7,11 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const baileys = require('@whiskeysockets/baileys');
 const { Sticker } = require('wa-sticker-formatter');
 const { Catbox } = require('node-catbox');
+const path = require('path');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
+
 
 const catbox = new Catbox();
 const { downloadContentFromMessage } = baileys;
@@ -36,7 +41,56 @@ const contextInfo = {
 };
 
 module.exports = [
+  {
+  name: 'toimg',
+    aliases: ['photo'], 
+  description: 'Convert static sticker to image.',
+  category: 'Conversion',
 
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+
+    if (!quoted?.stickerMessage) {
+      return king.sendMessage(fromJid, {
+        text: '❌ *Reply to a static sticker to convert it to image.*'
+      }, { quoted: msg });
+    }
+
+    const quotedObj = await msg.getQuotedObj();
+
+    if (quotedObj.isAnimated || quotedObj.isLottie || quotedObj.mimetype !== 'image/webp') {
+      return king.sendMessage(fromJid, {
+        text: '❌ *Only static stickers are supported.*'
+      }, { quoted: msg });
+    }
+
+    const stream = await quotedObj.download();
+    fs.mkdirSync('./temp', { recursive: true });
+
+    const tmpPath = './temp/sticker.webp';
+    const outPath = './temp/image.jpg';
+    fs.writeFileSync(tmpPath, stream);
+
+    try {
+      await execPromise(`ffmpeg -y -i "${tmpPath}" "${outPath}"`);
+      await king.sendMessage(fromJid, {
+        image: fs.readFileSync(outPath),
+        caption: '✅ *Sticker converted to image.*'
+      }, { quoted: msg });
+    } catch (err) {
+      await king.sendMessage(fromJid, {
+        text: `❌ *Failed to convert sticker.*\n\n${err.message}`
+      }, { quoted: msg });
+    } finally {
+      if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+      if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+    }
+  }
+}, 
 {
   name: 'sticker',
   get flashOnly() {
