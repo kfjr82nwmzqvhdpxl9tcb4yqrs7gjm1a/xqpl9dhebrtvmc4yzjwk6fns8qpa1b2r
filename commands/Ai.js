@@ -4,7 +4,8 @@ const vertexAI = require('../france/Gemini');
 const { franceking } = require('../main');
 const { intelQuery } = require('../france/Deep');
 
-module.exports = {
+module.exports = [
+  {
   name: 'deepseek',
   aliases: ['intel', 'findout'],
   description: 'Conducts an AI-powered investigation and returns summarized insights.',
