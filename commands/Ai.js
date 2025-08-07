@@ -3,10 +3,75 @@ const axios = require('axios');
 const vertexAI = require('../france/Gemini');
 const { franceking } = require('../main');
 
-module.exports = [
+module.exports = {
+  name: 'imagine',
+  aliases: ['draw', 'generate'],
+  description: 'Generate an image using Gemini AI.',
+  category: 'AI',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    if (!args.length) {
+      return king.sendMessage(fromJid, {
+        text: '🧠 *What do you want to imagine?*\n\n_Example:_ `.imagine a futuristic city at night`'
+      }, { quoted: msg });
+    }
+
+    const prompt = args.join(' ');
+    const ai = new vertexAI();
+
+    try {
+      await king.sendMessage(fromJid, {
+        text: '🎨 *Generating image... Please wait.*'
+      }, { quoted: msg });
+
+      const predictions = await ai.image(prompt, {
+        model: 'imagen-3.0-generate-002',
+        aspect_ratio: '9:16'
+      });
+
+      const base64 = predictions?.[0]?.bytesBase64Encoded;
+
+      if (!base64) {
+        return king.sendMessage(fromJid, {
+          text: '⚠️ Sorry, I could not generate the image. Try again later.'
+        }, { quoted: msg });
+      }
+
+      const imageBuffer = Buffer.from(base64, 'base64');
+
+      await king.sendMessage(fromJid, {
+        image: imageBuffer,
+        caption: '_✨ Created by Gemini AI_'
+      }, { quoted: msg });
+
+    } catch (err) {
+      const status = err.response?.status;
+      const errorData = err.response?.data;
+      const message = err.message;
+      const stack = err.stack;
+
+      const errorMsg = [
+        '*❌ Error generating image:*',
+        status ? `*Status:* ${status}` : '',
+        message ? `*Message:* ${message}` : '',
+        errorData ? `*Data:* ${JSON.stringify(errorData, null, 2)}` : '',
+        stack ? `*Stack:* ${stack}` : ''
+      ].filter(Boolean).join('\n\n');
+
+      const trimmedError = errorMsg.length > 4000 ? errorMsg.slice(0, 4000) + '…' : errorMsg;
+
+      await king.sendMessage(fromJid, {
+        text: trimmedError
+      }, { quoted: msg });
+    }
+  }
+}, 
   {
   name: 'gemini',
-  aliases: ['ask', 'gpt'],
   description: 'Ask anything using Gemini AI.',
   category: 'AI',
 
@@ -237,72 +302,7 @@ module.exports = [
         }, { quoted: msg });
       }
     }
-  },
-  {
-    name: 'bard',
-    get flashOnly() {
-  return franceking();
-},
-    aliases: ['bard-ai'],
-    description: 'Chat with BARD AI.',
-    category: 'AI',
-    execute: async (sock, msg, args) => {
-      const chatId = msg.key.remoteJid;
-
-      try {
-        if (!args || args.length === 0) {
-          return await sock.sendMessage(chatId, {
-            text: 'Hello, I am *BARD AI*.\n\nHow can I assist you today?'
-          }, {
-            quoted: msg,
-            contextInfo: {
-              forwardingScore: 5,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: '120363238139244263@newsletter',
-                newsletterName: "FLASH-MD",
-                serverMessageId: 143,
-                sourceUrl: 'https://whatsapp.com/channel/0029VaTbb3p84Om9LRX1jg0P'
-              }
-            }
-          });
-        }
-
-        const prompt = args.join(' ');
-        const response = await fetch(`https://api.diioffc.web.id/api/ai/bard?query=${encodeURIComponent(prompt)}`);
-        const data = await response.json();
-
-        if (data.status && data.result && data.result.message) {
-          const answer = data.result.message;
-
-          await sock.sendMessage(chatId, {
-            text: `${answer}\n\n> *POWERED BY FLASH-MD*`
-          }, {
-            quoted: msg,
-            contextInfo: {
-              forwardingScore: 5,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: '120363238139244263@newsletter',
-                newsletterName: "FLASH-MD",
-                serverMessageId: 143,
-                sourceUrl: 'https://whatsapp.com/channel/0029VaTbb3p84Om9LRX1jg0P'
-              }
-            }
-          });
-
-        } else {
-          throw new Error('Invalid response from the API.');
-        }
-
-      } catch (error) {
-        console.error('Error getting response:', error.message);
-        await sock.sendMessage(chatId, {
-          text: '❌ Error getting response from BARD AI.'
-        }, { quoted: msg });
-      }
-    }
-  },
+  },       
   {
     name: 'inspire', 
     get flashOnly() {
