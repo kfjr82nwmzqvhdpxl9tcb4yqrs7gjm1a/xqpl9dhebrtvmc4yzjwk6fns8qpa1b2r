@@ -1,5 +1,5 @@
 // commands/genius.js
-const { searchGenius, getLyrics } = require('../france/genius');
+const { searchGenius, getLyrics } = require('../france/Genius');
 const { franceking } = require('../main');
 
 module.exports = {
