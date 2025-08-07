@@ -1,10 +1,23 @@
+// france/genius.js
 const axios = require('axios');
 const cheerio = require('cheerio');
+
+const GENIUS_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.5',
+  'Referer': 'https://genius.com/',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1',
+};
 
 async function searchGenius(query) {
   const { data } = await axios.get('https://genius.com/api/search/multi', {
     params: { q: query },
-    headers: { 'User-Agent': 'Mozilla/5.0' }
+    headers: {
+      ...GENIUS_HEADERS,
+      'Accept': 'application/json, text/plain, */*'
+    }
   });
 
   const sections = data.response?.sections || [];
@@ -22,9 +35,7 @@ async function searchGenius(query) {
 
 async function getLyrics(url) {
   const { data } = await axios.get(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0'
-    }
+    headers: GENIUS_HEADERS
   });
 
   const $ = cheerio.load(data);
