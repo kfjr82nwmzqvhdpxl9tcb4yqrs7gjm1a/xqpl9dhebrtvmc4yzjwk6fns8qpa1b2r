@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-async function gpt(prompt) {
+async function xenc01(prompt) {
     try {
         const { data } = await axios.post(
             'https://us-central1-openaiprojects-1fba2.cloudfunctions.net/chat_gpt_ai/api.live.text.gen',
@@ -27,4 +27,4 @@ async function gpt(prompt) {
     }
 }
 
-module.exports = { gpt };
+module.exports = { xenc01 };
