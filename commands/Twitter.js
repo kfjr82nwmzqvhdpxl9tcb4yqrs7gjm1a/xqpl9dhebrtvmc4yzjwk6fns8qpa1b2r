@@ -1,10 +1,11 @@
 const { franceking } = require('../main');
 const { downloadFromSSSTwitter } = require('../france/x');
+const axios = require('axios');
 
 module.exports = {
   name: 'twitter',
   aliases: ['tw', 'twdl'],
-  description: 'Download Twitter videos using ssstwitter.com',
+  description: 'Download and send Twitter videos directly.',
   category: 'Downloader',
 
   get flashOnly() {
@@ -22,20 +23,28 @@ module.exports = {
 
     try {
       const result = await downloadFromSSSTwitter(url);
+      const videoUrl = result.mp4high || result.mp4mid || result.mp4low;
 
-      if (!result.mp4high && !result.mp4mid && !result.mp4low) {
+      if (!videoUrl) {
         return king.sendMessage(fromJid, {
-          text: '⚠️ No downloadable video links found.'
+          text: '⚠️ No downloadable video link was found.'
         }, { quoted: msg });
       }
 
-      let replyText = '📥 *Twitter Video Download Links:*\n\n';
-      if (result.mp4high) replyText += `🔹 *High Quality:* ${result.mp4high}\n`;
-      if (result.mp4mid) replyText += `🔸 *Medium Quality:* ${result.mp4mid}\n`;
-      if (result.mp4low) replyText += `▪️ *Low Quality:* ${result.mp4low}\n`;
+      // Download video as buffer
+      const videoResponse = await axios.get(videoUrl, {
+        responseType: 'arraybuffer',
+        headers: {
+          'User-Agent': 'Mozilla/5.0'
+        }
+      });
 
+      const videoBuffer = Buffer.from(videoResponse.data);
+
+      // Send video with caption
       await king.sendMessage(fromJid, {
-        text: replyText.trim()
+        video: videoBuffer,
+        caption: '✨ Downloaded by Flash-Md-V2'
       }, { quoted: msg });
 
     } catch (err) {
@@ -43,7 +52,7 @@ module.exports = {
       const stack = err.stack || '';
 
       const errorMsg = [
-        '*❌ Failed to fetch Twitter video:*',
+        '*❌ Failed to download Twitter video:*',
         `*Message:* ${message}`,
         `*Stack:* ${stack.slice(0, 1000)}`
       ].join('\n\n');
