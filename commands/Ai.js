@@ -46,7 +46,7 @@ module.exports = [
 
       await king.sendMessage(fromJid, {
         image: imageBuffer,
-        caption: '_✨ Created by Gemini AI_'
+        caption: '_✨ Created by Flash-Md-V2_'
       }, { quoted: msg });
 
     } catch (err) {
