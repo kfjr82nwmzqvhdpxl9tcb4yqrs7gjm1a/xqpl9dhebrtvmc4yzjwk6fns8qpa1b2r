@@ -1,19 +1,12 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-
-const GENIUS_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9',
-  'Referer': 'https://genius.com/',
-  'Connection': 'keep-alive'
-};
+const puppeteer = require('puppeteer');
 
 async function searchGenius(query) {
   const { data } = await axios.get('https://genius.com/api/search/multi', {
     params: { q: query },
     headers: {
-      ...GENIUS_HEADERS,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36',
       'Accept': 'application/json, text/plain, */*'
     }
   });
@@ -32,18 +25,24 @@ async function searchGenius(query) {
 }
 
 async function getLyrics(url) {
-  const { data } = await axios.get(url, {
-    headers: GENIUS_HEADERS
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
-  const $ = cheerio.load(data);
+  const page = await browser.newPage();
 
-  const title = $('h1').first().text().trim();
+  await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
 
-  const lyrics = $('div[data-lyrics-container="true"]')
-    .map((i, el) => $(el).text().trim())
-    .get()
-    .join('\n\n');
+  await page.goto(url, { waitUntil: 'networkidle2' });
+
+  const title = await page.$eval('h1', el => el.innerText.trim());
+
+  const lyrics = await page.$$eval('div[data-lyrics-container="true"]', elements =>
+    elements.map(el => el.innerText.trim()).join('\n\n')
+  );
+
+  await browser.close();
 
   if (!lyrics) {
     throw new Error('Lyrics not found on the page.');
