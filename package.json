@@ -1,5 +1,5 @@
 {
-  "name": "baileys-bot",
+  "name": "Flash-Md-V2",
   "version": "1.0.0",
   "main": "index.js",
   "type": "commonjs",
@@ -29,7 +29,8 @@
     "pg": "^8.11.2",
     "node-catbox": "^3.2.0",
     "g-i-s": "^2.1.7",
-    "puppeteer": "24.16.0",
+    "puppeteer-core": "^24.1.1",
+    "chrome-aws-lambda": "^15.0.0",
     "yt-search": "^2.10.4",
     "node-cron": "^3.0.3",
     "translatte": "^3.0.1",
