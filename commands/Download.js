@@ -5,7 +5,7 @@ const getFBInfo = require('@xaviabot/fb-downloader');
 const { search, download } = require('aptoide_scrapper_fixed'); 
 const { fetchStories } = require('../france/Ig');
  const getInstaMedia = require('../france/Insta'); 
-
+const getTikTokMedia = require('../france/Tok'); 
 
 function formatDate(dateStr) {
     const date = new Date(dateStr);
@@ -21,6 +21,51 @@ function formatDate(dateStr) {
 
 
 module.exports = [
+ {
+  name: 'tiktok',
+  aliases: ['tk', 'tiktokdl'],
+  description: 'Download TikTok media by link.',
+  category: 'Downloader',
+
+  execute: async (king, msg, args, fromJid) => {
+    const query = args.join(' ').trim();
+
+    if (!query || !query.startsWith('http')) {
+      return king.sendMessage(fromJid, {
+        text: '📌 *Please provide a valid TikTok video link.*'
+      }, { quoted: msg });
+    }
+
+    const response = await getTikTokMedia(query);
+
+    if (!response.status) {
+      return king.sendMessage(fromJid, {
+        text: `❌ *Failed to fetch TikTok media.*\nReason: ${response.message}`
+      }, { quoted: msg });
+    }
+
+    const caption = `🎵 *${response.title || 'TikTok Media'}*`;
+
+    if (response.video) {
+      await king.sendMessage(fromJid, {
+        video: { url: response.video },
+        caption
+      }, { quoted: msg });
+    } else {
+      await king.sendMessage(fromJid, {
+        text: '⚠️ Video link not found.'
+      }, { quoted: msg });
+    }
+
+    // if (response.audio) {
+    //   await king.sendMessage(fromJid, {
+    //     document: { url: response.audio },
+    //     mimetype: 'audio/mpeg',
+    //     fileName: 'tiktok-audio.mp3'
+    //   }, { quoted: msg });
+    // }
+  }
+}, 
  {
   name: 'insta',
   aliases: ['igdl', 'ig', 'instagram'],
@@ -876,67 +921,8 @@ const contextInfo = {
     }
   }
 }, 
-    {
-  name: "tiktok",
-        get flashOnly() {
-  return franceking();
-},
-  aliases: ["tik", "tok", "tikdl"],
-  description: "Download TikTok video",
-  category: "Download",
-  execute: async (sock, msg, args) => {
-    const chatId = msg.key.remoteJid;
-const contextInfo = {
-  forwardingScore: 1,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363238139244263@newsletter',
-    newsletterName: 'FLASH-MD',
-    serverMessageId: -1
-  }
-};
-    const input = args.join(' ');
-    if (!input) {
-      return await sock.sendMessage(chatId, {
-        text: "Please insert a TikTok video link.",
-        contextInfo
-      }, { quoted: msg });
-    }
 
-    try {
-      await sock.sendMessage(chatId, {
-        text: "⏳ Downloading TikTok video, please wait...",
-        contextInfo
-      }, { quoted: msg });
-
-      const res = await axios.get(`https://bk9.fun/download/tiktok?url=${encodeURIComponent(input)}`);
-      const data = res.data;
-
-      if (!data.status || !data.BK9) {
-        return await sock.sendMessage(chatId, {
-          text: "Failed to retrieve video. Please check the link and try again.",
-          contextInfo
-        }, { quoted: msg });
-      }
-
-      const videoUrl = data.BK9.BK9;
-      const caption = data.BK9.desc || "No caption available.";
-
-      await sock.sendMessage(chatId, {
-        video: { url: videoUrl },
-        caption: `*📹 TikTok Video Downloaded!*\n\n*Caption:* ${caption}\n\n_Provided by FLASH-MD_`,
-        gifPlayback: false
-      }, { quoted: msg });
-
-    } catch (err) {
-      console.error("TikTok Download Error:", err);
-      await sock.sendMessage(chatId, {
-        text: "An error occurred while processing the TikTok link. Please try again later.",
-        contextInfo
-      }, { quoted: msg });
-    }
-  }
-}, 
+     
 {
   name: "image-dl",
     get flashOnly() {
