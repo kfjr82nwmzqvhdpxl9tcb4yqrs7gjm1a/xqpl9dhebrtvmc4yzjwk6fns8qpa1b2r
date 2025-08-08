@@ -23,9 +23,9 @@ function formatDate(dateStr) {
 module.exports = [
  {
   name: 'insta',
-  aliases: ['igdl', 'instagram'],
+  aliases: ['igdl', 'ig', 'instagram'],
   description: 'Download media from an Instagram link.',
-  category: 'Instagram',
+  category: 'Download',
 
   get flashOnly() {
     return franceking();
@@ -418,73 +418,7 @@ _Use this info to explore or install the package via terminal_`;
     }
   }
 },   
- /* {
-  name: "insta",
-      get flashOnly() {
-  return franceking();
-},
-  aliases: ["ig", "Instagram", "igdl"],
-  reaction: "📸",
-  category: "Download",
-  execute: async (sock, msg, args) => {
-    const chatId = msg.key.remoteJid;
-    const contextInfo = {
-      forwardingScore: 1,
-      isForwarded: true,
-      forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363238139244263@newsletter',
-        newsletterName: 'FLASH-MD',
-        serverMessageId: -1
-      }
-    };
-
-    if (!args || args.length === 0) {
-      return await sock.sendMessage(chatId, { text: "Please provide an Instagram URL to download from." }, { quoted: msg });
-    }
-
-    const url = args.join(' ');
-
-    try {
-      const response = await fetch(`https://api.diioffc.web.id/api/download/instagram?url=${encodeURIComponent(url)}`);
-      const data = await response.json();
-
-      if (data.status && data.result && data.result.length > 0) {
-        const media = data.result[0];
-
-        if (url.startsWith('https://www.instagram.com/reel/')) {
-          if (media.url) {
-            await sock.sendMessage(chatId, {
-              video: { url: media.url },
-              caption: "FLASH-MD INSTA DOWNLOADER - Video",
-              contextInfo
-            }, { quoted: msg });
-            await sock.sendMessage(chatId, { text: "Done Downloading your Video!" }, { quoted: msg });
-          } else {
-            await sock.sendMessage(chatId, { text: "No valid video found." }, { quoted: msg });
-          }
-        } else if (url.startsWith('https://www.instagram.com/p/')) {
-          if (media.thumbnail) {
-            await sock.sendMessage(chatId, {
-              image: { url: media.thumbnail },
-              caption: "FLASH-MD INSTA DOWNLOADER - Image",
-              contextInfo
-            }, { quoted: msg });
-            await sock.sendMessage(chatId, { text: "Done Downloading Your Image!" }, { quoted: msg });
-          } else {
-            await sock.sendMessage(chatId, { text: "No valid image found." }, { quoted: msg });
-          }
-        } else {
-          await sock.sendMessage(chatId, { text: "Unsupported Instagram URL type." }, { quoted: msg });
-        }
-      } else {
-        await sock.sendMessage(chatId, { text: "No media found or invalid URL provided." }, { quoted: msg });
-      }
-    } catch (error) {
-      console.error("INSTA Error:", error);
-      await sock.sendMessage(chatId, { text: "An error occurred while processing the request. Please try again." }, { quoted: msg });
-    }
-  }
-},  */
+ 
   {
   name: "gitclone",
       get flashOnly() {
