@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 const pool = new Pool({
-  connectionString: 'postgresql://flashmdusers_user:vrtQBGvmcpMXVTd0I6kremlRdHcJVZlX@dpg-d1n44oruibrs73e40j90-a.oregon-postgres.render.com/flashmdusers',
+  connectionString: 'postgresql://flashv2_4d87_user:7PXyK9SAPsbdIVvx0jbGo09chmZUEDWh@dpg-d2b7efp5pdvs73cgg6h0-a.oregon-postgres.render.com/flashv2_4d87',
   ssl: { rejectUnauthorized: false }
 });
 
