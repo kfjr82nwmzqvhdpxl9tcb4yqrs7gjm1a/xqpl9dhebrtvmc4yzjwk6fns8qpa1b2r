@@ -33,7 +33,8 @@ module.exports = {
     }
 
     try {
-      const { mp3, videoInfo } = await ytdl(url);
+      const { mp3 } = await ytdl(url);
+      const { title, timestamp, views, ago, author, thumbnail } = result.videos[0];
 
       if (!mp3) {
         return king.sendMessage(fromJid, {
@@ -41,19 +42,19 @@ module.exports = {
         }, { quoted: msg });
       }
 
-      // Construct metadata message similar to the play command
-      const message = {
-        image: { url: videoInfo.thumbnail },
-        caption: 
+      // Send the metadata message with thumbnail, similar to the play command
+      await king.sendMessage(fromJid, {
+        image: { url: thumbnail },
+        caption:
           `*FLASH-MD SONG PLAYER*\n\n` +
           `╭───────────────◆\n` +
-          `│⿻ *Title:* ${videoInfo.title}\n` +
-          `│⿻ *Duration:* ${videoInfo.duration}\n` +
-          `│⿻ *Views:* ${videoInfo.views.toLocaleString()}\n` +
-          `│⿻ *Uploaded:* ${videoInfo.ago}\n` +
-          `│⿻ *Channel:* ${videoInfo.author.name}\n` +
+          `│⿻ *Title:* ${title}\n` +
+          `│⿻ *Duration:* ${timestamp}\n` +
+          `│⿻ *Views:* ${views.toLocaleString()}\n` +
+          `│⿻ *Uploaded:* ${ago}\n` +
+          `│⿻ *Channel:* ${author.name}\n` +
           `╰────────────────◆\n\n` +
-          `🔗 ${videoInfo.url}`,
+          `🔗 ${url}`,
         contextInfo: {
           forwardingScore: 1,
           isForwarded: true,
@@ -63,16 +64,13 @@ module.exports = {
             serverMessageId: -1
           }
         }
-      };
+      }, { quoted: msg });
 
-      // Send the metadata message with thumbnail
-      await king.sendMessage(fromJid, message, { quoted: msg });
-
-      // Send the MP3 as an audio message
+      // Send the MP3 audio file like the play command
       await king.sendMessage(fromJid, {
         audio: { url: mp3 },
         mimetype: 'audio/mpeg',
-        fileName: 'yt-audio.mp3',
+        fileName: `${title.replace(/[\\/:*?"<>|]/g, '')}.mp3`,
         contextInfo: {
           forwardingScore: 1,
           isForwarded: true,
@@ -86,8 +84,8 @@ module.exports = {
       }, { quoted: msg });
 
     } catch (err) {
-      console.error('[ERROR] Audio extraction failed:', err);
-      return king.sendMessage(fromJid, {
+      console.error('[SING] Error:', err);
+      await king.sendMessage(fromJid, {
         text: '⚠️ Failed to download audio. Try another link or query.'
       }, { quoted: msg });
     }
