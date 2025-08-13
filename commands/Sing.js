@@ -1,4 +1,4 @@
-const ytdl = require('../france/yt');
+const ytdl = require('../france/Yt');
 const yts = require('yt-search');
 
 module.exports = {
