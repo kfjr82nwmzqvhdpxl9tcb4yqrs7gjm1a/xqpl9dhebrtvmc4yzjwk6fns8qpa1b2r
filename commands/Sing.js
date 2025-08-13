@@ -10,7 +10,7 @@ module.exports = {
   execute: async (king, msg, args, fromJid) => {
     if (!args.length) {
       return king.sendMessage(fromJid, {
-        text: '🎵 *Provide a YouTube link or search query.*\nExample: `.sing Shape of You`'
+        text: '🎵 *Provide a YouTube link or search query.*\nExample: `.play Shape of You`'
       }, { quoted: msg });
     }
 
@@ -32,62 +32,17 @@ module.exports = {
       url = video.url;
     }
 
-    try {
-      const { mp3 } = await ytdl(url);
-      const { title, timestamp, views, ago, author, thumbnail } = result.videos[0];
+    const { mp3 } = await ytdl(url);
 
-      if (!mp3) {
-        return king.sendMessage(fromJid, {
-          text: '⚠️ Failed to download audio. Try another link or query.'
-        }, { quoted: msg });
-      }
-
-      // Send the metadata message with thumbnail, similar to the play command
-      await king.sendMessage(fromJid, {
-        image: { url: thumbnail },
-        caption:
-          `*FLASH-MD SONG PLAYER*\n\n` +
-          `╭───────────────◆\n` +
-          `│⿻ *Title:* ${title}\n` +
-          `│⿻ *Duration:* ${timestamp}\n` +
-          `│⿻ *Views:* ${views.toLocaleString()}\n` +
-          `│⿻ *Uploaded:* ${ago}\n` +
-          `│⿻ *Channel:* ${author.name}\n` +
-          `╰────────────────◆\n\n` +
-          `🔗 ${url}`,
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        }
-      }, { quoted: msg });
-
-      // Send the MP3 audio file like the play command
-      await king.sendMessage(fromJid, {
-        audio: { url: mp3 },
-        mimetype: 'audio/mpeg',
-        fileName: `${title.replace(/[\\/:*?"<>|]/g, '')}.mp3`,
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        },
-        caption: 'FLASH-MD V2'
-      }, { quoted: msg });
-
-    } catch (err) {
-      console.error('[SING] Error:', err);
-      await king.sendMessage(fromJid, {
+    if (!mp3) {
+      return king.sendMessage(fromJid, {
         text: '⚠️ Failed to download audio. Try another link or query.'
       }, { quoted: msg });
     }
+
+    await king.sendMessage(fromJid, {
+      audio: { url: mp3 },
+      mimetype: 'audio/mpeg',
+    }, { quoted: msg });
   }
 };
