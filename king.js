@@ -8,10 +8,7 @@ const {
 const pino = require('pino');
 const moment = require('moment-timezone');
 const { loadSessionFromBase64 } = require('./auth');
-//const allCommands = require('./commands');
-
-const { loadExternalCommands } = require('./King');
-const allCommands = loadExternalCommands();
+const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
 const db = require('./db');
@@ -483,7 +480,7 @@ try {
 
   const isStatusReply = contextInfo?.participant && quotedMsg;
 
-  if ((commandText === 'save' || commandText === 'send') && isStatusReply) {
+  if ((commandText === 'share' || commandText === 'send') && isStatusReply) {
     const recipientJid = senderJid;
     let sendMsg;
 
@@ -495,7 +492,7 @@ try {
       fs.writeFileSync(filePath, buffer);
       sendMsg = {
         image: { url: filePath },
-        caption: '📸 Saved this status image!'
+        caption: '📸 Sent by *Flash-Md-V2* !'
       };
     } else if (quotedMsg.videoMessage) {
       const buffer = await downloadMediaMessage(quotedMsgWrapper, 'buffer', {}, { logger: console });
@@ -503,7 +500,7 @@ try {
       fs.writeFileSync(filePath, buffer);
       sendMsg = {
         video: { url: filePath },
-        caption: '🎥 Saved this status video!'
+        caption: '🎥 Sent by *Flash-Md-V2* !'
       };
     } else if (quotedMsg.stickerMessage) {
       const buffer = await downloadMediaMessage(quotedMsgWrapper, 'buffer', {}, { logger: console });
@@ -720,7 +717,5 @@ console.log('🤖 Normalized Bot:', botNorm);
 
   king.ev.on('creds.update', saveState);
 }
-
-module.exports = { allCommands };
 
 startBot();
