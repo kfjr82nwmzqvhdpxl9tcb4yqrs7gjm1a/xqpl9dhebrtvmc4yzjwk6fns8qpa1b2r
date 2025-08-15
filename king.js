@@ -8,7 +8,10 @@ const {
 const pino = require('pino');
 const moment = require('moment-timezone');
 const { loadSessionFromBase64 } = require('./auth');
-const allCommands = require('./commands');
+//const allCommands = require('./commands');
+
+const { loadExternalCommands } = require('./King');
+const allCommands = loadExternalCommands();
 const conf = require('./config');
 require('./flash.js');
 const db = require('./db');
@@ -717,5 +720,7 @@ console.log('🤖 Normalized Bot:', botNorm);
 
   king.ev.on('creds.update', saveState);
 }
+
+module.exports = { allCommands };
 
 startBot();
