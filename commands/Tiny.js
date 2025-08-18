@@ -16,7 +16,7 @@ module.exports = {
 
     if (!longUrl || !longUrl.startsWith('http')) {
       return king.sendMessage(fromJid, {
-        text: '🔗 *Usage:* `.tinyurl <long-url>`\n\nExample: `.tinyurl https://example.com/very/long/link`'
+        text: '🔗 *Usage:* `tinyurl https://github.com/franceking1/Flash-Md-V2'
       }, { quoted: msg });
     }
 
