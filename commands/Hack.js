@@ -3,7 +3,7 @@ const { franceking } = require('../main');
 module.exports = {
   name: 'hack',
   aliases: ['fakehack', 'h4ck'],
-  description: 'Fake hack. ',
+  description: 'Fake hack for fun 😈',
   category: 'Fun',
 
   get flashOnly() {
@@ -45,7 +45,6 @@ module.exports = {
     ];
 
     const messages = [
-      `🧠 Initiating hack...`,
       `🔌 Connecting to device: ${randomDevice[Math.floor(Math.random() * randomDevice.length)]}`,
       `🌐 IP Address: ${randomIP()}`,
       `📡 Signal strength: ▓▓▓▓▓▓▓▓▓▒ 95%`,
@@ -59,23 +58,50 @@ module.exports = {
       `🧪 Injecting malware into WhatsApp backup...`,
       `💾 Download complete.`,
       `🧹 Deleting traces...`,
-      `💀 Hack complete. Target is now under our control.`
+      `💀 Hack complete. Target is now under our control.`,
+      `🛑 *Warning:* This hack has triggered a report to Interpol. Good luck 😈`
     ];
 
-    for (const bar of progressSteps) {
-      await king.sendMessage(fromJid, { text: `💻 Hacking progress:\n${bar}` }, { quoted: msg });
-      await sleep(1000);
-    }
+    let display = '🧠 Initiating hack...\n\n' + progressSteps[0];
 
-    await sleep(1000);
+    const hackMsg = await king.sendMessage(fromJid, {
+      text: display
+    }, { quoted: msg });
+
+    for (let i = 1; i < progressSteps.length; i++) {
+      display = '🧠 Initiating hack...\n\n' + progressSteps[i];
+      await sleep(1000);
+      await king.relayMessage(
+        fromJid,
+        {
+          protocolMessage: {
+            key: hackMsg.key,
+            type: 14,
+            editedMessage: {
+              conversation: display
+            }
+          }
+        },
+        {}
+      );
+    }
 
     for (const line of messages) {
-      await king.sendMessage(fromJid, { text: line }, { quoted: msg });
-      await sleep(1300);
+      await sleep(1500);
+      display += `\n\n${line}`;
+      await king.relayMessage(
+        fromJid,
+        {
+          protocolMessage: {
+            key: hackMsg.key,
+            type: 14,
+            editedMessage: {
+              conversation: display
+            }
+          }
+        },
+        {}
+      );
     }
-
-    await king.sendMessage(fromJid, {
-      text: `🛑 *Warning:* This hack has triggered a report to Interpol. Good luck 😈`,
-    }, { quoted: msg });
   }
 };
