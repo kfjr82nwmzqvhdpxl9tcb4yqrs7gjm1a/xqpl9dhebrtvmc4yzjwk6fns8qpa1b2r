@@ -116,7 +116,7 @@ module.exports = [
         text: `🔍 Searching for information on *${animeName}*...`
       }, { quoted: msg });
 
-      const responseInfo = await axios.get(`https://api.jikan.moe/v4/anime?q=${animeName}&limit=5`);
+      const responseInfo = await axios.get(`https://api.jikan.moe/v4/anime?q=${animeName}`);
       const results = responseInfo.data?.data;
 
       if (!results || results.length === 0) {
