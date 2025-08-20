@@ -93,6 +93,83 @@ module.exports = [
   }
   }, 
  {
+  name: 'anime',
+  aliases: ['animesearch'],
+  description: 'Search for anime info using Jikan API 📺',
+  category: 'Search',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    const animeName = args.join(" ");
+    if (!animeName) {
+      return king.sendMessage(fromJid, {
+        text: "Please provide an anime name. Example: *.anime One Piece*"
+      }, { quoted: msg });
+    }
+
+    try {
+      await king.sendMessage(fromJid, {
+        text: `🔍 Searching for information on *${animeName}*...`
+      }, { quoted: msg });
+
+      const responseInfo = await axios.get(`https://api.jikan.moe/v4/anime?q=${animeName}&limit=1`);
+      if (!responseInfo.data.data || responseInfo.data.data.length === 0) {
+        return king.sendMessage(fromJid, {
+          text: `Could not find the anime "${animeName}".`
+        }, { quoted: msg });
+      }
+
+      const animeData = responseInfo.data.data[0];
+
+      let nextEpisodeText = "Information not available.";
+      try {
+        const responseAirs = await axios.get(`https://api.jikan.moe/v4/anime/${animeData.mal_id}/episodes`);
+        const episodes = responseAirs.data.data;
+        const now = new Date();
+        const nextEpisode = episodes.find(ep => ep.aired && new Date(ep.aired) > now);
+
+        if (nextEpisode && nextEpisode.aired) {
+          const date = new Date(nextEpisode.aired);
+          nextEpisodeText = `Episode ${nextEpisode.mal_id} scheduled for ${date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}`;
+        } else if (animeData.status !== "Currently Airing") {
+          nextEpisodeText = "The anime has finished airing.";
+        }
+      } catch (e) {}
+
+      const title = animeData.title_japanese ? `${animeData.title} (${animeData.title_japanese})` : animeData.title;
+      const synopsis = animeData.synopsis ? animeData.synopsis.substring(0, 300) + '...' : 'No synopsis available.';
+      const score = animeData.score ? `${animeData.score}/10 ⭐` : 'N/A';
+      const episodesInfo = animeData.episodes ? `${animeData.episodes} episodes` : 'N/A';
+
+      const message = `📺 *${title}*\n\n` +
+                      `*Status:* ${animeData.status}\n` +
+                      `*Score:* ${score}\n` +
+                      `*Episodes:* ${episodesInfo}\n\n` +
+                      `*Synopsis:*\n${synopsis}\n\n` +
+                      `*Next Episode:* ${nextEpisodeText}`;
+
+      await king.sendMessage(fromJid, {
+        image: { url: animeData.images.jpg.large_image_url },
+        caption: message
+      }, { quoted: msg });
+
+    } catch (error) {
+      await king.sendMessage(fromJid, {
+        text: "An error occurred during the search. The API might be overloaded, please try again."
+      }, { quoted: msg });
+    }
+  }
+}, 
+  
+ {
   name: 'love',
   aliases: ['compatibility', 'lovetest'],
   description: 'Calculate love compatibility between two people ❤️',
