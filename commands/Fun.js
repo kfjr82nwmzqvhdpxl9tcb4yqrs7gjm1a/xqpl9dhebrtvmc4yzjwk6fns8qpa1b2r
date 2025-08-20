@@ -1,4 +1,4 @@
-const { franceking } = require('../main');
+
 const { axios } = require('axios');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const { franceking } = require('../main');
@@ -318,87 +318,6 @@ module.exports = [
     }
   }
   }, 
-
-{
-  name: 'anime',
-  aliases: ['animesearch'],
-  description: 'Search for anime info using Jikan API 📺',
-  category: 'Search',
-
-  get flashOnly() {
-    return franceking();
-  },
-
-  execute: async (king, msg, args, fromJid) => {
-    const animeName = args.join(" ");
-    if (!animeName) {
-      return king.sendMessage(fromJid, {
-        text: "Please provide an anime name. Example: *.anime One Piece*"
-      }, { quoted: msg });
-    }
-
-    try {
-      await king.sendMessage(fromJid, {
-        text: `🔍 Searching for information on *${animeName}*...`
-      }, { quoted: msg });
-
-      const responseInfo = await axios.get(`https://api.jikan.moe/v4/anime?q=${animeName}`);
-      const results = responseInfo.data?.data;
-
-      if (!results || results.length === 0) {
-        return king.sendMessage(fromJid, {
-          text: `Could not find the anime "${animeName}".`
-        }, { quoted: msg });
-      }
-
-      const animeData = results.find(a => a.type !== 'Music' && a.type !== 'OVA' && a.type !== 'Special') || results[0];
-
-      let nextEpisodeText = "Information not available.";
-      try {
-        const airingInfo = animeData.aired?.to || animeData.aired?.from;
-        if (airingInfo) {
-          const date = new Date(airingInfo);
-          nextEpisodeText = date > new Date()
-            ? `Airing on ${date.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}`
-            : "Already aired.";
-        } else if (animeData.status !== "Currently Airing") {
-          nextEpisodeText = "The anime has finished airing.";
-        }
-      } catch (e) {}
-
-      const title = animeData.title_japanese
-        ? `${animeData.title} (${animeData.title_japanese})`
-        : animeData.title;
-      const synopsis = animeData.synopsis
-        ? animeData.synopsis.substring(0, 300) + '...'
-        : 'No synopsis available.';
-      const score = animeData.score ? `${animeData.score}/10 ⭐` : 'N/A';
-      const episodesInfo = animeData.episodes ? `${animeData.episodes} episodes` : 'N/A';
-
-      const message = `📺 *${title}*\n\n` +
-                      `*Status:* ${animeData.status}\n` +
-                      `*Score:* ${score}\n` +
-                      `*Episodes:* ${episodesInfo}\n\n` +
-                      `*Synopsis:*\n${synopsis}\n\n` +
-                      `*Next Episode:* ${nextEpisodeText}`;
-
-      await king.sendMessage(fromJid, {
-        image: { url: animeData.images.jpg.large_image_url },
-        caption: message
-      }, { quoted: msg });
-
-    } catch (error) {
-      await king.sendMessage(fromJid, {
-        text: "An error occurred during the search. The API might be overloaded or returned incomplete data."
-      }, { quoted: msg });
-    }
-  }
-},  
  {
   name: 'love',
   aliases: ['compatibility', 'lovetest'],
