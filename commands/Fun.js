@@ -1,6 +1,7 @@
 const { franceking } = require('../main');
 
-module.exports = {
+module.exports = [
+  {
   name: 'hack',
   aliases: ['fakehack', 'h4ck'],
   description: 'Fake hack for fun 😈',
@@ -90,4 +91,58 @@ module.exports = {
       }, { quoted: msg });
     }
   }
-};
+  }, 
+   {
+  name: 'flip',
+  aliases: ['coin', 'toss'],
+  description: 'Toss a coin and get HEADS or TAILS 🪙',
+  category: 'Fun',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const coinMsg = await king.sendMessage(fromJid, {
+      text: '🪙 Tossing the coin in the air...'
+    }, { quoted: msg });
+
+    await sleep(1000);
+
+    await king.relayMessage(
+      fromJid,
+      {
+        protocolMessage: {
+          key: coinMsg.key,
+          type: 14,
+          editedMessage: {
+            conversation: '🌀 The coin is spinning... spinning...'
+          }
+        }
+      },
+      {}
+    );
+
+    await sleep(1500);
+
+    const result = Math.random() < 0.5 ? 'HEADS' : 'TAILS';
+
+    const finalText = `🪙 The coin has landed!\n\nResult: It's *${result}*!`;
+
+    await king.relayMessage(
+      fromJid,
+      {
+        protocolMessage: {
+          key: coinMsg.key,
+          type: 14,
+          editedMessage: {
+            conversation: finalText
+          }
+        }
+      },
+      {}
+    );
+  }
+} ];
