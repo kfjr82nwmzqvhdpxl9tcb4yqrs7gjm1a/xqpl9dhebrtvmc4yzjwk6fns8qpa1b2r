@@ -1,5 +1,5 @@
 const { franceking } = require('../main');
-
+const { axios} = require('axios');
 module.exports = [
   {
   name: 'hack',
