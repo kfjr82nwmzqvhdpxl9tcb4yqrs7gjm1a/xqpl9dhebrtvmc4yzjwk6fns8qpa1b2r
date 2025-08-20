@@ -92,6 +92,48 @@ module.exports = [
     }
   }
   }, 
+ {
+  name: 'love',
+  aliases: ['compatibility', 'lovetest'],
+  description: 'Calculate love compatibility between two people ❤️',
+  category: 'Fun',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    const senderName = msg.pushName || 'User';
+    const quoted = msg.message?.extendedTextMessage?.contextInfo?.participant;
+    const quotedName = msg.message?.extendedTextMessage?.contextInfo?.participant || '';
+    let user1 = senderName;
+    let user2 = '';
+
+    if (msg.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+      user2 = quotedName.replace(/@s\.whatsapp\.net$/, '');
+    } else if (args.length > 0) {
+      user2 = args.join(' ');
+    } else {
+      return king.sendMessage(fromJid, {
+        text: 'Please mention someone or reply to their message. Example: *.love @Marie*'
+      }, { quoted: msg });
+    }
+
+    const percentage = Math.floor(Math.random() * 101);
+    let emoji = '❤️';
+    if (percentage < 25) emoji = '💔';
+    else if (percentage < 50) emoji = '🤔';
+    else if (percentage < 75) emoji = '😊';
+    else emoji = '💖';
+
+    const response = `--- Compatibility Test ---\n\n` +
+                     `❤️ Person 1: *${user1}*\n` +
+                     `❤️ Person 2: *${user2}*\n\n` +
+                     `Their compatibility is: *${percentage}%* ${emoji}`;
+
+    await king.sendMessage(fromJid, { text: response }, { quoted: msg });
+  }
+}, 
    {
   name: 'flip',
   aliases: ['coin', 'toss'],
