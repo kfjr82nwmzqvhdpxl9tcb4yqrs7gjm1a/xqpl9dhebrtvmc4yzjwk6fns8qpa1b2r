@@ -62,23 +62,20 @@ module.exports = {
       `🛑 *Warning:* This hack has triggered a report to Interpol. Good luck 😈`
     ];
 
-    let display = '🧠 Initiating hack...\n\n' + progressSteps[0];
-
-    const hackMsg = await king.sendMessage(fromJid, {
-      text: display
+    const progressMsg = await king.sendMessage(fromJid, {
+      text: `💻 Hacking progress:\n${progressSteps[0]}`
     }, { quoted: msg });
 
     for (let i = 1; i < progressSteps.length; i++) {
-      display = '🧠 Initiating hack...\n\n' + progressSteps[i];
       await sleep(1000);
       await king.relayMessage(
         fromJid,
         {
           protocolMessage: {
-            key: hackMsg.key,
+            key: progressMsg.key,
             type: 14,
             editedMessage: {
-              conversation: display
+              conversation: `💻 Hacking progress:\n${progressSteps[i]}`
             }
           }
         },
@@ -88,20 +85,9 @@ module.exports = {
 
     for (const line of messages) {
       await sleep(1500);
-      display += `\n\n${line}`;
-      await king.relayMessage(
-        fromJid,
-        {
-          protocolMessage: {
-            key: hackMsg.key,
-            type: 14,
-            editedMessage: {
-              conversation: display
-            }
-          }
-        },
-        {}
-      );
+      await king.sendMessage(fromJid, {
+        text: line
+      }, { quoted: msg });
     }
   }
 };
