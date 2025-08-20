@@ -1,6 +1,232 @@
 const { franceking } = require('../main');
 const { axios } = require('axios');
+const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const { franceking } = require('../main');
+
 module.exports = [
+  {
+  name: 'exchange',
+  aliases: ['rate', 'rates'],
+  category: 'Finance',
+  description: 'Convert currency using live exchange rate',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    if (args.length < 3) {
+      return king.sendMessage(fromJid, {
+        text: 'Please provide the amount, from currency, and to currency.\n\nExample: *.exchange 100 usd kes*'
+      }, { quoted: msg });
+    }
+
+    const [amountRaw, fromCurrency, toCurrency] = args;
+    const amount = parseFloat(amountRaw);
+
+    if (isNaN(amount)) {
+      return king.sendMessage(fromJid, {
+        text: 'Invalid amount. Please enter a valid number.'
+      }, { quoted: msg });
+    }
+
+    try {
+      const response = await axios.get(`https://api.exchangerate-api.com/v4/latest/${fromCurrency.toUpperCase()}`);
+      const rates = response.data.rates;
+
+      if (!rates[toCurrency.toUpperCase()]) {
+        return king.sendMessage(fromJid, {
+          text: 'Currency conversion rate not available.'
+        }, { quoted: msg });
+      }
+
+      const convertedAmount = (amount * rates[toCurrency.toUpperCase()]).toFixed(2);
+
+      return king.sendMessage(fromJid, {
+        text: `${amount} ${fromCurrency.toUpperCase()} = ${convertedAmount} ${toCurrency.toUpperCase()}`
+      }, { quoted: msg });
+
+    } catch (error) {
+      return king.sendMessage(fromJid, {
+        text: '❌ An error occurred while converting currency. Please try again later.'
+      }, { quoted: msg });
+    }
+  }
+}, 
+{
+  name: 'currency',
+  description: 'Converts one currency to another using live exchange rates',
+  category: 'Finance',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    if (!args[0] || args.length < 3) {
+      return king.sendMessage(fromJid, {
+        text: "Please provide the amount, from currency, and to currency. Example: *.currency 100 usd kes*"
+      }, { quoted: msg });
+    }
+
+    const [amountRaw, fromCurrency, toCurrency] = args;
+    const amount = parseFloat(amountRaw);
+
+    if (isNaN(amount)) {
+      return king.sendMessage(fromJid, {
+        text: "Invalid amount. Please provide a number. Example: *.currency 50 eur usd*"
+      }, { quoted: msg });
+    }
+
+    try {
+      const response = await axios.get(`https://api.exchangerate-api.com/v4/latest/${fromCurrency.toUpperCase()}`);
+      const data = response.data;
+      const rates = data.rates;
+
+      if (!rates[toCurrency.toUpperCase()]) {
+        return king.sendMessage(fromJid, {
+          text: `Invalid target currency *${toCurrency.toUpperCase()}*. Use *.currencyinfo* to view supported currencies.`
+        }, { quoted: msg });
+      }
+
+      const convertedAmount = (amount * rates[toCurrency.toUpperCase()]).toFixed(2);
+      const updateDate = new Date(data.time_last_updated * 1000);
+
+      let info = `*💱 Currency Conversion 💱*\n\n`;
+      info += `🌍 Base: ${data.base}\n`;
+      info += `🔄 Updated: ${updateDate.toLocaleDateString()} - ${updateDate.toLocaleTimeString()}\n\n`;
+      info += `💵 ${amount} ${fromCurrency.toUpperCase()} = ${convertedAmount} ${toCurrency.toUpperCase()}\n`;
+      info += `💸 Rate: 1 ${fromCurrency.toUpperCase()} = ${rates[toCurrency.toUpperCase()]} ${toCurrency.toUpperCase()}`;
+
+      await king.sendMessage(fromJid, { text: info }, { quoted: msg });
+
+    } catch (error) {
+      await king.sendMessage(fromJid, {
+        text: "❌ An error occurred while converting currency.\nMake sure your currency codes are valid.\nUse *.currencyinfo* to see all supported currencies."
+      }, { quoted: msg });
+    }
+  }
+}, 
+  {
+  name: 'imdb',
+  aliases: ['movie', 'film'],
+  description: 'Search for a movie or series using IMDb API',
+  category: 'Search',
+
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    if (!args[0]) {
+      return king.sendMessage(fromJid, {
+        text: '🎬 Provide the name of a movie or series. Example: *.imdb Inception*'
+      }, { quoted: msg });
+    }
+
+    const query = args.join(" ");
+    try {
+      const response = await axios.get(`http://www.omdbapi.com/?apikey=742b2d09&t=${encodeURIComponent(query)}&plot=full`);
+      const imdb = response.data;
+
+      if (imdb.Response === 'False') {
+        return king.sendMessage(fromJid, {
+          text: `❌ Could not find results for "${query}".`
+        }, { quoted: msg });
+      }
+
+      let info = "⚍⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚍\n";
+      info += " ``` 𝕀𝕄𝔻𝔹 𝕊𝔼𝔸ℝℂℍ```\n";
+      info += "⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎⚎\n";
+      info += `🎬 Title: ${imdb.Title}\n`;
+      info += `📅 Year: ${imdb.Year}\n`;
+      info += `⭐ Rated: ${imdb.Rated}\n`;
+      info += `📆 Release: ${imdb.Released}\n`;
+      info += `⏳ Runtime: ${imdb.Runtime}\n`;
+      info += `🌀 Genre: ${imdb.Genre}\n`;
+      info += `👨🏻‍💻 Director: ${imdb.Director}\n`;
+      info += `✍ Writers: ${imdb.Writer}\n`;
+      info += `👨 Actors: ${imdb.Actors}\n`;
+      info += `📃 Synopsis: ${imdb.Plot}\n`;
+      info += `🌐 Language: ${imdb.Language}\n`;
+      info += `🌍 Country: ${imdb.Country}\n`;
+      info += `🎖️ Awards: ${imdb.Awards}\n`;
+      info += `📦 Box Office: ${imdb.BoxOffice}\n`;
+      info += `🏙️ Production: ${imdb.Production}\n`;
+      info += `🌟 IMDb Rating: ${imdb.imdbRating}\n`;
+      info += `❎ IMDb Votes: ${imdb.imdbVotes}\n`;
+      info += `🎥 Watch Online: https://www.google.com/search?q=watch+${encodeURIComponent(imdb.Title)}+online\n`;
+
+      await king.sendMessage(fromJid, {
+        image: { url: imdb.Poster },
+        caption: info
+      }, { quoted: msg });
+
+    } catch (error) {
+      return king.sendMessage(fromJid, {
+        text: "❌ An error occurred while searching IMDb."
+      }, { quoted: msg });
+    }
+  }
+}, 
+  {
+  name: 'emomix',
+  aliases: ['emojimix'],
+  category: 'Converter',
+  description: 'Mixes two emojis into one sticker',
+  
+  get flashOnly() {
+    return franceking();
+  },
+
+  execute: async (king, msg, args, fromJid) => {
+    if (!args[0] || args.length !== 1) {
+      return king.sendMessage(fromJid, {
+        text: "Incorrect use. Example: *.emomix 😀;🥰*"
+      }, { quoted: msg });
+    }
+
+    const emojis = args.join(' ').split(';');
+    if (emojis.length !== 2) {
+      return king.sendMessage(fromJid, {
+        text: "Please specify two emojis using a `;` separator."
+      }, { quoted: msg });
+    }
+
+    const emoji1 = emojis[0].trim();
+    const emoji2 = emojis[1].trim();
+
+    try {
+      const response = await axios.get(`https://levanter.onrender.com/emix?q=${emoji1}${emoji2}`);
+
+      if (response.data?.status) {
+        const stickerMess = new Sticker(response.data.result, {
+          pack: 'FLASH-MD',
+          type: StickerTypes.CROPPED,
+          categories: ['🤩', '🎉'],
+          id: '12345',
+          quality: 70,
+          background: 'transparent'
+        });
+
+        const buffer = await stickerMess.toBuffer();
+        await king.sendMessage(fromJid, {
+          sticker: buffer
+        }, { quoted: msg });
+
+      } else {
+        return king.sendMessage(fromJid, {
+          text: 'Unable to create emoji mix.'
+        }, { quoted: msg });
+      }
+
+    } catch (err) {
+      return king.sendMessage(fromJid, {
+        text: 'An error occurred while creating the emoji mix: ' + err.message
+      }, { quoted: msg });
+    }
+  }
+}, 
   {
   name: 'hack',
   aliases: ['fakehack', 'h4ck'],
