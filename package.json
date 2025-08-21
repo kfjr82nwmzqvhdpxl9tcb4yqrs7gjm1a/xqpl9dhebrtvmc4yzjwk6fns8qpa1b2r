@@ -30,7 +30,7 @@
     "performance-now": "^2.1.0",
     "pino": "^8.15.1",
     "pino-pretty": "^10.0.0",
-    "puppeteer": "^21.3.8",
+    "puppeteer": "24.17.0",
     "qs": "latest",
     "translatte": "^3.0.1",
     "wa-sticker-formatter": "^4.4.4",
