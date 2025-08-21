@@ -1,28 +1,43 @@
-// france/scraper.js
-const axios = require('axios');
-const FormData = require('form-data');
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
 
 async function enhanceImage(imageBuffer) {
-  const form = new FormData();
-  form.append('image', imageBuffer, {
-    filename: 'image.jpg',
-    contentType: 'image/jpeg'
-  });
+  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+  const page = await browser.newPage();
 
-  const response = await axios.post('https://api.upscale.media/api/v1/upscale', form, {
-    headers: {
-      ...form.getHeaders()
-    }
-  });
+  await page.goto('https://waifu2x.udp.jp/index.en.html', { waitUntil: 'networkidle2' });
 
-  const { success, output_url } = response.data;
+  // Save the buffer temporarily to upload
+  const tempImagePath = path.join(__dirname, 'temp_upload.jpg');
+  await fs.promises.writeFile(tempImagePath, imageBuffer);
 
-  if (!success || !output_url) {
-    throw new Error('Failed to enhance image using Upscale.media');
-  }
+  // Upload file
+  const inputUploadHandle = await page.$('input[type=file]');
+  await inputUploadHandle.uploadFile(tempImagePath);
 
-  const enhancedImage = await axios.get(output_url, { responseType: 'arraybuffer' });
-  return Buffer.from(enhancedImage.data, 'binary');
+  // Set noise reduction to 'None' (optional)
+  await page.select('#noise_level', '0');
+  // Set scale to 2x (default)
+  await page.select('#scale', '2');
+
+  // Click convert
+  await page.click('input[type=submit]');
+
+  // Wait for result image to appear (max 60 seconds)
+  await page.waitForSelector('#result > img', { timeout: 60000 });
+
+  // Get the URL of the enhanced image
+  const enhancedImageUrl = await page.$eval('#result > img', img => img.src);
+
+  // Download enhanced image
+  const viewSource = await page.goto(enhancedImageUrl);
+  const enhancedBuffer = await viewSource.buffer();
+
+  await browser.close();
+  await fs.promises.unlink(tempImagePath);
+
+  return enhancedBuffer;
 }
 
 module.exports = { enhanceImage };
