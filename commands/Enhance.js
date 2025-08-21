@@ -1,4 +1,3 @@
-// commands/enhance.js
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { enhanceImage } = require('../france/scraper');
 const { franceking } = require('../main');
@@ -35,10 +34,17 @@ module.exports = {
       }, { quoted: msg });
 
     } catch (err) {
-      console.error(err);
-      await king.sendMessage(fromJid, {
-        text: '❌ Failed to enhance the image. Try again later or check the image size/format.'
-      }, { quoted: msg });
+      let errorMessage = '❌ Failed to enhance the image.';
+
+      if (err.response && err.response.data) {
+        errorMessage += `\n*API Response:* ${JSON.stringify(err.response.data).slice(0, 1000)}`;
+      } else if (err.message) {
+        errorMessage += `\n*Error:* ${err.message}`;
+      }
+
+      await king.sendMessage(fromJid, { text: errorMessage }, { quoted: msg });
+      console.error('Enhance error:', err);
     }
   }
 };
+
