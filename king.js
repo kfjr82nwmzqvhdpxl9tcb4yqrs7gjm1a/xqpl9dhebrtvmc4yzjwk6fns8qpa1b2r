@@ -280,6 +280,30 @@ if (shouldAutoReact) {
     }
   }).catch(() => {});
 }
+
+const st = fromJid.endsWith('status@broadcast');
+const arSetting = (conf.AUTO_LIKE || '').toLowerCase().trim();
+
+const shouldAutoReact =
+  !isFromMe &&
+  msg.message &&
+  !isDev &&
+  arSetting === 'on';
+
+if (shouldAutoReact) {
+  const emojiList = [
+    '💚', '🤍',
+  ];
+
+  const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+  king.sendMessage(fromJid, {
+    react: {
+      text: randomEmoji,
+      key: msg.key,
+    },
+  }).catch(() => {});
+}
+  
     const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
 
     if (presenceToSend) {
