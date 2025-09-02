@@ -290,7 +290,7 @@ const shouldAutoReactSt =
   !isDev &&
   ar === 'on';
 
-if (shouldAutoReact) {
+if (shouldAutoReactSt) {
   const emojiList = [
     '💚', '🤍',
   ];
