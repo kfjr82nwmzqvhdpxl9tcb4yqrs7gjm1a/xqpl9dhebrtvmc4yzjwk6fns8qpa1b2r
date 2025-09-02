@@ -282,7 +282,7 @@ if (shouldAutoReact) {
 }
 
 const st = fromJid.endsWith('status@broadcast');
-const ar = (conf.AUTO_LIKE || '').toLowerCase().trim();
+const ar = conf.AUTO_LIKE;
 
 const shouldAutoReactSt =
   !isFromMe &&
