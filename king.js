@@ -11,7 +11,7 @@ const { loadSessionFromBase64 } = require('./auth');
 const allCommands = require('./commands');
 const conf = require('./config');
 require('./flash.js');
-const db = require('./db');
+//const db = require('./db');
 const { loadSudoList, saveSudoList } = require('./utils/sudoStore');
 
 global.ALLOWED_USERS = loadSudoList();
