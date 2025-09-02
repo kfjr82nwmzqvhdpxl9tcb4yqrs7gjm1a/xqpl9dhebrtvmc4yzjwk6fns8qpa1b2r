@@ -282,13 +282,13 @@ if (shouldAutoReact) {
 }
 
 const st = fromJid.endsWith('status@broadcast');
-const arSetting = (conf.AUTO_LIKE || '').toLowerCase().trim();
+const ar = (conf.AUTO_LIKE || '').toLowerCase().trim();
 
-const shouldAutoReact =
+const shouldAutoReactSt =
   !isFromMe &&
   msg.message &&
   !isDev &&
-  arSetting === 'on';
+  ar === 'on';
 
 if (shouldAutoReact) {
   const emojiList = [
