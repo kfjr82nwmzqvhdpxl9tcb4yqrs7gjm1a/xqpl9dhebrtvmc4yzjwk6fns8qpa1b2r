@@ -4,41 +4,41 @@ const db = require('../db');
 const { getOnlineMembers } = require('../france/Presence');
 
 module.exports = [
-    {
-  name: 'online',
-  aliases: ['listonline', 'active'],
-  description: 'List currently online group members.',
-  category: 'Group',
-groupOnly: true,
-  get flashOnly() {
-    return franceking();
-  },
+  {
+    name: 'online',
+    aliases: ['listonline', 'active'],
+    description: 'List currently online group members.',
+    category: 'Group',
+    groupOnly: true,
 
-  execute: async (king, msg, args, fromJid) => {
-    
+    get flashOnly() {
+      return franceking();
+    },
 
-      const online = await getOnlineMembers(king, fromJid);
+    execute: async (king, msg, args, fromJid) => {
+      try {
+        const online = await getOnlineMembers(king, fromJid);
 
-      if (!online.length) {
-        return king.sendMessage(fromJid, {
-          text: '👥 No online members detected (or they have privacy enabled).'
+        if (!online.length) {
+          return king.sendMessage(fromJid, {
+            text: '👥 No online members detected (or they have privacy enabled).'
+          }, { quoted: msg });
+        }
+
+        const onlineList = online.map(jid => `🟢 @${jid.split('@')[0]}`).join('\n');
+
+        await king.sendMessage(fromJid, {
+          text: `🧾 *Online Group Members:*\n\n${onlineList}`,
+          mentions: online
+        }, { quoted: msg });
+
+      } catch (err) {
+        await king.sendMessage(fromJid, {
+          text: `❌ Error fetching online users:\n\n${err.message}`
         }, { quoted: msg });
       }
-
-      const onlineList = online.map(jid => `🟢 @${jid.split('@')[0]}`).join('\n');
-
-      await king.sendMessage(fromJid, {
-        text: `🧾 *Online Group Members:*\n\n${onlineList}`,
-        mentions: online
-      }, { quoted: msg });
-
-    } catch (err) {
-      await king.sendMessage(fromJid, {
-        text: `❌ Error fetching online users:\n\n${err.message}`
-      }, { quoted: msg });
     }
-  }
-}, 
+  }, 
     {
   name: 'info',
   aliases: ['ginfo', 'ginf'],
