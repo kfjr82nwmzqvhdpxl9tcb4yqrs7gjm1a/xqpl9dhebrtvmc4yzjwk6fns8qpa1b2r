@@ -25,7 +25,9 @@ module.exports = [
           }, { quoted: msg });
         }
 
-        const onlineList = online.map(jid => `🟢 @${jid.split('@')[0]}`).join('\n');
+        const onlineList = online
+          .map((jid, index) => `${index + 1}. 🟢 @${jid.split('@')[0]}`)
+          .join('\n');
 
         await king.sendMessage(fromJid, {
           text: `🧾 *Online Group Members:*\n\n${onlineList}`,
