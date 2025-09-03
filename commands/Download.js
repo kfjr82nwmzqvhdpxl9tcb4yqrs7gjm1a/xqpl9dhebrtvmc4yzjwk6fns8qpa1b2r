@@ -25,7 +25,7 @@ module.exports = [
   name: 'tiktok',
   aliases: ['tk', 'tiktokdl'],
   description: 'Download TikTok media by link.',
-  category: 'Downloader',
+  category: 'Download',
 
   execute: async (king, msg, args, fromJid) => {
     const query = args.join(' ').trim();
@@ -44,7 +44,7 @@ module.exports = [
       }, { quoted: msg });
     }
 
-    const caption = `🎵 *${response.title || 'TikTok Media'}*`;
+    const caption = `🎵 *${response.title || 'FLASH-MD V2'}*`;
 
     if (response.video) {
       await king.sendMessage(fromJid, {
