@@ -1,7 +1,6 @@
 const { franceking } = require('../main');
 const conf = require('../config');
 const db = require('../db');
-const { franceking } = require('../main');
 const { getOnlineMembers } = require('../france/Presence');
 
 module.exports = [
