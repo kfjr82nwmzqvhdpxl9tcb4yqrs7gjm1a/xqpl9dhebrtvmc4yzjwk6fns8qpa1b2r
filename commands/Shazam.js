@@ -75,9 +75,12 @@ module.exports = {
       if (artists) response += `👤 *Artist(s):* ${artists.map(a => a.name).join(', ')}\n`;
       if (album?.name) response += `💿 *Album:* ${album.name}\n`;
       if (genres?.length) response += `🎼 *Genre:* ${genres.map(g => g.name).join(', ')}\n`;
-      if (release_date) response += `📅 *Released:* ${release_date}\n`;
+      if (release_date) {
+        const [year, month, day] = release_date.split('-');
+        response += `📅 *Released:* ${day}/${month}/${year}\n`;
+      }
       if (ytSearch?.videos?.[0]?.url) response += `🔗 *YouTube:* ${ytSearch.videos[0].url}\n`;
-      response += `\n🔍 Powered by ACRCloud & YouTube`;
+      response += `\n*POWERED BY FLASH-MD V2*`;
 
       return king.sendMessage(fromJid, {
         text: response.trim(),
