@@ -704,8 +704,8 @@ console.log('🤖 Normalized Bot:', botNorm);
       }).catch(() => {});
     }
 
-    if (command.flashOnly && !isAllowed && conf.MODE !== 'private') {
-  return;
+    if (command.flashOnly && !isAllowed) {
+      return;
     }
 
     if (command.groupOnly && !isGroup) {
