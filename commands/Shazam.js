@@ -36,7 +36,7 @@ function trimTo15Seconds(inputBuffer, outputPath) {
 
 module.exports = {
   name: 'shazam',
-  aliases: ['whatsong', 'findsong'],
+  aliases: ['whatsong', 'findsong', 'identify'],
   description: 'Identify a song from a short audio or video and show details.',
   category: 'Search',
 
@@ -50,11 +50,13 @@ module.exports = {
 
     if (!quoted || (!quoted.audioMessage && !quoted.videoMessage)) {
       return king.sendMessage(fromJid, {
-        text: '🎵 *Reply to a short audio or video (10–15s) to identify the song.*'
+        text: '🎵 *Please reply to a short audio or video message (10–15 seconds) to identify the song.*'
       }, { quoted: msg });
     }
 
+    let tempPath = null;
     try {
+      // 1. Download media
       const buffer = await downloadMediaMessage(
         { message: quoted },
         'buffer',
@@ -62,8 +64,12 @@ module.exports = {
         { logger: console }
       );
 
-      const trimmedBuffer = await trimTo15Seconds(buffer, path.join(__dirname, '..', 'temp', `trimmed-${Date.now()}.mp4`));
+      // 2. Trim to 15 seconds
+      const tempFileName = `trimmed-${Date.now()}.mp4`;
+      tempPath = path.join(__dirname, '..', 'temp', tempFileName);
+      const trimmedBuffer = await trimTo15Seconds(buffer, tempPath);
 
+      // 3. Identify with ACRCloud
       const acr = new acrcloud({
         host: 'identify-ap-southeast-1.acrcloud.com',
         access_key: '26afd4eec96b0f5e5ab16a7e6e05ab37',
@@ -74,28 +80,31 @@ module.exports = {
 
       if (status.code !== 0 || !metadata?.music?.length) {
         return king.sendMessage(fromJid, {
-          text: '❌ Could not recognize the song. Try again with a clearer 10–15 second clip.'
+          text: '❌ *Song could not be recognized.* Please try with a clearer 10–15 second audio or video clip.'
         }, { quoted: msg });
       }
 
+      // 4. Format results
       const music = metadata.music[0];
       const { title, artists, album, genres, release_date } = music;
 
-      const query = `${title} ${artists?.[0]?.name || ''}`;
-      const search = await yts(query);
+      const ytQuery = `${title} ${artists?.[0]?.name || ''}`;
+      const ytResult = await yts(ytQuery);
 
-      let result = `🎶 *Song Identified!*\n`;
-      result += `\n🎧 *Title:* ${title}`;
-      if (artists) result += `\n👤 *Artist(s):* ${artists.map(a => a.name).join(', ')}`;
-      if (album) result += `\n💿 *Album:* ${album.name}`;
-      if (genres) result += `\n🎼 *Genre:* ${genres.map(g => g.name).join(', ')}`;
-      if (release_date) result += `\n📅 *Released:* ${release_date}`;
-      if (search?.videos?.[0]?.url) result += `\n🔗 *YouTube:* ${search.videos[0].url}`;
+      let text = `🎶 *Song Identified!*\n\n`;
+      text += `🎧 *Title:* ${title || 'Unknown'}\n`;
+      if (artists) text += `👤 *Artist(s):* ${artists.map(a => a.name).join(', ')}\n`;
+      if (album?.name) text += `💿 *Album:* ${album.name}\n`;
+      if (genres?.length) text += `🎼 *Genre:* ${genres.map(g => g.name).join(', ')}\n`;
+      if (release_date) text += `📅 *Released:* ${release_date}\n`;
+      if (ytResult?.videos?.[0]?.url) text += `🔗 *YouTube:* ${ytResult.videos[0].url}\n`;
+      text += `\n🔍 Powered by ACRCloud & yt-search`;
 
-      return king.sendMessage(fromJid, {
-        text: result.trim(),
+      // 5. Send final result
+      await king.sendMessage(fromJid, {
+        text: text.trim(),
         contextInfo: {
-          forwardingScore: 1,
+          forwardingScore: 999,
           isForwarded: true,
           forwardedNewsletterMessageInfo: {
             newsletterJid: '120363238139244263@newsletter',
@@ -108,8 +117,17 @@ module.exports = {
     } catch (err) {
       console.error('[SHZ ERROR]', err);
       return king.sendMessage(fromJid, {
-        text: '⚠️ Song not recognizable. Try again with a clearer or shorter clip.'
+        text: '⚠️ *Error:* Song could not be recognized. Please try again with a different clip (preferably 10–15 seconds).'
       }, { quoted: msg });
+    } finally {
+      // 6. Cleanup
+      if (tempPath && fs.existsSync(tempPath)) {
+        try {
+          fs.unlinkSync(tempPath);
+        } catch (cleanupErr) {
+          console.error('[CLEANUP ERROR]', cleanupErr);
+        }
+      }
     }
   }
 };
