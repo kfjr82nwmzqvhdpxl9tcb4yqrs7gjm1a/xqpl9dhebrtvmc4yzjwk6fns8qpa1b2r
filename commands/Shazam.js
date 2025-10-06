@@ -3,52 +3,16 @@ const yts = require("yt-search");
 const { franceking } = require('../main');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs");
-const ffmpeg = require("fluent-ffmpeg");
-const ffmpegPath = require("ffmpeg-static");
 const path = require("path");
 
-ffmpeg.setFfmpegPath(ffmpegPath);
-
-// Create temp folder if not exists
 const TEMP_DIR = path.join(__dirname, '..', 'temp');
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR);
 
-/**
- * Trim 15 seconds from a specific time in the media
- */
-function trimClip(inputBuffer, startSeconds = 0) {
-  return new Promise((resolve, reject) => {
-    const inputPath = path.join(TEMP_DIR, `input-${Date.now()}.mp4`);
-    const outputPath = path.join(TEMP_DIR, `trimmed-${Date.now()}.mp4`);
-    
-    fs.writeFileSync(inputPath, inputBuffer);
-
-    ffmpeg(inputPath)
-      .setStartTime(startSeconds)
-      .duration(15)
-      .output(outputPath)
-      .on('end', () => {
-        const trimmed = fs.readFileSync(outputPath);
-        fs.unlinkSync(inputPath);
-        fs.unlinkSync(outputPath);
-        resolve(trimmed);
-      })
-      .on('error', (err) => {
-        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-        reject(err);
-      })
-      .run();
-  });
-}
-
-/**
- * Identify song using ACRCloud
- */
 async function identifySong(buffer) {
   const acr = new acrcloud({
-    host: 'identify-ap-southeast-1.acrcloud.com',
-    access_key: '26afd4eec96b0f5e5ab16a7e6e05ab37',
-    access_secret: 'wXOZIqdMNZmaHJP1YDWVyeQLg579uK2CfY6hWMN8'
+    host: 'identify-us-west-2.acrcloud.com',
+    access_key: '4ee38e62e85515a47158aeb3d26fb741',
+    access_secret: 'KZd3cUQoOYSmZQn1n5ACW5XSbqGlKLhg6G8S8EvJ'
   });
 
   const result = await acr.identify(buffer);
@@ -76,24 +40,25 @@ module.exports = {
       }, { quoted: msg });
     }
 
+    const filePath = path.join(TEMP_DIR, `media-${Date.now()}.dat`);
+
     try {
-      // Download media as buffer
-      const mediaBuffer = await downloadMediaMessage(
+      const stream = await downloadMediaMessage(
         { message: quoted },
-        'buffer',
+        'stream',
         {},
         { logger: console }
       );
 
-      // Try identifying from multiple segments
-      const segmentStarts = [0, 60, 120]; // start times in seconds
-      let matchedSong = null;
+      const writeStream = fs.createWriteStream(filePath);
+      stream.pipe(writeStream);
+      await new Promise(resolve => writeStream.on('finish', resolve));
 
-      for (let start of segmentStarts) {
-        const clip = await trimClip(mediaBuffer, start);
-        matchedSong = await identifySong(clip);
-        if (matchedSong) break;
-      }
+      let buffer = fs.readFileSync(filePath);
+      const MAX_SIZE = 1 * 1024 * 1024;
+      if (buffer.length > MAX_SIZE) buffer = buffer.slice(0, MAX_SIZE);
+
+      const matchedSong = await identifySong(buffer);
 
       if (!matchedSong) {
         return king.sendMessage(fromJid, {
@@ -132,6 +97,8 @@ module.exports = {
       return king.sendMessage(fromJid, {
         text: '⚠️ *Error:* Unable to recognize the song. Please try again with a clear, short clip (10–20s).'
       }, { quoted: msg });
+    } finally {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
   }
 };
