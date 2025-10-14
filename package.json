@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node db-init.js && node index.js"
   },
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x"
+  },
   "dependencies": {
     "@hapi/boom": "^9.1.4",
     "@whiskeysockets/baileys": "6.7.20",
@@ -25,12 +29,12 @@
     "axios": "^1.4.0",
     "fluent-ffmpeg": "^2.1.2",
     "fs-extra": "^11.1.1",
-    "jimp": "^0.16.13",
+    "jimp": "^1.6.0",
     "wa-sticker-formatter": "^4.4.4",
     "pg": "^8.11.2",
     "node-catbox": "^3.2.0",
     "g-i-s": "^2.1.7",
-    "qs": "latest",
+    "qs": "^6.11.2",
     "yt-search": "^2.10.4",
     "node-cron": "^3.0.3",
     "translatte": "^3.0.1",
