@@ -66,7 +66,7 @@ function getChatCategory(jid) {
   return '❔ Unknown Chat Type';
 }
 
-async function startBot() {
+/*async function startBot() {
   const { state, saveState } = await loadSessionFromBase64();
   const { version } = await fetchLatestBaileysVersion();
 
@@ -90,6 +90,47 @@ async function startBot() {
 
   
   king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
+    if (connection === 'close') {
+      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      if (shouldReconnect) {
+        try {
+          king.ev.removeAllListeners();
+          king.ws.close();
+        } catch (err) {}
+        startBot();
+      }
+    }*/
+const qrcode = require('qrcode-terminal'); // Make sure this is installed
+
+async function startBot() {
+  const { state, saveState } = await loadSessionFromBase64();
+  const { version } = await fetchLatestBaileysVersion();
+
+  king = makeWASocket({
+    auth: {
+      creds: state.creds,
+      keys: makeCacheableSignalKeyStore(
+        state.keys,
+        pino({ level: "fatal" }).child({ level: "fatal" })
+      ),
+    },
+    markOnlineOnConnect: true,
+    // ⛔️ Removed deprecated option
+    // printQRInTerminal: true,
+    logger: pino({ level: "fatal" }).child({ level: "fatal" }),
+    browser: Browsers.macOS("Safari"),
+  });
+
+  global.KING_LID = null;
+  const lidToNumberMap = new Map();
+
+  // ✅ NEW: Handle QR code manually
+  king.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+    if (qr) {
+      console.log('Scan this QR code to connect:');
+      qrcode.generate(qr, { small: true });
+    }
+
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
       if (shouldReconnect) {
