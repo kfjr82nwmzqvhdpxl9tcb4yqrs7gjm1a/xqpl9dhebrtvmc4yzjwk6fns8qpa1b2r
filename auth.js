@@ -1,30 +1,27 @@
-require('dotenv').config();
 const fs = require('fs');
-const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
-const { sessionBase64 } = require('./config');
+const { useSingleFileAuthState } = require('@whiskeysockets/baileys');
 
-const SESSION_FOLDER = './auth_state';
+const SESSION_FILE = './auth_state.json';
+const base64 = process.env.SESSION_BASE64 || require('./config').sessionBase64;
 
 async function loadSessionFromBase64() {
-    const base64 = process.env.SESSION_BASE64 || sessionBase64;
-    if (base64) {
+    if (base64 && !fs.existsSync(SESSION_FILE)) {
         try {
-            const json = Buffer.from(base64, 'base64').toString('utf-8');
-            if (!fs.existsSync(SESSION_FOLDER)) fs.mkdirSync(SESSION_FOLDER);
-            fs.writeFileSync(`${SESSION_FOLDER}/creds.json`, json, 'utf-8');
+            const decoded = Buffer.from(base64, 'base64').toString('utf-8');
+            fs.writeFileSync(SESSION_FILE, decoded, 'utf-8');
+            console.log('✅ Session restored from Base64');
         } catch (err) {
-            console.error('Invalid Base64 session:', err);
+            console.error('❌ Failed to decode Base64 session:', err);
         }
     }
 
-    const { state, saveCreds } = await useMultiFileAuthState(SESSION_FOLDER);
-    return { state, saveState: saveCreds };
+    const { state, saveState } = await useSingleFileAuthState(SESSION_FILE);
+    return { state, saveState };
 }
 
 function getEncodedSession() {
-    const filePath = `${SESSION_FOLDER}/creds.json`;
-    if (!fs.existsSync(filePath)) return '';
-    const raw = fs.readFileSync(filePath, 'utf-8');
+    if (!fs.existsSync(SESSION_FILE)) return '';
+    const raw = fs.readFileSync(SESSION_FILE, 'utf-8');
     return Buffer.from(raw).toString('base64');
 }
 
