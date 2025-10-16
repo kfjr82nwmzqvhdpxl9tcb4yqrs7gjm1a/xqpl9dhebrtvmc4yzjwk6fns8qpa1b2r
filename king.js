@@ -8,36 +8,41 @@ const { Boom } = require('@hapi/boom')
 const P = require('pino')
 
 const MAIN_LOGGER = P({ level: 'silent' })
-const sessionFolder = './auth_info_baileys'
 
-async function connectToWhatsApp () {
-    const { state, saveCreds } = await useMultiFileAuthState(sessionFolder)
+async function startSock() {
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys')
+    const { version } = await fetchLatestBaileysVersion()
 
     const sock = makeWASocket({
-        version: await fetchLatestBaileysVersion().then(v => v.version),
+        version,
         auth: state,
-        printQRInTerminal: false,
         logger: MAIN_LOGGER,
-        browser: ['Windows', 'Chrome', '10']
+        printQRInTerminal: false,
+        browser: ['Baileys', 'Chrome', '1.0']
     })
 
     if (!sock.authState.creds.registered) {
-        const phoneNumber = '254742063632'
-        const code = await sock.requestPairingCode(phoneNumber)
-        console.log(`Pairing code for ${phoneNumber}: ${code}`)
+        const number = '254742063632'
+        const code = await sock.requestPairingCode(number)
+        console.log(`Pairing code for ${number}: ${code}`)
     }
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update
+
         if (connection === 'close') {
-            const shouldReconnect =
-                (lastDisconnect?.error instanceof Boom &&
-                    lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut)
+            const shouldReconnect = !(
+                lastDisconnect?.error instanceof Boom &&
+                lastDisconnect.error.output?.statusCode === DisconnectReason.loggedOut
+            )
+
             if (shouldReconnect) {
-                connectToWhatsApp()
+                startSock()
             }
-        } else if (connection === 'open') {
-            console.log('Connected to WhatsApp')
+        }
+
+        if (connection === 'open') {
+            console.log('✅ Connected to WhatsApp Web')
         }
     })
 
@@ -46,16 +51,14 @@ async function connectToWhatsApp () {
         if (!message.message || message.key.fromMe) return
 
         const sender = message.key.remoteJid
-        const textMessage = message.message?.conversation ||
-                            message.message?.extendedTextMessage?.text ||
-                            ''
+        const text = message.message?.conversation || ''
 
-        if (textMessage.toLowerCase() === 'hi') {
-            await sock.sendMessage(sender, { text: 'Hello! This is your Baileys bot.' })
+        if (text.toLowerCase() === 'hi') {
+            await sock.sendMessage(sender, { text: '👋 Hello! Bot is active.' })
         }
     })
 
     sock.ev.on('creds.update', saveCreds)
 }
 
-connectToWhatsApp()
+startSock()
