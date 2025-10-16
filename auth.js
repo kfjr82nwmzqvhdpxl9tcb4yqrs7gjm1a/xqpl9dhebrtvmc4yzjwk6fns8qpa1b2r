@@ -15,7 +15,7 @@ async function loadSessionFromBase64() {
         }
     }
 
-    const { state, saveState } = await useSingleFileAuthState(SESSION_FILE);
+    const { state, saveState } = await useMultiFileAuthState(SESSION_FILE);
     return { state, saveState };
 }
 
