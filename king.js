@@ -1,17 +1,21 @@
-const { default: makeWASocket, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, DisconnectReason, makeCacheableSignalKeyStore } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const { loadSessionFromBase64 } = require('./auth');
 const P = require('pino');
+const fs = require('fs');
 
 async function startBot() {
-    const { state, saveState } = await loadSessionFromBase64();
+    const { state, saveCreds } = await loadSessionFromBase64(); // ✅ use saveCreds instead of saveState
 
     const sock = makeWASocket({
-        auth: state,
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, fs)
+        },
         logger: P({ level: 'silent' })
     });
 
-    sock.ev.on('creds.update', saveState);
+    sock.ev.on('creds.update', saveCreds); // ✅ correct listener
 
     sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
         if (connection === 'open') {
@@ -26,7 +30,7 @@ async function startBot() {
                 console.log('⚠️ Session logged out or invalid. Need to re-pair.');
             } else {
                 console.log('🔁 Reconnecting...');
-                setTimeout(startBot, 3000); // small delay before retry
+                setTimeout(startBot, 3000);
             }
         }
     });
