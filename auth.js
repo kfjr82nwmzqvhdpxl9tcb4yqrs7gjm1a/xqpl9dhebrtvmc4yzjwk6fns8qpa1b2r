@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { useSingleFileAuthState } = require('@whiskeysockets/baileys');
+const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
 
 const SESSION_FILE = './auth_state.json';
 const base64 = process.env.SESSION_BASE64 || require('./config').sessionBase64;
