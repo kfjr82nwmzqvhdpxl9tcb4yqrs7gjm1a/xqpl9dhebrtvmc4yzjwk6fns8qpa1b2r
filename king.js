@@ -82,12 +82,6 @@ async function startBot() {
         printQRInTerminal: false,
         logger: pino({ level: "fatal" }).child({ level: "fatal" }),
         browser: Browsers.windows('Edge'),
-        generateHighQualityLinkPreview: false,
-        defaultQueryTimeoutMs: 60000,
-         connectTimeoutMs: 60000,
-        keepAliveIntervalMs: 30000,
-         retryRequestDelayMs: 250,
-       maxRetries: 5,
             });
 
   global.KING_LID = null;
