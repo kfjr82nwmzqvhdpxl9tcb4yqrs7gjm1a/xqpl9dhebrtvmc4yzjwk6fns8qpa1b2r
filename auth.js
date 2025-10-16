@@ -3,7 +3,7 @@ const path = require('path');
 const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const config = require('./config');
 
-const AUTH_DIR = './auth_info';
+const AUTH_DIR = './auth_info'; // a directory, not a file
 const base64 = process.env.SESSION_BASE64 || config.sessionBase64;
 
 async function loadSessionFromBase64() {
