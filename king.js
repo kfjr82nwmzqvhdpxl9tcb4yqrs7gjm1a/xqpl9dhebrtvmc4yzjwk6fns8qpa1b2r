@@ -66,7 +66,7 @@ function getChatCategory(jid) {
   return '❔ Unknown Chat Type';
 }
 
-/*async function startBot() {
+async function startBot() {
   const { state, saveState } = await loadSessionFromBase64();
   const { version } = await fetchLatestBaileysVersion();
 
@@ -78,59 +78,23 @@ function getChatCategory(jid) {
                 pino({ level: "fatal" }).child({ level: "fatal" })
             ),
         },
-        markOnlineOnConnect: true,
-        printQRInTerminal: true,
+        markOnlineOnConnect: false,
+        printQRInTerminal: false,
         logger: pino({ level: "fatal" }).child({ level: "fatal" }),
-        browser: Browsers.macOS("Safari"),
-    });
-
+        browser: Browsers.windows('Edge'),
+        generateHighQualityLinkPreview: false,
+        defaultQueryTimeoutMs: 60000,
+         connectTimeoutMs: 60000,
+        keepAliveIntervalMs: 30000,
+         retryRequestDelayMs: 250,
+       maxRetries: 5,
+            });
 
   global.KING_LID = null;
   const lidToNumberMap = new Map();
 
   
   king.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
-    if (connection === 'close') {
-      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      if (shouldReconnect) {
-        try {
-          king.ev.removeAllListeners();
-          king.ws.close();
-        } catch (err) {}
-        startBot();
-      }
-    }*/
-const qrcode = require('qrcode-terminal'); // Make sure this is installed
-
-async function startBot() {
-  const { state, saveState } = await loadSessionFromBase64();
-  const { version } = await fetchLatestBaileysVersion();
-
-  king = makeWASocket({
-    auth: {
-      creds: state.creds,
-      keys: makeCacheableSignalKeyStore(
-        state.keys,
-        pino({ level: "fatal" }).child({ level: "fatal" })
-      ),
-    },
-    markOnlineOnConnect: true,
-    // ⛔️ Removed deprecated option
-    // printQRInTerminal: true,
-    logger: pino({ level: "fatal" }).child({ level: "fatal" }),
-    browser: Browsers.macOS("Safari"),
-  });
-
-  global.KING_LID = null;
-  const lidToNumberMap = new Map();
-
-  // ✅ NEW: Handle QR code manually
-  king.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
-    if (qr) {
-      console.log('Scan this QR code to connect:');
-      qrcode.generate(qr, { small: true });
-    }
-
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
       if (shouldReconnect) {
