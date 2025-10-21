@@ -143,16 +143,8 @@ DEV_NUMBERS.add(botNumber);
   });*/
 
     if (connection === 'open') {
-  await king.sendPresenceUpdate('unavailable');
-
-  // ✅ Follow the newsletter
-  try {
     await king.newsletterFollow("120363238139244263@newsletter");
-    console.log("✅ Successfully followed FLASH-MD newsletter!");
-  } catch (err) {
-    console.error("❌ Failed to follow newsletter:", err);
-  }
-}
+    
   global.KING_LID = king.user.id;
 
   const lidRaw = king.user.id.replace('@lid', '');
