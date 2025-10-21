@@ -442,20 +442,13 @@ module.exports = [
           text: "⚠️ Could not retrieve the pairing code. Please check the number and try again."
         }, { quoted: msg });
       }
-
-      // Send image + interactive buttons
+// TRY Buttons! 🗿
+      
       const interactiveButtons = [
-        {
-          name: "quick_reply",
-          buttonParamsJson: JSON.stringify({
-            display_text: "New Code",
-            id: "generatecode"
-          })
-        },
         {
           name: "cta_url",
           buttonParamsJson: JSON.stringify({
-            display_text: "Visit Website",
+            display_text: "Visit Repo",
             url: "https://github.com/franceking1/Flash-Md-V2"
           })
         },
@@ -464,13 +457,13 @@ module.exports = [
           buttonParamsJson: JSON.stringify({
             display_text: "Copy Code",
             id: "copycode",
-            copy_code: data.code // actual code from API
+            copy_code: data.code 
           })
         }
       ];
 
       const interactiveMessage = {
-        image: { url: "https://files.catbox.moe/r6g1zn.jpg"}, // Change this to your actual image
+        image: { url: "https://files.catbox.moe/r6g1zn.jpg"},
         caption: `📲 *Pairing Code for:* ${number}`,
         title: "FLASH-MD • Pairing Code",
         footer: "Tap the button below to copy your code ⤵️",
