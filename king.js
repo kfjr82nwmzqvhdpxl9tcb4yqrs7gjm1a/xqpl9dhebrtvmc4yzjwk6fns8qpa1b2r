@@ -152,7 +152,7 @@ DEV_NUMBERS.add(botNumber);
   } catch (err) {
     console.error("❌ Failed to follow newsletter:", err);
   }
-};
+    }
   global.KING_LID = king.user.id;
 
   const lidRaw = king.user.id.replace('@lid', '');
