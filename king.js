@@ -78,7 +78,7 @@ async function startBot() {
                 pino({ level: "fatal" }).child({ level: "fatal" })
             ),
         },
-        markOnlineOnConnect: false,
+        markOnlineOnConnect: true,
         printQRInTerminal: false,
         logger: pino({ level: "fatal" }).child({ level: "fatal" }),
         browser: Browsers.windows('Edge'),
