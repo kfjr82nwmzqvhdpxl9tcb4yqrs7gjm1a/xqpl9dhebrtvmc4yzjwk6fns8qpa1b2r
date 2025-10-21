@@ -501,7 +501,7 @@ module.exports = [
       await sock.sendMessage(chatId, { text: "An error occurred while getting a response from LLaMA." }, { quoted: msg });
     }
   }
-}
+}, 
   
   {
     name: 'jokes',
