@@ -99,7 +99,7 @@ async function startBot() {
         startBot();
       }
     }
-if (connection === 'open') {
+/*if (connection === 'open') {
   await king.sendPresenceUpdate('unavailable'); 
 
     global.KING_LID = king.user.id;
@@ -140,7 +140,61 @@ DEV_NUMBERS.add(botNumber);
         }
       }).catch(() => {});
     }
-  });
+  });*/
+
+    if (connection === 'open') {
+  await king.sendPresenceUpdate('unavailable');
+
+  global.KING_LID = king.user.id;
+
+  const lidRaw = king.user.id.replace('@lid', '');
+  const userLidRaw = conf.USER_LID?.replace('@lid', '');
+
+  if (userLidRaw) {
+    lidToNumberMap.set(king.user.id, userLidRaw);
+    DEV_LIDS.add(userLidRaw);
+    DEV_NUMBERS.add(userLidRaw);
+    console.log('✅ Added USER_LID to DEV_LIDS and DEV_NUMBERS:', userLidRaw);
+  }
+
+  const botNumber = getUserNumber(king.user.id);
+  DEV_NUMBERS.add(botNumber);
+
+  const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
+  const prefixInfo = conf.prefixes.length > 0
+    ? `Prefixes: [${conf.prefixes.join(', ')}]`
+    : 'Prefixes: [No Prefix]';
+  const totalCmds = commands.size;
+
+  const connInfo = `*FLASH-MD-V2 IS CONNECTED*
+
+*✅ Using Version 2.5!*
+*📌 Commands:* ${totalCmds}
+*⚙️ ${prefixInfo}*
+*🗓️ Date:* ${date}`;
+
+  // Send welcome message from newsletter
+  await king.sendMessage(king.user.id, {
+    text: connInfo,
+    contextInfo: {
+      forwardingScore: 1,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: '120363238139244263@newsletter',
+        newsletterName: 'FLASH-MD',
+        serverMessageId: -1
+      }
+    }
+  }).catch(() => {});
+
+  // ✅ Follow the newsletter
+  try {
+    await king.newsletterFollow("120363238139244263@newsletter");
+    console.log("✅ Successfully followed FLASH-MD newsletter!");
+  } catch (err) {
+    console.error("❌ Failed to follow newsletter:", err);
+  }
+}
 
 const handledCalls = new Set();
     
