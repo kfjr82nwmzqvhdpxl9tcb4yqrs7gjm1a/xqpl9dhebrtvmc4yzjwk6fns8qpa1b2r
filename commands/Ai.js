@@ -409,7 +409,87 @@ module.exports = [
       }
     }
   },
-  {
+
+{
+  name: 'pair',
+  get flashOnly() {
+    return franceking();
+  },
+  description: 'Generates a pairing code for a phone number.',
+  category: 'General',
+  execute: async (sock, msg, args) => {
+    const chatId = msg.key.remoteJid;
+
+    if (!args || args.length === 0) {
+      return await sock.sendMessage(chatId, {
+        text: "❗ Please provide a phone number to generate a pairing code."
+      }, { quoted: msg });
+    }
+
+    const number = args.join(' ').trim();
+    const url = `https://fixed-sessions.onrender.com/pair?number=${encodeURIComponent(number)}`;
+
+    try {
+      await sock.sendMessage(chatId, {
+        text: "*FLASH-MD is generating your pairing code...*"
+      }, { quoted: msg });
+
+      const response = await axios.get(url);
+      const data = response.data;
+
+      if (!data?.code) {
+        return await sock.sendMessage(chatId, {
+          text: "⚠️ Could not retrieve the pairing code. Please check the number and try again."
+        }, { quoted: msg });
+      }
+
+      // Send image + interactive buttons
+      const interactiveButtons = [
+        {
+          name: "quick_reply",
+          buttonParamsJson: JSON.stringify({
+            display_text: "New Code",
+            id: "generatecode"
+          })
+        },
+        {
+          name: "cta_url",
+          buttonParamsJson: JSON.stringify({
+            display_text: "Visit Website",
+            url: "https://www.flash-md.com/"
+          })
+        },
+        {
+          name: "cta_copy",
+          buttonParamsJson: JSON.stringify({
+            display_text: "Copy Code",
+            id: "copycode",
+            copy_code: data.code // actual code from API
+          })
+        }
+      ];
+
+      const interactiveMessage = {
+        image: { url: "https://example.com/pairing-banner.jpg" }, // Change this to your actual image
+        caption: `📲 *Pairing Code for:* ${number}`,
+        title: "FLASH-MD • Pairing Code",
+        footer: "Tap the button below to copy your code ⤵️",
+        interactiveButtons
+      };
+
+      await sock.sendMessage(chatId, interactiveMessage, { quoted: msg });
+
+    } catch (error) {
+      console.error('Pairing Code Error:', error);
+      await sock.sendMessage(chatId, {
+        text: "❌ There was an error processing your request. Please try again later."
+      }, { quoted: msg });
+    }
+  }
+}, 
+
+  
+ /* {
     name: 'pair',
     get flashOnly() {
   return franceking();
@@ -458,7 +538,7 @@ module.exports = [
         await sock.sendMessage(chatId, { text: "There was an error processing your request. Please try again later." }, { quoted: msg });
       }
     }
-  },
+  },*/
   {
     name: 'best-wallp',
     get flashOnly() {
