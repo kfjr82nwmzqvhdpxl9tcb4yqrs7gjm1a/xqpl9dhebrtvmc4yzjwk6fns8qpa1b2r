@@ -282,28 +282,25 @@ if (shouldAutoReact) {
     }
   }).catch(() => {});
 }
-
-const st = fromJid.endsWith('status@broadcast');
+const isStatus = fromJid.endsWith('status@broadcast');
 const ar = conf.AUTO_LIKE;
 
 const shouldAutoReactSt =
+  isStatus &&
   !isFromMe &&
   msg.message &&
   !isDev &&
   ar === 'on';
 
 if (shouldAutoReactSt) {
-  const emojiList = [
-    '💚', '🤍',
-  ];
-
-  const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
   king.sendMessage(fromJid, {
     react: {
-      text: randomEmoji,
+      text: '❤️',
       key: msg.key,
     },
-  }).catch(() => {});
+  }).catch((err) => {
+    console.error('❌ Failed to send reaction to status:', err);
+  });
 }
   
     const presenceToSend = isGroupJid(fromJid) ? PRESENCE.GROUP : PRESENCE.DM;
