@@ -190,7 +190,7 @@ module.exports = [
 
       await king.sendMessage(fromJid, {
         text: trimmedError
-      }, { quoted: msg });
+      }, ai: true, { quoted: msg });
     }
   }
 }, 
