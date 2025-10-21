@@ -99,51 +99,56 @@ async function startBot() {
         startBot();
       }
     }
-if (connection === 'open') {
-await king.newsletterFollow("120363238139244263@newsletter");
 
-    global.KING_LID = king.user.id;
+    if (connection === 'open') {
+  try {
+    await king.newsletterFollow("120363238139244263@newsletter");
+    console.log('✅ Successfully followed the newsletter: 120363238139244263@newsletter');
+  } catch (err) {
+    console.error('❌ Error following the newsletter:', err);
+  }
 
-const lidRaw = king.user.id.replace('@lid', '');
-const userLidRaw = conf.USER_LID?.replace('@lid', '');
+  global.KING_LID = king.user.id;
 
-if (userLidRaw) {
-  lidToNumberMap.set(king.user.id, userLidRaw); 
-  DEV_LIDS.add(userLidRaw); 
-  DEV_NUMBERS.add(userLidRaw); 
-  console.log('✅ Added USER_LID to DEV_LIDS and DEV_NUMBERS:', userLidRaw);
-}
+  const lidRaw = king.user.id.replace('@lid', '');
+  const userLidRaw = conf.USER_LID?.replace('@lid', '');
 
-const botNumber = getUserNumber(king.user.id);
-DEV_NUMBERS.add(botNumber); 
-      const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
-      const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
-      const totalCmds = commands.size;
+  if (userLidRaw) {
+    lidToNumberMap.set(king.user.id, userLidRaw); 
+    DEV_LIDS.add(userLidRaw); 
+    DEV_NUMBERS.add(userLidRaw); 
+    console.log('✅ Added USER_LID to DEV_LIDS and DEV_NUMBERS:', userLidRaw);
+  }
 
-      const connInfo = `*FLASH-MD-V2 IS CONNECTED*
+  const botNumber = getUserNumber(king.user.id);
+  DEV_NUMBERS.add(botNumber); 
+
+  const date = moment().tz('Africa/Nairobi').format('dddd, Do MMMM YYYY');
+  const prefixInfo = conf.prefixes.length > 0 ? `Prefixes: [${conf.prefixes.join(', ')}]` : 'Prefixes: [No Prefix]';
+  const totalCmds = commands.size;
+
+  const connInfo = `*FLASH-MD-V2 IS CONNECTED*
 
 *✅ Using Version 2.5!*
 *📌 Commands:* ${totalCmds}
 *⚙️ ${prefixInfo}*
 *🗓️ Date:* ${date}`;
 
-      await king.sendMessage(king.user.id, {
-        text: connInfo,
-        contextInfo: {
-          forwardingScore: 1,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363238139244263@newsletter',
-            newsletterName: 'FLASH-MD',
-            serverMessageId: -1
-          }
-        }
-      }).catch(() => {});
+  await king.sendMessage(king.user.id, {
+    text: connInfo,
+    contextInfo: {
+      forwardingScore: 1,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: '120363238139244263@newsletter',
+        newsletterName: 'FLASH-MD',
+        serverMessageId: -1
+      }
     }
+  }).catch(() => {
+    console.warn('⚠️ Failed to send connection info message.');
   });
-
-
-    
+}
 
 const handledCalls = new Set();
     
