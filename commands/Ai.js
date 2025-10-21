@@ -135,7 +135,7 @@ module.exports = [
       }, { quoted: msg });
     }
   }
-}, 
+},
   {
   name: 'gemini',
   description: 'Ask anything using Gemini AI.',
@@ -164,12 +164,14 @@ module.exports = [
 
       if (!aiReply) {
         return king.sendMessage(fromJid, {
-          text: '⚠️ No response received from Gemini AI.'
+          text: '⚠️ No response received from Gemini AI.',
+          ai: true
         }, { quoted: msg });
       }
 
       await king.sendMessage(fromJid, {
-        text: `💬 *Gemini AI says:*\n\n${aiReply}`
+        text: `💬 *Gemini AI says:*\n\n${aiReply}`,
+        ai: true
       }, { quoted: msg });
 
     } catch (err) {
@@ -189,8 +191,9 @@ module.exports = [
       const trimmedError = errorMsg.length > 4000 ? errorMsg.slice(0, 4000) + '…' : errorMsg;
 
       await king.sendMessage(fromJid, {
-        text: trimmedError
-      }, ai: true, { quoted: msg });
+        text: trimmedError,
+        ai: true
+      }, { quoted: msg });
     }
   }
 }, 
