@@ -456,7 +456,7 @@ module.exports = [
           name: "cta_url",
           buttonParamsJson: JSON.stringify({
             display_text: "Visit Website",
-            url: "https://www.flash-md.com/"
+            url: "https://github.com/franceking1/Flash-Md-V2"
           })
         },
         {
@@ -470,7 +470,7 @@ module.exports = [
       ];
 
       const interactiveMessage = {
-        image: { url: "https://example.com/pairing-banner.jpg" }, // Change this to your actual image
+        image: { url: "https://files.catbox.moe/r6g1zn.jpg"}, // Change this to your actual image
         caption: `📲 *Pairing Code for:* ${number}`,
         title: "FLASH-MD • Pairing Code",
         footer: "Tap the button below to copy your code ⤵️",
