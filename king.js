@@ -194,7 +194,7 @@ DEV_NUMBERS.add(botNumber);
   } catch (err) {
     console.error("❌ Failed to follow newsletter:", err);
   }
-}
+};
 
 const handledCalls = new Set();
     
