@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const axios = require('axios');
 
-const url = process.env.ALIVE_URL || 'https://new-bot-5l2f.onrender.com';
+const url = process.env.ALIVE_URL || 'https://new-fixed-2.onrender.com';
 
 cron.schedule('*/14 * * * *', () => {
     axios.get(url)
