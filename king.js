@@ -100,8 +100,8 @@ async function startBot() {
       }
     }
 if (connection === 'open') {
-await king.newsletterFollow("120363238139244263@newsletter");
-await king.newsletterUnmute("120363238139244263@newsletter")
+/*await king.newsletterFollow("120363238139244263@newsletter");
+await king.newsletterUnmute("120363238139244263@newsletter")*/
     global.KING_LID = king.user.id;
 
 const lidRaw = king.user.id.replace('@lid', '');
