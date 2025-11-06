@@ -178,7 +178,7 @@ const handledCalls = new Set();
   }
 });
 
-king.ev.on('group-participants.update', async ({ id, participants, action }) => {
+/*king.ev.on('group-participants.update', async ({ id, participants, action }) => {
   if (!isGroupJid(id)) return;
 
   if (action === 'add' || action === 'invite') {
@@ -206,9 +206,9 @@ king.ev.on('group-participants.update', async ({ id, participants, action }) => 
       console.error('❗ Failed to send custom welcome message:', err);
     }
   }
-});
+});*/
   
-king.ev.on('messages.upsert', async ({ messages }) => {
+/*king.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg || !msg.message) return;
   const rawFromJid = msg.key.remoteJid;
@@ -241,7 +241,50 @@ const senderJid = normalizeJid(senderJidRaw);
     const isDev = isDevUser(senderNumber);
   
 console.log('🔍 Sender Number:', senderNumber);
-console.log('🔍 isDev:', isDevUser(senderNumber));
+console.log('🔍 isDev:', isDevUser(senderNumber));*/
+
+
+king.ev.on('messages.upsert', async ({ messages, type }) => {
+  // Only handle NEW messages, not history or sync
+  if (type !== 'notify') return;
+
+  const msg = messages[0];
+  if (!msg || !msg.message) return;
+
+  const rawFromJid = msg.key.remoteJid;
+  const fromJid = normalizeJid(rawFromJid);
+  const isFromMe = msg.key.fromMe;
+
+  let senderJidRaw;
+  if (isFromMe) {
+    senderJidRaw = king.user.id;
+  } else if (msg.key.participant) {
+    senderJidRaw = msg.key.participant;
+  } else if (msg.participant) {
+    senderJidRaw = msg.participant;
+  } else {
+    senderJidRaw = msg.key.remoteJid;
+  }
+
+  const senderJid = normalizeJid(senderJidRaw);
+  let senderNumber = getUserNumber(senderJid);
+
+  if (senderJidRaw.endsWith('@lid')) {
+    const lidId = senderJidRaw.replace('@lid', '');
+    if (lidToNumberMap.has(senderJidRaw)) {
+      senderNumber = lidToNumberMap.get(senderJidRaw);
+    } else if (DEV_LIDS.has(lidId)) {
+      senderNumber = lidId;
+    }
+  }
+
+  const isDev = isDevUser(senderNumber);
+
+  console.log('📩 New message received');
+  console.log('🔍 Sender Number:', senderNumber);
+  console.log('🔍 isDev:', isDev);
+});
+
   
 const gc = fromJid.endsWith('@g.us');
 const arSetting = (conf.AR || '').toLowerCase().trim(); 
