@@ -279,11 +279,9 @@ king.ev.on('messages.upsert', async ({ messages, type }) => {
   }
 
   const isDev = isDevUser(senderNumber);
-
-  console.log('📩 New message received');
-  console.log('🔍 Sender Number:', senderNumber);
-  console.log('🔍 isDev:', isDev);
-});
+  
+console.log('🔍 Sender Number:', senderNumber);
+console.log('🔍 isDev:', isDevUser(senderNumber));
 
   
 const gc = fromJid.endsWith('@g.us');
