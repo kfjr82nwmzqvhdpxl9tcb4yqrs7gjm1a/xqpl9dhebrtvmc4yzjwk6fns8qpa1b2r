@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^9.1.4",
-    "@whiskeysockets/baileys": "6.7.21", 
+    "@whiskeysockets/baileys": "npm:gifted-baileys@2.0.0", 
     "dotenv": "^16.3.1",
     "@xaviabot/fb-downloader": "^1.0.14",
     "cheerio": "^1.0.0-rc.10",
