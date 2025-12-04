@@ -113,7 +113,7 @@ _Sending the audio..._`;
       }, { quoted: msg });
     }
 
-    const caption = `🎵 *${response.title || 'FLASH-MD V2'}*`;
+    const caption = `🎵 *${response.title || 'FLASH-MD V3'}*`;
 
     if (response.video) {
       await king.sendMessage(fromJid, {
@@ -168,12 +168,12 @@ _Sending the audio..._`;
       if (isVideo) {
         await king.sendMessage(fromJid, {
           video: { url: igmp4 },
-          caption: '_*✨ Downloaded by Flash-Md-V2*_'
+          caption: '_*✨ Downloaded by Flash-Md-V3*_'
         }, { quoted: msg });
       } else {
         await king.sendMessage(fromJid, {
           image: { url: igmp4 },
-          caption: '_*✨ Downloaded by Flash-Md-V2*_'
+          caption: '_*✨ Downloaded by Flash-Md-V3*_'
         }, { quoted: msg });
       }
 
@@ -219,12 +219,12 @@ _Sending the audio..._`;
         if (item.type === 'image') {
           await king.sendMessage(fromJid, {
             image: { url: item.url },
-            caption: `📸 _✨ Downloaded by Flash-Md-V2_`
+            caption: `📸 _✨ Downloaded by Flash-Md-V3_`
           }, { quoted: msg });
         } else if (item.type === 'video') {
           await king.sendMessage(fromJid, {
             video: { url: item.url },
-            caption: `🎥 _✨ Downloaded by Flash-Md-V2_`
+            caption: `🎥 _✨ Downloaded by Flash-Md-V3_`
           }, { quoted: msg });
         }
       }
@@ -896,7 +896,7 @@ _Use this info to explore or install the package via terminal_`;
       const stories = res.items.slice(0, 5); 
 
       for (const [index, item] of stories.entries()) {
-        const caption = `📖 *${username}* - Story ${index + 1} of ${stories.length}\n\n_*✨Downloaded by Flash-Md-V2*_`;
+        const caption = `📖 *${username}* - Story ${index + 1} of ${stories.length}\n\n_*✨Downloaded by Flash-Md-V3*_`;
 
         if (item.type === 'image') {
           await king.sendMessage(fromJid, {
