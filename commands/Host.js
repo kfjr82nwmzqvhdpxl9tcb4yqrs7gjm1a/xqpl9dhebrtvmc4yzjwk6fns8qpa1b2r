@@ -26,7 +26,7 @@ function detectPlatform() {
     if (process.env.GITHUB_WORKFLOW || process.env.GITHUB_ACTIONS) return 'GitHub Actions';
     if (process.env.DYNO) return 'Heroku';
 
-    return 'Unknown (Linux)';
+    return 'Panel';
 }
 
 function formatUptime(totalSec) {
@@ -61,7 +61,7 @@ module.exports = {
         const time = moment().tz(config.timezone).format('HH:mm:ss | DD/MM/YYYY');
 
         const hostInfo = `*◇ HOSTING STATUS ◇*\n\n` +
-                         `*Hosting Provider:* ${platform}\n` +
+                         `*Hosted On:* ${platform}\n` +
                          `*Time:* ${time}\n` +
                          `*Bot Uptime:* ${uptimeBot}\n` +
                          `*RAM Used:* ${usedMem} GB\n` +
