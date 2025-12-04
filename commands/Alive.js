@@ -24,7 +24,7 @@ function detectPlatform() {
     if (process.env.GITHUB_WORKFLOW || process.env.GITHUB_ACTIONS) return 'GitHub Actions';
     if (process.env.DYNO) return 'Heroku';
 
-    return 'Unknown (Linux)';
+    return 'Panel';
 }
 
 const getSenderId = (msg) => (msg.key?.participant || msg.key?.remoteJid || '0@s.whatsapp.net').split('@')[0];
