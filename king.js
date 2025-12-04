@@ -556,7 +556,7 @@ try {
       fs.writeFileSync(filePath, buffer);
       sendMsg = {
         image: { url: filePath },
-        caption: '📸 Sent by *Flash-Md-V2* !'
+        caption: '📸 Sent by *Flash-Md-V3* !'
       };
     } else if (quotedMsg.videoMessage) {
       const buffer = await downloadMediaMessage(quotedMsgWrapper, 'buffer', {}, { logger: console });
