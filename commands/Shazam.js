@@ -80,7 +80,7 @@ module.exports = {
         response += `📅 *Released:* ${day}/${month}/${year}\n`;
       }
       if (ytSearch?.videos?.[0]?.url) response += `🔗 *YouTube:* ${ytSearch.videos[0].url}\n`;
-      response += `\n*POWERED BY FLASH-MD V2*`;
+      response += `\n*POWERED BY FLASH-MD V3*`;
 
       return king.sendMessage(fromJid, {
         text: response.trim(),
