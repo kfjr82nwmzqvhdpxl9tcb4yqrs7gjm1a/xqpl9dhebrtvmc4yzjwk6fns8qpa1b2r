@@ -27,7 +27,7 @@ module.exports = [
 
         await king.sendMessage(chatId, {
           image: { url: result.image },
-          caption: '*FLASH-MD V2 - Logo Generator*'
+          caption: '*FLASH-MD V3 - Logo Generator*'
         }, { quoted: msg });
 
       } catch (error) {
@@ -65,7 +65,7 @@ module.exports = [
 
         await king.sendMessage(chatId, {
           image: { url: result.image },
-          caption: '*FLASH-MD V2 - Logo Generator*'
+          caption: '*FLASH-MD V3 - Logo Generator*'
         }, { quoted: msg });
 
       } catch (error) {
@@ -103,7 +103,7 @@ module.exports = [
 
         await king.sendMessage(chatId, {
           image: { url: result.image },
-          caption: '*FLASH-MD V2 - Logo Generator*'
+          caption: '*FLASH-MD V3 - Logo Generator*'
         }, { quoted: msg });
 
       } catch (error) {
@@ -139,7 +139,7 @@ module.exports = [
 
         await king.sendMessage(chatId, {
           image: { url: result.image },
-          caption: '*Logo by FLASH-MD V2*'
+          caption: '*Logo by FLASH-MD V3*'
         }, { quoted: msg });
 
       } catch (error) {
@@ -174,7 +174,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -210,7 +210,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -246,7 +246,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -281,7 +281,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -317,7 +317,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -353,7 +353,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -389,7 +389,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -425,7 +425,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -462,7 +462,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -499,7 +499,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -536,7 +536,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -572,7 +572,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -609,7 +609,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -646,7 +646,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -683,7 +683,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -720,7 +720,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -757,7 +757,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -794,7 +794,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -831,7 +831,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -868,7 +868,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -905,7 +905,7 @@ module.exports = [
 
       await king.sendMessage(chatId, {
         image: { url: result.image },
-        caption: '*Logo by FLASH-MD V2*'
+        caption: '*Logo by FLASH-MD V3*'
       }, { quoted: msg });
 
     } catch (error) {
@@ -941,7 +941,7 @@ module.exports = [
 
         await king.sendMessage(chatId, {
           image: { url: result.image },
-          caption: '*Logo by FLASH-MD V2*'
+          caption: '*Logo by FLASH-MD V3*'
         }, { quoted: msg });
 
       } catch (error) {
