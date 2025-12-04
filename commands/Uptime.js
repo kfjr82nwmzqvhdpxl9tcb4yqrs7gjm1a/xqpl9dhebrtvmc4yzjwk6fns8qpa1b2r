@@ -36,7 +36,7 @@ module.exports = [
                         key: pingMsg.key,
                         type: 14,
                         editedMessage: {
-                            conversation: `🏓 Pong!\n⏱️ *_Flash-Md-V2.5 Speed: ${latency} ms_*`,
+                            conversation: `🏓 Pong!\n⏱️ *_Flash-Md-V3 Speed: ${latency} ms_*`,
                         },
                     },
                 },
@@ -60,13 +60,13 @@ module.exports = [
             const jid = msg.key.remoteJid;
 
             await sock.sendMessage(jid, {
-                text: `*_UPTIME OF FLASH-MD-V2: ${formatted}_*`
+                text: `*_UPTIME OF FLASH-MD-V3: ${formatted}_*`
             }, {
                 quoted: {
                     key: { fromMe: false, participant: '0@s.whatsapp.net', remoteJid: 'status@broadcast' },
                     message: {
                         contactMessage: {
-                            displayName: 'FLASH-MD-V2',
+                            displayName: 'FLASH-MD-V3',
                             vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;a,;;;\nFN:'FLASH-MD-V2'\nitem1.TEL;waid=${senderId}:${senderId}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`,
                         },
                     },
